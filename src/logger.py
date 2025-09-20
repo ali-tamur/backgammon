@@ -1,8 +1,10 @@
+from typing import Optional
+from pathlib import Path
+
 import avro.schema
 from avro.datafile import DataFileWriter, DataFileReader
 from avro.io import DatumWriter, DatumReader
-from io import BytesIO
-from typing import Optional
+
 
 class GameKeeper:
     def __init__(self, game_id, white, black):
@@ -24,8 +26,9 @@ class GameKeeper:
             'score': score
         }
 
+
 class LogWriter:
-    def __init__(self, file_path: str, schema_path: str):
+    def __init__(self, file_path: Path, schema_path: Path):
         schema = avro.schema.parse(open(schema_path, "rt").read())
         self.writer = DataFileWriter(open(file_path, "ab"), DatumWriter(), schema)
         self.game_keeper: Optional[GameKeeper] = None
@@ -47,12 +50,13 @@ class LogWriter:
     def close(self):
         self.writer.close()
 
+
 class LogReader:
     def __init__(self, schema_path: str):
         self.schema = avro.schema.parse(open(schema_path, "rt").read())
         self.records = []
 
-    def read(self, file_path:str):
+    def read(self, file_path: str):
         try:
             with open(file_path, "rb") as f:
                 with DataFileReader(f, DatumReader()) as reader:

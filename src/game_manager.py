@@ -1,15 +1,12 @@
-import random
-from ctypes import HRESULT
-
-from state import GameState
-from player import *
-from move_generator import generate_moves
-from dice_source import DiceSource
-from logger import LogWriter
 from typing import Optional
 
+from src.dice_source import DiceSource
+from src.logger import LogWriter
+from src.player import *
+
+
 class GameManager:
-    def __init__(self, alice:Player, bob:Player, dice_source:DiceSource, logger:Optional[LogWriter] = None):
+    def __init__(self, alice: Player, bob: Player, dice_source: DiceSource, logger: Optional[LogWriter] = None):
         self.players = [alice, bob]
         self.dice_source = dice_source
         self.logger = logger
@@ -24,7 +21,7 @@ class GameManager:
             dice = Dice.dice_throw(d1, d2)
             state = self.players[on_turn].move(state, dice)
             if self.logger:
-                self.logger.move([d1,d2], state)
+                self.logger.move([d1, d2], state)
             if state.score() is not None:
                 break
             on_turn = 1 - on_turn
@@ -37,17 +34,3 @@ class GameManager:
         if self.logger:
             self.logger.end_game(result)
         return result
-
-if __name__ == "__main__":
-    for i in range(20):
-        log_file = 'mylog.avro'
-        my_schema = 'log.avsc'
-        mylogger = LogWriter(log_file, my_schema)
-        seed_a = random.Random(18+i)
-        seed_b = random.Random(456+i)
-        alice = RandomPlayer("alice", seed_a)
-        bob = RandomPlayer("bob", seed_b)
-        dice_source = DiceSource(789+i)
-        game_manager = GameManager(alice, bob, dice_source, mylogger)
-        score = game_manager.run_once()
-        #print(score)

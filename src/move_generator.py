@@ -1,7 +1,7 @@
 from typing import List, Set
 
-from dice import Dice, DICE
-from state import *
+from src.dice import Dice, DICE
+from src.state import *
 
 """
 Section: Make a move and return a new game state

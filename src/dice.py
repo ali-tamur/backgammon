@@ -1,17 +1,19 @@
 from typing import List, Literal, TypeAlias
-from state import STATE, GameState
+
+from src.state import STATE, GameState
 
 DICE: TypeAlias = Literal[1, 2, 3, 4, 5, 6]
+
 
 class Dice:
     def __init__(self, dice_list: List[DICE]):
         self.dice_list = dice_list
 
     @staticmethod
-    def dice_throw(d1:DICE, d2:DICE):
+    def dice_throw(d1: DICE, d2: DICE):
         if d1 == d2:
             return Dice([d1, d1, d1, d1])
-        return Dice([d1,d2]) if d1 < d2 else Dice([d2,d1])
+        return Dice([d1, d2]) if d1 < d2 else Dice([d2, d1])
 
     def dice_to_use(self, state: GameState) -> List[DICE]:
         if len(self.dice_list) == 0:
@@ -36,5 +38,3 @@ class Dice:
 
     def __repr__(self):
         return self.dice_list.__repr__()
-
-

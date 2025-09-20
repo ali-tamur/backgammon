@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from http.cookiejar import debug
 
 """
 Game state is represented by an array of length 28.
@@ -16,17 +15,20 @@ a[26]: # of stones the player collected.
 a[27]: # of stones the opponent collected.
 """
 
+
 class STATE(Enum):
     ON_BAR = auto()
     NORMAL = auto()
     COLLECTING = auto()
+
 
 PLAYER_BAR = 24
 OPPONENT_BAR = 25
 PLAYER_BAG = 26
 OPPONENT_BAG = 27
 COLLECT_START = 18
-COLLECT_END =24
+COLLECT_END = 24
+
 
 class GameState:
     def __init__(self, a):
@@ -53,8 +55,8 @@ class GameState:
         return GameState(a)
 
     def opponent_state(self):
-        a = [-self.a[i] for i in range(COLLECT_END-1, -1, -1)]
-        for i in [OPPONENT_BAR,PLAYER_BAR,OPPONENT_BAG,PLAYER_BAG]:
+        a = [-self.a[i] for i in range(COLLECT_END - 1, -1, -1)]
+        for i in [OPPONENT_BAR, PLAYER_BAR, OPPONENT_BAG, PLAYER_BAG]:
             a.append(self.a[i])
         return GameState(tuple(a))
 

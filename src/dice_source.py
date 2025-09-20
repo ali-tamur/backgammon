@@ -1,5 +1,5 @@
-from dice import Dice
 import random
+
 
 class DiceSource:
     def __init__(self, random_seed):

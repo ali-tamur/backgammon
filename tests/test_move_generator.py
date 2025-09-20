@@ -1,5 +1,4 @@
-import pytest
-from move_generator import *
+from src.move_generator import *
 
 
 def generate_all_dice():
@@ -186,7 +185,6 @@ class TestMoveGenerator:
         expected[7] = 1
         assert r.pop().a == tuple(expected)
 
-
     def test_single_stone_movement(self):
         a = [0] * 28
         a[HOME(1)] = 14
@@ -195,7 +193,7 @@ class TestMoveGenerator:
         state = GameState(tuple(a))
 
         for i in range(1, 7):
-            for j in range(i+1, 7):
+            for j in range(i + 1, 7):
                 dice = Dice.dice_throw(i, j)
                 r = generate_moves(state, dice)
                 assert len(r) == 1
@@ -218,7 +216,7 @@ class TestMoveGenerator:
         assert len(r) == 1
         expected = a[:]
         expected[0] = 0
-        expected[PLAYER_BAG] =1
+        expected[PLAYER_BAG] = 1
         assert r.pop().a == tuple(expected)
 
     def test_single_stone_move_and_bolt(self):
@@ -270,7 +268,6 @@ class TestMoveGenerator:
                     expected_set.add(tuple(e))
 
                 assert {state.a for state in r} == expected_set
-
 
     def test_double_stone_movement_with_blocks(self):
         a = [0] * 28
@@ -344,8 +341,6 @@ class TestMoveGenerator:
         expected_set.add(tuple(e))
         assert {state.a for state in r} == expected_set
 
-
-
     def test_double_stone_double_dice(self):
         a = [0] * 28
         a[HOME(1)] = 13
@@ -418,7 +413,7 @@ class TestMoveGenerator:
 
     def test_collect_with_waste(self):
         a = [0] * 28
-        for i in range(HOME(3),COLLECT_END):
+        for i in range(HOME(3), COLLECT_END):
             a[i] = 1
         a[PLAYER_BAG] = 12
         a[OPPONENT_BAR] = 15

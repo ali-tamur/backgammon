@@ -1,18 +1,21 @@
-import pytest
 from typing import Tuple
-from state import *
+
+import pytest
+
+from src.state import *
 
 
 @pytest.fixture
 def collecting_state() -> GameState:
     s = GameState.game_start()
-    a = [0]*COLLECT_START
+    a = [0] * COLLECT_START
     for i in range(COLLECT_START, COLLECT_END):
         a.append(2)
-    a += [0,0,0,0]
+    a += [0, 0, 0, 0]
     a[PLAYER_BAG] = 3
     a[0] = -15
     return GameState(tuple(a))
+
 
 @pytest.fixture
 def on_bar_state() -> GameState:
@@ -22,14 +25,15 @@ def on_bar_state() -> GameState:
     a[PLAYER_BAR] = 1
     return GameState(tuple(a))
 
-@pytest.fixture(params =
-                [(b, st) for b in [True, False] for st in ["normal","gammon","backgammon-1", "backgammon-2"]])
+
+@pytest.fixture(params=
+                [(b, st) for b in [True, False] for st in ["normal", "gammon", "backgammon-1", "backgammon-2"]])
 def game_score(request) -> Tuple[GameState, int]:
     a = [0] * 28
     a[PLAYER_BAG] = 15
     b, st = request.param
     should_score = None
-    if  st == "normal":
+    if st == "normal":
         should_score = 1
         a[0] = -1
         a[OPPONENT_BAG] = 14
@@ -55,6 +59,7 @@ def game_score(request) -> Tuple[GameState, int]:
 def game_lost(game_won):
     s_opp = game_won.opponent_state()
     return s_opp
+
 
 class TestGameState:
     def test_game_start(self):
@@ -85,7 +90,6 @@ class TestGameState:
         s_opp_2 = s_opp.opponent_state()
         assert state == s_opp_2
 
-
     def test_win_lose(self, game_score):
         state, should_score = game_score
         assert state.score() == should_score
@@ -93,18 +97,9 @@ class TestGameState:
     def test_no_score(self):
         assert GameState.game_start().score() is None
 
-
     def test_move_state(self, collecting_state, on_bar_state):
         s = GameState.game_start()
         assert s.move_state() == STATE.NORMAL
 
         assert collecting_state.move_state() == STATE.COLLECTING
         assert on_bar_state.move_state() == STATE.ON_BAR
-
-
-
-
-
-
-
-
