@@ -1,3 +1,5 @@
 tensorflow
 avro
 jupyterlab
+numpy
+python-dotenv

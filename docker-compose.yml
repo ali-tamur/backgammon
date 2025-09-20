@@ -1,0 +1,10 @@
+services:
+  backgammon-player:
+    image: backgammon:0.1
+    container_name: backgammon_container
+    volumes:
+      - backgammon-data:/app/data
+    command: ["tail", "-f", "/dev/null" ]
+
+volumes:
+  backgammon-data:

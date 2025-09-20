@@ -1,19 +1,33 @@
-# Use an official Python runtime as a parent image
+# Start with a base Python image.
 FROM python:3.12-slim
 
-# Set the working directory in the container
+# Set the working directory for your application.
 WORKDIR /app
 
-# Copy the requirements.txt file from your project to the container's /app directory
+# Create a non-root user and group to run the application.
+RUN addgroup --gid 1001 backgammon_group && adduser --system --uid 1001 --ingroup backgammon_group backgammon_user
+
+# Copy requirements.txt first to leverage Docker's layer caching.
+# This only runs when requirements.txt changes.
 COPY requirements.txt .
 
-# Install any dependencies specified in requirements.txt
+# Install dependencies. This step is performed as the root user.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your project's code to the container's /app directory
+# Copy the rest of the application code.
 COPY . .
 
-RUN mkdir -p logs && touch logs/mylog.avro
+# Create the data directory for the Docker volume.
+RUN mkdir -p /app/data
 
-# Specify the command to run when the container starts
-CMD ["python3", "-m", "src.backgammon"]
+# Change ownership of the entire application and data directories to the non-root user.
+RUN chown -R backgammon_user:backgammon_group /app
+
+# Set the correct permissions for the data directory.
+RUN chmod -R 775 /app/data
+
+# Switch to the non-root user for all subsequent commands and for runtime.
+USER backgammon_user
+
+# Set the default command to keep the container running.
+CMD ["sleep", "infinity"]
