@@ -4,8 +4,7 @@ from typing import List
 import numpy as np
 import tensorflow as tf
 
-from logger import PlayerLog
-from src.logger import read_for_player
+from src.logger import read_for_player, PlayerLog
 from src.state import OPPONENT_BAR, COLLECT_START, PLAYER_BAR, PLAYER_BAG, OPPONENT_BAG
 
 
@@ -34,19 +33,17 @@ def state_to_tensor(state_arr: List[int]) -> tf.Tensor:
     return tensor
 
 
-def game_to_training_data(game: PlayerLog):
+def game_to_training_data(game: PlayerLog, accumulate_records):
     states = game.game_states()
-    player_tensor = [state_to_tensor(st) for st in states]
-    return tf.stack(player_tensor), game.score()
+    score = game.score()
+    num_moves = len(states)
+    for i in range(num_moves):
+        accumulate_records.append((score, i+1, num_moves, state_to_tensor(states[i])))
 
 
 def prepare_training_data(log_file: Path, player_name: str):
-    states = []
-    scores = []
-    for player_log in read_for_player(log_file, player_name)
-        st, score = game_to_training_data(player_log)
-        states.append(st)
-        scores.append(score)
-    scores = np.array(scores)
+    result = []
+    for player_log in read_for_player(log_file, player_name):
+        game_to_training_data(player_log, result)
 
-    return tf.stack(states), tf.constant(scores)
+    return result
