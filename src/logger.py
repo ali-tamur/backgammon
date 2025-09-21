@@ -1,9 +1,13 @@
-from typing import Optional, List
+import json
+import os
 from pathlib import Path
+from typing import Optional, List
 
-import avro.schema
-from avro.datafile import DataFileWriter, DataFileReader
-from avro.io import DatumWriter, DatumReader
+import fastavro
+# import avro.schema
+# from avro.datafile import DataFileWriter, DataFileReader
+# from avro.io import DatumWriter, DatumReader
+from fastavro import parse_schema
 
 
 class PlayerLog:
@@ -51,40 +55,74 @@ class GameRecordCreator:
 
 class LogWriter:
     def __init__(self, file_path: Path, schema_path: Path):
-        schema = avro.schema.parse(open(schema_path, "rt").read())
-        self.writer = DataFileWriter(open(file_path, "ab"), DatumWriter(), schema)
+        with open(schema_path, "rt") as f:
+            schema_dict = json.load(f)
+        self.schema = parse_schema(schema_dict)
+        self.file_path = file_path
+        self._check_new_file()
         self.game_keeper: Optional[GameRecordCreator] = None
+        self.file = None
+
+    def _check_new_file(self):
+        is_new_file = not os.path.exists(self.file_path) or os.path.getsize(self.file_path) == 0
+        if is_new_file:
+            with open(self.file_path, 'wb') as out_file:
+                fastavro.writer(out_file, self.schema, [])
+
+    def __enter__(self):
+        self.file = open(self.file_path, "a+b")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.file:
+            self.file.close()
 
     def start_game(self, game_id, white, black):
         self.game_keeper = GameRecordCreator(game_id, white, black)
 
     def move(self, dice, state):
         self.game_keeper.add_move(dice, state)
-        pass
 
     def end_game(self, score):
         record = self.game_keeper.end_game(score)
         try:
-            self.writer.append(record)
+            fastavro.writer(self.file, self.schema, [record])
         finally:
-            self.writer.flush()
+            self.file.flush()
 
-    def close(self):
-        self.writer.close()
+
+class DummyLogWriter:
+    def __init__(self):
+        pass
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def start_game(self, game_id, white, black):
+        pass
+
+    def move(self, dice, state):
+        pass
+
+    def end_game(self, score):
+        pass
 
 
 def read_log(file_path: Path) -> List[dict]:
     records = []
     try:
-       with open(file_path, "rb") as f:
-           with DataFileReader(f, DatumReader()) as reader:
-               for record in reader:
-                   records.append(record)
+        with open(file_path, "rb") as f:
+            avro_reader = fastavro.reader(f)
+            for record in avro_reader:
+                records.append(record)
     except IOError as e:
         print(f"Error reading file: {e}")
     return records
 
-def read_for_player(file_path:Path, player_name):
+
+def read_for_player(file_path: Path, player_name):
     records = read_log(file_path)
     result = [PlayerLog.create(record, player_name) for record in records]
     return [r for r in result if r is not None]

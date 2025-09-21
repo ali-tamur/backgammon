@@ -2,12 +2,13 @@ from random import Random
 from pathlib import Path
 import os
 import argparse
+import time
 
 from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
 
 from src.dice_source import DiceSource
 from src.game_manager import GameManager
-from src.logger import LogWriter
+from src.logger import LogWriter, DummyLogWriter
 from src.player import RandomPlayer
 from dotenv import load_dotenv
 
@@ -43,8 +44,9 @@ def parse_args():
     return args
 
 def main():
-    args = parse_args()
-    n_games = args.count
+    #args = parse_args()
+#    n_games = args.count
+    n_games = 200
     load_dotenv()
     log_schema_path = os.getenv("LOG_SCHEMA_PATH") or DEFAULT_LOG_SCHEMA_PATH
     log_file_path = os.getenv("LOG_FILE_PATH") or DEFAULT_LOG_PATH
@@ -53,15 +55,13 @@ def main():
     my_schema = project_root / log_schema_path
     log_file = Path(log_file_path)
     mylogger = LogWriter(log_file, my_schema)
-    for i in range(n_games):
-        seed_a = Random(17 + i)
-        seed_b = Random(455 + i)
-        alice = RandomPlayer("alice", seed_a)
-        bob = RandomPlayer("bob", seed_b)
-        dice_source = DiceSource(788 + i)
-        game_manager = GameManager(alice, bob, dice_source, mylogger)
-        score = game_manager.run_once()
-        print(score)
+    #mylogger = DummyLogWriter()
+    random_seed = Random(time.time())
+    alice = RandomPlayer("alice", random_seed)
+    bob = RandomPlayer("bob", random_seed)
+    dice_source = DiceSource(random_seed)
+    game_manager = GameManager(alice, bob, dice_source, mylogger)
+    game_manager.run(n_games)
 
 
 if __name__ == "__main__":
