@@ -1,9 +1,12 @@
-from typing import List, Tuple
+from pathlib import Path
+from typing import List
 
 import numpy as np
 import tensorflow as tf
 
-from src.state import GameState, OPPONENT_BAR, COLLECT_START, PLAYER_BAR, PLAYER_BAG, OPPONENT_BAG
+from logger import PlayerLog
+from src.logger import read_for_player
+from src.state import OPPONENT_BAR, COLLECT_START, PLAYER_BAR, PLAYER_BAG, OPPONENT_BAG
 
 
 def state_to_tensor(state_arr: List[int]) -> tf.Tensor:
@@ -31,9 +34,19 @@ def state_to_tensor(state_arr: List[int]) -> tf.Tensor:
     return tensor
 
 
-def game_to_training_data(state_list: List[GameState], player_index) -> tf.Tensor:
-    player_tensor = [state_to_tensor(st.a) for st in state_list[player_index:len(state_list):2]]
-    return tf.stack(player_tensor)
+def game_to_training_data(game: PlayerLog):
+    states = game.game_states()
+    player_tensor = [state_to_tensor(st) for st in states]
+    return tf.stack(player_tensor), game.score()
 
-def prepare_training_data(log_file, player_name):
-    pass
+
+def prepare_training_data(log_file: Path, player_name: str):
+    states = []
+    scores = []
+    for player_log in read_for_player(log_file, player_name)
+        st, score = game_to_training_data(player_log)
+        states.append(st)
+        scores.append(score)
+    scores = np.array(scores)
+
+    return tf.stack(states), tf.constant(scores)

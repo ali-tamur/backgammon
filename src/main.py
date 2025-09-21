@@ -38,6 +38,7 @@ def parse_args():
         default=1,
         help="The number of games to play."
     )
+
     args = parser.parse_args()
     return args
 
