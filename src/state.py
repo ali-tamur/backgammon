@@ -89,7 +89,7 @@ class GameState:
     def move_state(self) -> STATE:
         if self.player_on_bar() > 0:
             return STATE.ON_BAR
-        if len([1 for i in range(COLLECT_START) if self.a[i] > 0]) == 0:
+        if sum([self.a[i] for i in range(COLLECT_START, COLLECT_END) if self.a[i] > 0]) + self.a[PLAYER_BAG] == 15:
             return STATE.COLLECTING
         return STATE.NORMAL
 
