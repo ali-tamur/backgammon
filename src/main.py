@@ -10,6 +10,7 @@ from src.dice_source import DiceSource
 from src.game_manager import GameManager
 from src.logger import LogWriter, DummyLogWriter
 from src.player import RandomPlayer
+from src.training_data import prepare_training_data
 from dotenv import load_dotenv
 
 
@@ -26,43 +27,67 @@ def find_project_root():
     return project_root
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Run a backgammon AI simulation.")
+    parser = argparse.ArgumentParser(description="Run a backgammon AI simulation.")
 
     subparsers = parser.add_subparsers(dest="command")
     play_games_parser = subparsers.add_parser(
         "play_games", help="Run a simulation for a specified number of games.")
-
     play_games_parser.add_argument(
         "--count",
         type=int,
-        default=1,
+        default=0,
         help="The number of games to play."
+    )
+
+    read_data_parser = subparsers.add_parser(
+        "read_data", help="Read a dataset of training data.")
+    read_data_parser.add_argument(
+        "--player_name",
+        type=str,
+        required=True,
+        help="The player name whose games will be loaded"
     )
 
     args = parser.parse_args()
     return args
 
-def main():
-    #args = parse_args()
-#    n_games = args.count
-    n_games = 200
+def read_data(log_file:Path, player_name: str):
+    return prepare_training_data(log_file, player_name)
+
+def play_games(alice, bob, dice_source, n_games, log_writer):
+    game_manager = GameManager(alice, bob, dice_source, log_writer)
+    game_manager.run(n_games)
+
+def get_log_file() -> Path:
+    load_dotenv()
+    log_file_path = os.getenv("LOG_FILE_PATH") or DEFAULT_LOG_PATH
+    log_file = Path(log_file_path)
+    return log_file
+
+def get_schema() -> Path:
     load_dotenv()
     log_schema_path = os.getenv("LOG_SCHEMA_PATH") or DEFAULT_LOG_SCHEMA_PATH
-    log_file_path = os.getenv("LOG_FILE_PATH") or DEFAULT_LOG_PATH
-
     project_root = find_project_root()
-    my_schema = project_root / log_schema_path
-    log_file = Path(log_file_path)
-    mylogger = LogWriter(log_file, my_schema)
-    #mylogger = DummyLogWriter()
-    #random_seed = Random(time.time())
+    schema = project_root / log_schema_path
+    return schema
+
+def create_log_writer():
+    schema = get_schema()
+    log_file = get_log_file()
+    return LogWriter(log_file, schema)
+
+def main():
     random_seed = Random(31415)
-    alice = RandomPlayer("alice", random_seed)
-    bob = RandomPlayer("bob", random_seed)
-    dice_source = DiceSource(random_seed)
-    game_manager = GameManager(alice, bob, dice_source, mylogger)
-    game_manager.run(n_games)
+    args = parse_args()
+    if args.command == "play_games":
+        n_games = args.count or 1000
+        alice = RandomPlayer('alice', random_seed)
+        bob = RandomPlayer('bob', random_seed)
+        log_writer = create_log_writer()
+        play_games(alice, bob, DiceSource(random_seed), n_games, log_writer)
+    elif args.command == "read_data":
+        player = args.player_name
+        read_data(get_log_file(), player)
 
 
 if __name__ == "__main__":
