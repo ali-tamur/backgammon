@@ -18,10 +18,7 @@ def _to_board(state: GameState, src_index: int, dst_index: int) -> GameState:
     Assumes the move is legal.
     """
     a = list(state.a)
-    if src_index >= 0:
-        a[src_index] -= 1
-    else:
-        a[PLAYER_BAR] -= 1
+    a[src_index] -= 1
     if a[dst_index] == -1:
         a[OPPONENT_BAR] += 1
         a[dst_index] = 1
@@ -31,7 +28,7 @@ def _to_board(state: GameState, src_index: int, dst_index: int) -> GameState:
 
 
 def from_bar_to_board(state: GameState, index: int) -> GameState:
-    return _to_board(state, -1, index)
+    return _to_board(state, PLAYER_BAR, index)
 
 
 def from_board_to_board(state: GameState, src_index: int, dst_index: int) -> GameState:
@@ -134,6 +131,22 @@ def playable_indexes(state: GameState, dice: DICE):
 Section: generate moves from a dice roll for any game state.
 """
 
+class ResultKeeper:
+    def __init__(self, initial_state:GameState, remaining_dice:int)-> None:
+        self.d = {initial_state}
+        self.remaining_dice = remaining_dice
+
+    def add(self, state, remaining_dice) -> None:
+        if remaining_dice > self.remaining_dice:
+            return
+        elif remaining_dice < self.remaining_dice:
+            self.remaining_dice = remaining_dice
+            self.d = {state}
+        else:
+            self.d.add(state)
+
+    def moves(self) -> Set[GameState]:
+        return self.d
 
 def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameState]:
     """
@@ -142,25 +155,29 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
     :return: List of game states after each legal move.
     """
     partial_results = [(initial_state, initial_dice)]
-    result = {(initial_state, len(initial_dice))}
+    result = ResultKeeper(initial_state, len(initial_dice))
     while partial_results:
         state, dice = partial_results.pop()
         if dice.is_empty():
-            result.add((state, 0))
+            result.add(state, 0)
             continue
         move_state = state.move_state()
         if move_state == STATE.ON_BAR:
             candidates = moves_for_on_bar(state, dice)
             if not candidates:
-                result.add((state, len(dice)))
+                result.add(state, len(dice))
                 continue
-            partial_results += candidates
+            for new_state, new_dice in candidates:
+                if new_dice.is_empty():
+                    result.add(new_state, 0)
+                else:
+                    partial_results.append((new_state, new_dice))
         else:
             dices = dice.dice_to_use(state)
             for d in dices:
                 playable = playable_indexes(state, d)
                 if not playable:
-                    result.add((state, len(dice)))
+                    result.add(state, len(dice))
                 for src_index in playable:
                     if d + src_index >= COLLECT_END:
                         new_state = from_board_to_bag(state, src_index)
@@ -168,7 +185,9 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
                             return {new_state}
                     else:
                         new_state = from_board_to_board(state, src_index, src_index + d)
-                    partial_results.append((new_state, dice.dice_is_used(d)))
-    min_remaining = min([remaining for _, remaining in result])
-    moves = {state for state, remaining in result if remaining == min_remaining}
-    return moves
+                    new_dice = dice.dice_is_used(d)
+                    if dice.is_empty():
+                        result.add(new_state, 0)
+                    else:
+                        partial_results.append((new_state, new_dice))
+    return result.moves()
