@@ -45,5 +45,4 @@ def prepare_training_data(log_file: Path, player_name: str):
     result = []
     for player_log in read_for_player(log_file, player_name):
         game_to_training_data(player_log, result)
-
     return result
