@@ -145,8 +145,6 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
     result = {(initial_state, len(initial_dice))}
     while partial_results:
         state, dice = partial_results.pop()
-        if state.score() is not None:
-            return {state}
         if dice.is_empty():
             result.add((state, 0))
             continue
@@ -166,6 +164,8 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
                 for src_index in playable:
                     if d + src_index >= COLLECT_END:
                         new_state = from_board_to_bag(state, src_index)
+                        if new_state.score() is not None:
+                            return {new_state}
                     else:
                         new_state = from_board_to_board(state, src_index, src_index + d)
                     partial_results.append((new_state, dice.dice_is_used(d)))
