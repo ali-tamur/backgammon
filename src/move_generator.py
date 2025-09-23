@@ -27,28 +27,6 @@ def _to_board(state: GameState, src_index: int, dst_index: int) -> GameState:
     return GameState(tuple(a))
 
 
-def from_bar_to_board(state: GameState, index: int) -> GameState:
-    return _to_board(state, PLAYER_BAR, index)
-
-
-def from_board_to_board(state: GameState, src_index: int, dst_index: int) -> GameState:
-    return _to_board(state, src_index, dst_index)
-
-
-def from_board_to_bag(state: GameState, src_index: int) -> GameState:
-    """
-    :param state: a GameState
-    :param src_index: where the stone moves from
-    :return: a new game state
-
-    Assumes the move is legal.
-    """
-    a = list(state.a)
-    a[src_index] -= 1
-    a[PLAYER_BAG] += 1
-    return GameState(tuple(a))
-
-
 """
 Section: Check if a move destination is valid
 """
@@ -62,16 +40,7 @@ def can_move_on_board(state: GameState, src_index, dice: DICE) -> bool:
     :return: whether the destination is valid
     """
     dst_index = dice + src_index
-    return state.a[src_index] > 0 and dst_index < COLLECT_END and state.a[dst_index] >= -1
-
-
-def can_land_from_bar(state, dice) -> bool:
-    """
-    :param state: an on-bar game state; a stone is trying to land
-    :param dice: the dice
-    :return: whether the destination is valid
-    """
-    return state.a[dice - 1] >= -1
+    return dst_index < COLLECT_END and state.a[dst_index] >= -1
 
 
 """
@@ -87,8 +56,8 @@ def moves_for_on_bar(state: GameState, dice: Dice) -> List[GameState]:
     """
     r = []
     for d in dice.dice_to_use(False):
-        if can_land_from_bar(state, d):
-            new_state = from_bar_to_board(state, d - 1)
+        if state.a[d-1] >= -1:
+            new_state = _to_board(state, PLAYER_BAR, d - 1)
             new_dice = dice.dice_is_used(d)
             r.append((new_state, new_dice))
     return r
@@ -104,10 +73,9 @@ def playable_indexes_for_collect(state: GameState, dice: DICE) -> List[int]:
     can_collect_with_waste = all([index + dice >= COLLECT_END for index in src_indexes])
     if can_collect_with_waste:
         return [min(src_indexes)]
-    cands = []
+    cands = [src_index for src_index in src_indexes if can_move_on_board(state, src_index, dice)]
     if COLLECT_END - dice in src_indexes:
         cands.append(COLLECT_END - dice)
-    cands += [src_index for src_index in src_indexes if can_move_on_board(state, src_index, dice)]
     return cands
 
 
@@ -175,16 +143,19 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
         else:
             dices = dice.dice_to_use(move_state == STATE.COLLECTING)
             for d in dices:
-                playable = playable_indexes(state, d)
+                if move_state == STATE.NORMAL:
+                    playable = playable_indexes_for_normal(state, d)
+                else:
+                    playable = playable_indexes_for_collect(state, d)
                 if not playable:
                     result.add(state, len(dice))
                 for src_index in playable:
                     if d + src_index >= COLLECT_END:
-                        new_state = from_board_to_bag(state, src_index)
+                        new_state = _to_board(state, src_index, PLAYER_BAG)
                         if new_state.score() is not None:
                             return {new_state}
                     else:
-                        new_state = from_board_to_board(state, src_index, src_index + d)
+                        new_state = _to_board(state, src_index, src_index + d)
                     new_dice = dice.dice_is_used(d)
                     if dice.is_empty():
                         result.add(new_state, 0)
