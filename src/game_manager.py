@@ -30,7 +30,6 @@ class GameManager:
             result = -result
             state = state.opponent_state()
         self.logger.end_game(result)
-        print(result)
         return result
 
     def run(self, n_times):
