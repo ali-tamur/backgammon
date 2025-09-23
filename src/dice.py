@@ -1,7 +1,5 @@
 from typing import List, Literal, TypeAlias
 
-from src.state import STATE, GameState
-
 DICE: TypeAlias = Literal[1, 2, 3, 4, 5, 6]
 
 
