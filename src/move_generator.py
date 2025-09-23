@@ -124,8 +124,10 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
     """
     partial_results = [(initial_state, initial_dice)]
     result = ResultKeeper(initial_state, len(initial_dice))
-    while partial_results:
-        state, dice = partial_results.pop()
+    i = 0
+    while i < len(partial_results):
+        state, dice = partial_results[i]
+        i += 1
         if dice.is_empty():
             result.add(state, 0)
             continue
