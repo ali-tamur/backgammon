@@ -6,6 +6,7 @@ from pathlib import Path
 import src.main as m
 
 class TestMain:
+    @pytest.mark.integration
     def test_1(self):
         with tf.device('/CPU:0'):
             log_file =  Path('/app/data/game_log.avro')

@@ -1,4 +1,7 @@
 from enum import Enum, auto
+from typing import List
+
+from src.dice import Dice, DICE
 
 """
 Game state is represented by an array of length 28.
@@ -53,6 +56,48 @@ class GameState:
              5, 0, 0, 0, 0, -2,
              0, 0, 0, 0)
         return GameState(a)
+
+    def update_board(self, src_index: int, dst_index: int):
+        a = list(self.a)
+        a[src_index] -= 1
+        if a[dst_index] == -1:
+            a[OPPONENT_BAR] += 1
+            a[dst_index] = 1
+        else:
+            a[dst_index] += 1
+        return GameState(tuple(a))
+
+    def can_move_on_board(self, src_index, dice: DICE) -> bool:
+        dst_index = dice + src_index
+        return dst_index < COLLECT_END and self.a[dst_index] >= -1
+
+    def moves_for_on_bar(self, dice: Dice):
+        r = []
+        for d in dice.dice_to_use(False):
+            if self.a[d - 1] >= -1:
+                new_state = self.update_board(PLAYER_BAR, d - 1)
+                new_dice = dice.dice_is_used(d)
+                r.append((new_state, new_dice))
+        return r
+
+    def playable_indexes_for_collect(self, dice: DICE) -> List[int]:
+        src_indexes = [index for index in range(COLLECT_START, COLLECT_END) if self.a[index] > 0]
+        can_collect_with_waste = all([index + dice >= COLLECT_END for index in src_indexes])
+        if can_collect_with_waste:
+            return [min(src_indexes)]
+        cands = [src_index for src_index in src_indexes if self.can_move_on_board(src_index, dice)]
+        if COLLECT_END - dice in src_indexes:
+            cands.append(COLLECT_END - dice)
+        return cands
+
+    def playable_indexes_for_normal(self, dice: DICE) -> List[int]:
+        return [i for i in range(COLLECT_END) if self.a[i] > 0 and self.can_move_on_board(i, dice)]
+
+    def playable_indexes(self, dice: DICE):
+        if self.move_state() == STATE.COLLECTING:
+            return self.playable_indexes_for_collect(dice)
+        else:
+            return self.playable_indexes_for_normal(dice)
 
     def opponent_state(self):
         a = [-self.a[i] for i in range(COLLECT_END - 1, -1, -1)]

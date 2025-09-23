@@ -15,6 +15,7 @@ from pathlib import Path
 import src.main as m
 
 class TestPlayer:
+    @pytest.mark.integration
     def test_1(self):
         with tf.device('/CPU:0'):
             project_root = find_project_root()
