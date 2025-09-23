@@ -15,12 +15,12 @@ class Dice:
             return Dice([d1, d1, d1, d1])
         return Dice([d1, d2]) if d1 < d2 else Dice([d2, d1])
 
-    def dice_to_use(self, state: GameState) -> List[DICE]:
+    def dice_to_use(self, is_in_collect_state:bool) -> List[DICE]:
         if len(self.dice_list) == 0:
             return []
         if len(self.dice_list) == 1 or self.dice_list[0] == self.dice_list[-1]:
             return [self.dice_list[0]]
-        if state.move_state() == STATE.COLLECTING:
+        if is_in_collect_state:
             return [self.dice_list[-1]]
         return self.dice_list
 

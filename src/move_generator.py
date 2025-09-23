@@ -86,7 +86,7 @@ def moves_for_on_bar(state: GameState, dice: Dice) -> List[GameState]:
     :return: list of legal states after playing the dice. It might be empty.
     """
     r = []
-    for d in dice.dice_to_use(state):
+    for d in dice.dice_to_use(False):
         if can_land_from_bar(state, d):
             new_state = from_bar_to_board(state, d - 1)
             new_dice = dice.dice_is_used(d)
@@ -173,7 +173,7 @@ def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameStat
                 else:
                     partial_results.append((new_state, new_dice))
         else:
-            dices = dice.dice_to_use(state)
+            dices = dice.dice_to_use(move_state == STATE.COLLECTING)
             for d in dices:
                 playable = playable_indexes(state, d)
                 if not playable:
