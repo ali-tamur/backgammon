@@ -1,5 +1,13 @@
 # Start with a base Python image.
-FROM python:3.12-slim
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
+
+# Install Python and other necessary tools.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3-pip \
+    python3-setuptools \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 # Set the working directory for your application.
 WORKDIR /app
