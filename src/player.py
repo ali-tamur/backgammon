@@ -40,7 +40,7 @@ class NNPlayer(Player):
 
     def move(self, state: GameState, dice: Dice) -> GameState:
         moves = list(generate_moves(state, dice))
-        pure_weights = [float(self.model.predict(tf.constant(state_to_tensor(st.a)))[0])/self.temperature for st in moves]
+        pure_weights = [(self.model.predict(tf.expand_dims(state_to_tensor(st.a), axis=0), verbose=0)[0][0])/self.temperature for st in moves]
         exp_weights = np.exp(pure_weights)
 
         return self.r.choices(moves, weights=exp_weights)[0]
