@@ -1,8 +1,6 @@
 from enum import Enum, auto
 from typing import List
 
-from src.dice import Dice, DICE
-
 """
 Game state is represented by an array of length 28.
 

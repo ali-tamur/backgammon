@@ -5,7 +5,7 @@ from random import Random
 
 from dotenv import load_dotenv
 
-from src.dice_source import DiceSource
+from src.dice_source import Dice
 from src.game_manager import GameManager
 from src.logger import LogWriter
 from src.move_generator import WhiteGenerator, WhiteGeneratorFactory, BlackGeneratorFactory
@@ -95,7 +95,7 @@ def main():
         alice = RandomPlayer('alice', random_seed, WhiteGeneratorFactory)
         bob = RandomPlayer('bob', random_seed, BlackGeneratorFactory)
         log_writer = create_log_writer()
-        play_games(alice, bob, DiceSource(random_seed), n_games, log_writer, args.debug)
+        play_games(alice, bob, Dice(random_seed), n_games, log_writer, args.debug)
     elif args.command == "read_data":
         player = args.player_name
         read_data(get_log_file(), player)
