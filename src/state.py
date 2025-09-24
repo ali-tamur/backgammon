@@ -60,12 +60,6 @@ class GameState:
              0, 0, 0, 0)
         return GameState(a)
 
-    def opponent_state(self):
-        a = [-self.a[i] for i in range(COLLECT_END - 1, -1, -1)]
-        for i in [BLACK_BAR, WHITE_BAR, BLACK_BAG, WHITE_BAG]:
-            a.append(self.a[i])
-        return GameState(tuple(a))
-
     def _score_type(self, opponent_bag, opponent_bar, home_range, presence_fn):
         if self.a[opponent_bar] > 0 or any(presence_fn(self.a[i]) for i in home_range):
             return 3

@@ -40,9 +40,6 @@ class GameManager:
         if self.print_debug:
             print(f" Score: {result}")
             input("enter to end")
-        #if on_turn == 1:
-        #    result = -result
-        #    state = state.opponent_state()
         self.logger.end_game(result)
         return result
 
