@@ -24,6 +24,9 @@ class STATE(Enum):
     NORMAL = auto()
     COLLECTING = auto()
 
+class COLOR(Enum):
+    WHITE = auto()
+    BLACK = auto()
 
 WHITE_BAR = 24
 BLACK_BAR = 25
@@ -63,19 +66,7 @@ class GameState:
             a.append(self.a[i])
         return GameState(tuple(a))
 
-    def player_on_bar(self):
-        return self.a[WHITE_BAR]
-
-    def opponent_on_bar(self):
-        return self.a[BLACK_BAR]
-
-    def player_collected(self):
-        return self.a[WHITE_BAG]
-
-    def opponent_collected(self):
-        return self.a[BLACK_BAG]
-
-    def _score_type(self):
+    def _score_type(self, opponent_bag, home_range):
         if self.a[BLACK_BAR] > 0 or any(self.a[i] < 0 for i in range(COLLECT_START, COLLECT_END)):
             return 3
         if self.a[BLACK_BAG] == 0:
@@ -83,18 +74,12 @@ class GameState:
         return 1
 
     def score(self):
+        if self.a[WHITE_BAG] < 15 and self.a[BLACK_BAG] < 15:
+            return None
         if self.a[WHITE_BAG] == 15:
-            return self._score_type()
-        if self.a[BLACK_BAG] == 15:
-            return -self.opponent_state()._score_type()
-        return None
-
-    def move_state(self) -> STATE:
-        if self.player_on_bar() > 0:
-            return STATE.ON_BAR
-        if sum([self.a[i] for i in range(COLLECT_START, COLLECT_END) if self.a[i] > 0]) + self.a[WHITE_BAG] == 15:
-            return STATE.COLLECTING
-        return STATE.NORMAL
+            return self._score_type(BLACK_BAG, range(COLLECT_START,COLLECT_END))
+        else:
+            return -self._score_type(WHITE_BAG, range(6))
 
     def __copy__(self):
         return self

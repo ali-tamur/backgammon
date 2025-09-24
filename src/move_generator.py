@@ -63,6 +63,10 @@ class MoveGenerator(ABC):
     def best_for_collect(self, src_indexes) -> int:
         pass
 
+    @abstractmethod
+    def num_stones_at_home(self, state) -> int:
+        pass
+
     def can_move_on_board(self, state:GameState, src_index, dice: DICE) -> bool:
         dst_index = self.destination(src_index, dice)
         return 0 <= dst_index < COLLECT_END and self.can_land_on(state, dst_index)
@@ -94,6 +98,13 @@ class MoveGenerator(ABC):
             cands.append(perfect)
         return cands
 
+    def move_state(self, state) -> STATE:
+        if state.a[self.player_bar] > 0:
+            return STATE.ON_BAR
+        if self.num_stones_at_home(state) + state.a[self.player_bag] == 15:
+            return STATE.COLLECTING
+        return STATE.NORMAL
+
     def generate_moves(self, initial_state: GameState, initial_dice: Dice) -> Set[GameState]:
         partial_results = [(initial_state, initial_dice)]
         result = ResultKeeper(initial_state, len(initial_dice))
@@ -104,7 +115,7 @@ class MoveGenerator(ABC):
             if dice.is_empty():
                 result.add(state, 0)
                 continue
-            move_state = state.move_state()
+            move_state = self.move_state(state)
             if move_state == STATE.ON_BAR:
                 candidates = self.moves_for_on_bar(state, dice)
                 if not candidates:
@@ -148,8 +159,13 @@ class BlackGenerator(MoveGenerator):
 
     def update_board(self, state, src_index: int, dst_index: int):
         a = list(state.a)
-        a[src_index] += 1
-        if a[dst_index] == 1:
+        if src_index == self.player_bar:
+            a[src_index] -= 1
+        else:
+            a[src_index] += 1
+        if dst_index == self.player_bag:
+            a[dst_index] += 1
+        elif a[dst_index] == 1:
             a[WHITE_BAR] += 1
             a[dst_index] = -1
         else:
@@ -176,6 +192,9 @@ class BlackGenerator(MoveGenerator):
 
     def best_for_collect(self, src_indexes) -> int:
         return max(src_indexes)
+
+    def num_stones_at_home(self, state) -> int:
+       return -sum(state.a[i] for i in self.collect_range() if self.is_present_at(state, i))
 
 
 class WhiteGenerator(MoveGenerator):
@@ -214,6 +233,9 @@ class WhiteGenerator(MoveGenerator):
 
     def best_for_collect(self, src_indexes) -> int:
         return min(src_indexes)
+
+    def num_stones_at_home(self, state) -> int:
+        return sum(state.a[i] for i in self.collect_range() if self.is_present_at(state, i))
 
 
 WhiteGeneratorFactory = lambda state: WhiteGenerator()
