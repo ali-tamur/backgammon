@@ -25,10 +25,10 @@ class STATE(Enum):
     COLLECTING = auto()
 
 
-PLAYER_BAR = 24
-OPPONENT_BAR = 25
-PLAYER_BAG = 26
-OPPONENT_BAG = 27
+WHITE_BAR = 24
+BLACK_BAR = 25
+WHITE_BAG = 26
+BLACK_BAG = 27
 COLLECT_START = 18
 COLLECT_END = 24
 
@@ -42,11 +42,11 @@ class GameState:
 
     def debug_count_player_stones(self):
         on_board = sum([self.a[i] for i in range(COLLECT_END) if self.a[i] > 0])
-        assert on_board + self.a[PLAYER_BAR] + self.a[PLAYER_BAG] == 15
+        assert on_board + self.a[WHITE_BAR] + self.a[WHITE_BAG] == 15
 
     def debug_count_opponent_stones(self):
         on_board = sum([abs(self.a[i]) for i in range(COLLECT_END) if self.a[i] < 0])
-        assert on_board + self.a[OPPONENT_BAR] + self.a[OPPONENT_BAG] == 15
+        assert on_board + self.a[BLACK_BAR] + self.a[BLACK_BAG] == 15
 
     @staticmethod
     def game_start():
@@ -57,84 +57,42 @@ class GameState:
              0, 0, 0, 0)
         return GameState(a)
 
-    def update_board(self, src_index: int, dst_index: int):
-        a = list(self.a)
-        a[src_index] -= 1
-        if a[dst_index] == -1:
-            a[OPPONENT_BAR] += 1
-            a[dst_index] = 1
-        else:
-            a[dst_index] += 1
-        return GameState(tuple(a))
-
-    def can_move_on_board(self, src_index, dice: DICE) -> bool:
-        dst_index = dice + src_index
-        return dst_index < COLLECT_END and self.a[dst_index] >= -1
-
-    def moves_for_on_bar(self, dice: Dice):
-        r = []
-        for d in dice.dice_to_use(False):
-            if self.a[d - 1] >= -1:
-                new_state = self.update_board(PLAYER_BAR, d - 1)
-                new_dice = dice.dice_is_used(d)
-                r.append((new_state, new_dice))
-        return r
-
-    def playable_indexes_for_collect(self, dice: DICE) -> List[int]:
-        src_indexes = [index for index in range(COLLECT_START, COLLECT_END) if self.a[index] > 0]
-        can_collect_with_waste = all([index + dice >= COLLECT_END for index in src_indexes])
-        if can_collect_with_waste:
-            return [min(src_indexes)]
-        cands = [src_index for src_index in src_indexes if self.can_move_on_board(src_index, dice)]
-        if COLLECT_END - dice in src_indexes:
-            cands.append(COLLECT_END - dice)
-        return cands
-
-    def playable_indexes_for_normal(self, dice: DICE) -> List[int]:
-        return [i for i in range(COLLECT_END) if self.a[i] > 0 and self.can_move_on_board(i, dice)]
-
-    def playable_indexes(self, dice: DICE):
-        if self.move_state() == STATE.COLLECTING:
-            return self.playable_indexes_for_collect(dice)
-        else:
-            return self.playable_indexes_for_normal(dice)
-
     def opponent_state(self):
         a = [-self.a[i] for i in range(COLLECT_END - 1, -1, -1)]
-        for i in [OPPONENT_BAR, PLAYER_BAR, OPPONENT_BAG, PLAYER_BAG]:
+        for i in [BLACK_BAR, WHITE_BAR, BLACK_BAG, WHITE_BAG]:
             a.append(self.a[i])
         return GameState(tuple(a))
 
     def player_on_bar(self):
-        return self.a[PLAYER_BAR]
+        return self.a[WHITE_BAR]
 
     def opponent_on_bar(self):
-        return self.a[OPPONENT_BAR]
+        return self.a[BLACK_BAR]
 
     def player_collected(self):
-        return self.a[PLAYER_BAG]
+        return self.a[WHITE_BAG]
 
     def opponent_collected(self):
-        return self.a[OPPONENT_BAG]
+        return self.a[BLACK_BAG]
 
     def _score_type(self):
-        if self.a[OPPONENT_BAR] > 0 or any(self.a[i] < 0 for i in range(COLLECT_START, COLLECT_END)):
+        if self.a[BLACK_BAR] > 0 or any(self.a[i] < 0 for i in range(COLLECT_START, COLLECT_END)):
             return 3
-        if self.a[OPPONENT_BAG] == 0:
+        if self.a[BLACK_BAG] == 0:
             return 2
         return 1
 
     def score(self):
-        if self.a[PLAYER_BAG] == 15:
+        if self.a[WHITE_BAG] == 15:
             return self._score_type()
-        if self.a[OPPONENT_BAG] == 15:
+        if self.a[BLACK_BAG] == 15:
             return -self.opponent_state()._score_type()
         return None
 
     def move_state(self) -> STATE:
         if self.player_on_bar() > 0:
             return STATE.ON_BAR
-        if sum([self.a[i] for i in range(COLLECT_START, COLLECT_END) if self.a[i] > 0]) + self.a[PLAYER_BAG] == 15:
+        if sum([self.a[i] for i in range(COLLECT_START, COLLECT_END) if self.a[i] > 0]) + self.a[WHITE_BAG] == 15:
             return STATE.COLLECTING
         return STATE.NORMAL
 
