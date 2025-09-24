@@ -23,24 +23,24 @@ class Player(ABC):
 
 
 class RandomPlayer(Player):
-    def __init__(self, name, r: random.Random):
-        super().__init__(name)
+    def __init__(self, name, r: random.Random, move_generator):
+        super().__init__(name, move_generator)
         self.r = r
 
     def move(self, state: GameState, dice: Dice) -> GameState:
-        moves = list(self.move_generator(state).generate_moves(dice))
+        moves = list(self.move_generator().generate_moves(state, dice))
         return self.r.choice(moves)
 
 
 class NNPlayer(Player):
-    def __init__(self, name, model: keras.Model, r: random.Random, temperature):
-        super().__init__(name)
+    def __init__(self, name, model: keras.Model, r: random.Random, temperature, move_generator):
+        super().__init__(name, move_generator)
         self.r = r
         self.model = model
         self.temperature = temperature
 
     def move(self, state: GameState, dice: Dice) -> GameState:
-        moves = list(self.move_generator(state).generate_moves(dice))
+        moves = list(self.move_generator().generate_moves(state, dice))
         tensors = tf.stack([state_to_tensor(st.a) for st in moves])
         raw_scores = self.model.predict(tensors, verbose=0)
         pure_weights = tf.squeeze(raw_scores, [-1]) / self.temperature

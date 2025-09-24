@@ -7,6 +7,8 @@ def get_char(st: GameState, col: int, row: int) -> str:
     n = st.a[col]
     if n == 0 and row == 0:
         return '.'
+    if abs(n) > 5 and row == 4:
+        return f"{abs(n)}"
     if n > 0 and n > row:
         return '○'
     if n < 0 and abs(n) > row:
@@ -26,14 +28,14 @@ def get_bar(st: GameState, color:COLOR):
 def get_bag(st: GameState, row:int, color: COLOR):
     if color == COLOR.WHITE:
         n = st.a[WHITE_BAG]
-        n -= 5 * row
         ch = '○'
     else:
         n = st.a[BLACK_BAG]
-        n -= 5 * (2-row)
         ch = '●'
+    n -= 5 * row
     if n <= 0:
         return ""
+    n = min(n, 5)
     result = [ch] * n
     return ' '.join(result)
 
