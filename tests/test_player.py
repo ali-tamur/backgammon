@@ -3,7 +3,7 @@ import tensorflow as tf
 import keras
 
 from random import Random
-from src.dice_source import DiceSource
+from src.dice_source import Dice
 from src.game_manager import GameManager
 from src.player import NNPlayer, RandomPlayer
 from src.loss_model import GameStateWeightedLoss
@@ -25,7 +25,7 @@ class TestPlayer:
             temperature = 2
             alice = NNPlayer('alice_1', alice_model, r, temperature)
             bob = RandomPlayer('b', r)
-            dice_source = DiceSource(r)
+            dice_source = Dice(r)
             game_manager = GameManager(alice, bob, dice_source)
             r = [game_manager.run(1)]
             assert len(r) == 1

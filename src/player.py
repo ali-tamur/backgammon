@@ -1,11 +1,10 @@
 import random
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, List
 
 import keras
 import tensorflow as tf
 
-from src.dice import Dice
 from src.move_generator import MoveGenerator
 from src.state import GameState
 from src.training_data import state_to_tensor
@@ -27,7 +26,7 @@ class RandomPlayer(Player):
         super().__init__(name, move_generator)
         self.r = r
 
-    def move(self, state: GameState, dice: Dice) -> GameState:
+    def move(self, state: GameState, dice: List[int]) -> GameState:
         moves = list(self.move_generator().generate_moves(state, dice))
         return self.r.choice(moves)
 
@@ -39,7 +38,7 @@ class NNPlayer(Player):
         self.model = model
         self.temperature = temperature
 
-    def move(self, state: GameState, dice: Dice) -> GameState:
+    def move(self, state: GameState, dice: List[int]) -> GameState:
         moves = list(self.move_generator().generate_moves(state, dice))
         tensors = tf.stack([state_to_tensor(st.a) for st in moves])
         raw_scores = self.model.predict(tensors, verbose=0)

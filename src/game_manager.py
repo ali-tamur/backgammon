@@ -1,4 +1,4 @@
-from src.dice_source import DiceSource
+from src.dice_source import Dice
 from src.logger import DummyLogWriter
 from src.move_generator import WhiteGeneratorFactory, BlackGeneratorFactory
 from src.player import *
@@ -6,7 +6,7 @@ from src.pretty_print import pretty_print
 
 
 class GameManager:
-    def __init__(self, white: Player, black: Player, dice_source: DiceSource,
+    def __init__(self, white: Player, black: Player, dice_source: Dice,
                  logger=DummyLogWriter(), print_debug=False):
         self.players = [white, black]
         self.dice_source = dice_source
@@ -22,15 +22,14 @@ class GameManager:
             print(pretty_print(state))
             input("...")
         while True:
-            d1, d2 = self.dice_source.throw_dice()
-            dice = Dice.dice_throw(d1, d2)
+            dice = self.dice_source.throw_dice()
             state = self.players[on_turn].move(state, dice)
             if self.print_debug:
-                print(f"{d1} {d2}")
+                print(f"{dice[0]} {dice[1]}")
                 print(pretty_print(state))
                 print(f"\n\n")
                 input("...")
-            self.logger.move([d1, d2], state)
+            self.logger.move([dice[0], dice[1]], state)
             if state.score() is not None:
                 break
             on_turn = 1 - on_turn
