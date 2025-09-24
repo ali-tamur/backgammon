@@ -5,8 +5,9 @@ from src.player import *
 
 
 class GameManager:
-    def __init__(self, alice: Player, bob: Player, dice_source: DiceSource, logger=DummyLogWriter()):
-        self.players = [alice, bob]
+    def __init__(self, white: Player, black: Player, dice_source: DiceSource,
+                 logger=DummyLogWriter()):
+        self.players = [white, black]
         self.dice_source = dice_source
         self.logger = logger
         self.move_generators = [WhiteGeneratorFactory, BlackGeneratorFactory]
@@ -23,12 +24,12 @@ class GameManager:
             if state.score() is not None:
                 break
             on_turn = 1 - on_turn
-            state = state.opponent_state()
+            #state = state.opponent_state()
 
         result = state.score()
-        if on_turn == 1:
-            result = -result
-            state = state.opponent_state()
+        #if on_turn == 1:
+        #    result = -result
+        #    state = state.opponent_state()
         self.logger.end_game(result)
         return result
 
