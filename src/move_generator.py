@@ -238,5 +238,5 @@ class WhiteGenerator(MoveGenerator):
         return sum(state.a[i] for i in self.collect_range() if self.is_present_at(state, i))
 
 
-WhiteGeneratorFactory = lambda state: WhiteGenerator()
-BlackGeneratorFactory = lambda state: BlackGenerator()
+WhiteGeneratorFactory = lambda: WhiteGenerator()
+BlackGeneratorFactory = lambda: BlackGenerator()

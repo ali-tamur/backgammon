@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from src.dice_source import DiceSource
 from src.game_manager import GameManager
 from src.logger import LogWriter
+from src.move_generator import WhiteGenerator, WhiteGeneratorFactory, BlackGeneratorFactory
 from src.player import RandomPlayer
 from src.training_data import prepare_training_data
 
@@ -37,6 +38,11 @@ def parse_args():
         default=0,
         help="The number of games to play."
     )
+    play_games_parser.add_argument(
+        "--debug",
+        action='store_true',
+        help="Will print the game while it is played if enabled"
+    )
 
     read_data_parser = subparsers.add_parser(
         "read_data", help="Read a dataset of training data.")
@@ -55,8 +61,8 @@ def read_data(log_file: Path, player_name: str):
     return prepare_training_data(log_file, player_name)
 
 
-def play_games(alice, bob, dice_source, n_games, log_writer):
-    game_manager = GameManager(alice, bob, dice_source, log_writer)
+def play_games(alice, bob, dice_source, n_games, log_writer, will_debug):
+    game_manager = GameManager(alice, bob, dice_source, log_writer, will_debug)
     game_manager.run(n_games)
 
 
@@ -86,10 +92,10 @@ def main():
     args = parse_args()
     if args.command == "play_games":
         n_games = args.count or 1000
-        alice = RandomPlayer('alice', random_seed)
-        bob = RandomPlayer('bob', random_seed)
+        alice = RandomPlayer('alice', random_seed, WhiteGeneratorFactory)
+        bob = RandomPlayer('bob', random_seed, BlackGeneratorFactory)
         log_writer = create_log_writer()
-        play_games(alice, bob, DiceSource(random_seed), n_games, log_writer)
+        play_games(alice, bob, DiceSource(random_seed), n_games, log_writer, args.debug)
     elif args.command == "read_data":
         player = args.player_name
         read_data(get_log_file(), player)

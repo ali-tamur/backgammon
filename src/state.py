@@ -66,10 +66,10 @@ class GameState:
             a.append(self.a[i])
         return GameState(tuple(a))
 
-    def _score_type(self, opponent_bag, home_range):
-        if self.a[BLACK_BAR] > 0 or any(self.a[i] < 0 for i in range(COLLECT_START, COLLECT_END)):
+    def _score_type(self, opponent_bag, opponent_bar, home_range, presence_fn):
+        if self.a[opponent_bar] > 0 or any(presence_fn(self.a[i]) for i in home_range):
             return 3
-        if self.a[BLACK_BAG] == 0:
+        if self.a[opponent_bag] == 0:
             return 2
         return 1
 
@@ -77,9 +77,10 @@ class GameState:
         if self.a[WHITE_BAG] < 15 and self.a[BLACK_BAG] < 15:
             return None
         if self.a[WHITE_BAG] == 15:
-            return self._score_type(BLACK_BAG, range(COLLECT_START,COLLECT_END))
+            return self._score_type(BLACK_BAG, BLACK_BAR, range(COLLECT_START,COLLECT_END),
+                                    lambda n: n < 0)
         else:
-            return -self._score_type(WHITE_BAG, range(6))
+            return -self._score_type(WHITE_BAG, WHITE_BAR, range(6), lambda n:n>0)
 
     def __copy__(self):
         return self
