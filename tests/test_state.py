@@ -12,7 +12,7 @@ def collecting_state() -> GameState:
     for i in range(COLLECT_START, COLLECT_END):
         a.append(2)
     a += [0, 0, 0, 0]
-    a[PLAYER_BAG] = 3
+    a[WHITE_BAG] = 3
     a[0] = -15
     return GameState(tuple(a))
 
@@ -22,7 +22,7 @@ def on_bar_state() -> GameState:
     s = GameState.game_start()
     a = list(s.a)
     a[0] -= 1
-    a[PLAYER_BAR] = 1
+    a[WHITE_BAR] = 1
     return GameState(tuple(a))
 
 
@@ -30,17 +30,17 @@ def on_bar_state() -> GameState:
                 [(b, st) for b in [True, False] for st in ["normal", "gammon", "backgammon-1", "backgammon-2"]])
 def game_score(request) -> Tuple[GameState, int]:
     a = [0] * 28
-    a[PLAYER_BAG] = 15
+    a[WHITE_BAG] = 15
     b, st = request.param
     should_score = None
     if st == "normal":
         should_score = 1
         a[0] = -1
-        a[OPPONENT_BAG] = 14
+        a[BLACK_BAG] = 14
     elif st == "gammon":
         should_score = 2
         a[0] = -15
-        a[OPPONENT_BAG] = 0
+        a[BLACK_BAG] = 0
     elif st == "backgammon-1":
         should_score = 3
         a[0] = -14
@@ -48,7 +48,7 @@ def game_score(request) -> Tuple[GameState, int]:
     elif st == "backgammon-2":
         should_score = 3
         a[0] = -14
-        a[OPPONENT_BAR] = 1
+        a[BLACK_BAR] = 1
     if b:
         return GameState(a), should_score
     else:

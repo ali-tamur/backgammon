@@ -3,6 +3,8 @@ from typing import List, Literal, TypeAlias
 DICE: TypeAlias = Literal[1, 2, 3, 4, 5, 6]
 
 
+
+
 class Dice:
     def __init__(self, dice_list: List[DICE]):
         self.dice_list = dice_list

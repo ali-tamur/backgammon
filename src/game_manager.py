@@ -1,5 +1,6 @@
 from src.dice_source import DiceSource
 from src.logger import DummyLogWriter
+from src.move_generator import WhiteGeneratorFactory, BlackGeneratorFactory
 from src.player import *
 
 
@@ -8,6 +9,7 @@ class GameManager:
         self.players = [alice, bob]
         self.dice_source = dice_source
         self.logger = logger
+        self.move_generators = [WhiteGeneratorFactory, BlackGeneratorFactory]
 
     def _run_once(self):
         state = GameState.game_start()

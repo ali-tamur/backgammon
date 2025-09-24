@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.logger import read_for_player, PlayerLog
-from src.state import OPPONENT_BAR, COLLECT_START, PLAYER_BAR, PLAYER_BAG, OPPONENT_BAG
+from src.state import BLACK_BAR, COLLECT_START, WHITE_BAR, WHITE_BAG, BLACK_BAG
 
 
 def state_to_tensor(state_arr: List[int]) -> tf.Tensor:
@@ -20,13 +20,13 @@ def state_to_tensor(state_arr: List[int]) -> tf.Tensor:
             n = min(-n, 5)
             lst[index + 6 + n] = 1
     start_bar_index = 12 * 24
-    n = max(state_arr[PLAYER_BAR], 5)
+    n = max(state_arr[WHITE_BAR], 5)
     lst[start_bar_index + n] = 1
-    n = max(state_arr[OPPONENT_BAR], 5)
+    n = max(state_arr[BLACK_BAR], 5)
     lst[start_bar_index + 6 + n] = 1
     bear_off_index = start_bar_index + 12
-    lst[bear_off_index + state_arr[PLAYER_BAG]] += 1
-    lst[bear_off_index + 15 + state_arr[OPPONENT_BAG]] += 1
+    lst[bear_off_index + state_arr[WHITE_BAG]] += 1
+    lst[bear_off_index + 15 + state_arr[BLACK_BAG]] += 1
 
     numpy_array = np.array(lst)
     tensor = tf.constant(numpy_array)
