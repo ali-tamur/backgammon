@@ -1,21 +1,19 @@
-from random import Random
-from pathlib import Path
-import os
 import argparse
-import time
+import os
+from pathlib import Path
+from random import Random
 
-from jupyter_server import DEFAULT_EVENTS_SCHEMA_PATH
+from dotenv import load_dotenv
 
 from src.dice_source import DiceSource
 from src.game_manager import GameManager
-from src.logger import LogWriter, DummyLogWriter
+from src.logger import LogWriter
 from src.player import RandomPlayer
 from src.training_data import prepare_training_data
-from dotenv import load_dotenv
-
 
 DEFAULT_LOG_SCHEMA_PATH = "schemas/log.avsc"
 DEFAULT_LOG_PATH = "/app/data/game_log.avro"
+
 
 def find_project_root():
     current_file_path = Path(__file__).resolve()
@@ -25,6 +23,7 @@ def find_project_root():
         if project_root == project_root.parent:  # To prevent infinite loop if file is not found
             raise FileNotFoundError("Could not find project root. Make sure requirements.txt exists.")
     return project_root
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run a backgammon AI simulation.")
@@ -51,18 +50,22 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def read_data(log_file:Path, player_name: str):
+
+def read_data(log_file: Path, player_name: str):
     return prepare_training_data(log_file, player_name)
+
 
 def play_games(alice, bob, dice_source, n_games, log_writer):
     game_manager = GameManager(alice, bob, dice_source, log_writer)
     game_manager.run(n_games)
+
 
 def get_log_file() -> Path:
     load_dotenv()
     log_file_path = os.getenv("LOG_FILE_PATH") or DEFAULT_LOG_PATH
     log_file = Path(log_file_path)
     return log_file
+
 
 def get_schema() -> Path:
     load_dotenv()
@@ -71,10 +74,12 @@ def get_schema() -> Path:
     schema = project_root / log_schema_path
     return schema
 
+
 def create_log_writer():
     schema = get_schema()
     log_file = get_log_file()
     return LogWriter(log_file, schema)
+
 
 def main():
     random_seed = Random(31415)

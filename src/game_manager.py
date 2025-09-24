@@ -1,12 +1,10 @@
-from typing import Optional
-
 from src.dice_source import DiceSource
-from src.logger import LogWriter, DummyLogWriter
+from src.logger import DummyLogWriter
 from src.player import *
 
 
 class GameManager:
-    def __init__(self, alice: Player, bob: Player, dice_source: DiceSource, logger = DummyLogWriter()):
+    def __init__(self, alice: Player, bob: Player, dice_source: DiceSource, logger=DummyLogWriter()):
         self.players = [alice, bob]
         self.dice_source = dice_source
         self.logger = logger

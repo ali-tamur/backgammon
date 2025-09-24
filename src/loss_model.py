@@ -1,5 +1,4 @@
 import tensorflow as tf
-import keras
 from keras import saving
 from tensorflow import keras
 

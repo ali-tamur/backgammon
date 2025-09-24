@@ -38,7 +38,7 @@ def game_to_training_data(game: PlayerLog, accumulate_records):
     score = game.score()
     num_moves = len(states)
     for i in range(num_moves):
-        accumulate_records.append((score, i+1, num_moves, state_to_tensor(states[i])))
+        accumulate_records.append((score, i + 1, num_moves, state_to_tensor(states[i])))
 
 
 def prepare_training_data(log_file: Path, player_name: str):

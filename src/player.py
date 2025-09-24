@@ -2,14 +2,12 @@ import random
 from abc import ABC, abstractmethod
 
 import keras
-from keras import Model
 import tensorflow as tf
-from src.training_data import state_to_tensor
-import numpy as np
 
 from src.dice import Dice
 from src.move_generator import generate_moves
 from src.state import GameState
+from src.training_data import state_to_tensor
 
 
 class Player(ABC):
@@ -31,8 +29,9 @@ class RandomPlayer(Player):
         moves = list(generate_moves(state, dice))
         return self.r.choice(moves)
 
+
 class NNPlayer(Player):
-    def __init__(self, name, model:keras.Model, r: random.Random, temperature):
+    def __init__(self, name, model: keras.Model, r: random.Random, temperature):
         super().__init__(name)
         self.r = r
         self.model = model
