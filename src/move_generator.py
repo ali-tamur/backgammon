@@ -1,8 +1,10 @@
 from typing import Set
+
 from src.state import *
 
+
 class ResultKeeper:
-    def __init__(self, initial_state:GameState, remaining_dice:int)-> None:
+    def __init__(self, initial_state: GameState, remaining_dice: int) -> None:
         self.d = {initial_state}
         self.remaining_dice = remaining_dice
 
@@ -17,6 +19,7 @@ class ResultKeeper:
 
     def moves(self) -> Set[GameState]:
         return self.d
+
 
 def generate_moves(initial_state: GameState, initial_dice: Dice) -> Set[GameState]:
     """
