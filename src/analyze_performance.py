@@ -15,7 +15,7 @@ def my_game_engine():
     bob = RandomPlayer('bob', random_seed, BlackGeneratorFactory)
     play_games(alice, bob, Dice(random_seed), 100, DummyLogWriter(), False)
 
-cProfile.run('my_game_engine()', 'profile_output.pstats')
-p = pstats.Stats('profile_output.pstats')
+cProfile.run('my_game_engine()', 'profile.pstats')
+p = pstats.Stats('profile.pstats')
 
 p.sort_stats('cumtime').print_stats('src/')

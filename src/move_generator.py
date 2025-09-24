@@ -27,13 +27,10 @@ def on_board(index):
 
 
 class MoveGenerator(ABC):
-    def __init__(self):
+    def __init__(self, color:COLOR):
         self.player_bag = None
         self.player_bar = None
-
-    @abstractmethod
-    def destination(self, index, dice) -> int:
-        pass
+        self.color = color
 
     @abstractmethod
     def is_present_at(self, state: GameState, index: int) -> bool:
@@ -68,12 +65,16 @@ class MoveGenerator(ABC):
         pass
 
     def can_move_on_board(self, state:GameState, src_index, dice: int) -> bool:
-        dst_index = self.destination(src_index, dice)
+        dst_index = src_index+dice if self.color == COLOR.WHITE else src_index-dice
         return 0 <= dst_index < COLLECT_END and self.can_land_on(state, dst_index)
 
     def playable_indexes_for_normal(self, state:GameState, dice: int) -> List[int]:
-        return [i for i in range(COLLECT_END) if
-                self.is_present_at(state, i) and self.can_move_on_board(state, i, dice)]
+        if self.color == COLOR.WHITE:
+            return [i for i in range(COLLECT_END)
+                    if state.a[i] > 0 and i + dice < COLLECT_END  and state.a[i + dice] >= -1]
+        else:
+            return [i for i in range(COLLECT_END)
+                    if state.a[i] < 0 <= i - dice and state.a[i - dice] <= 1]
 
     def moves_for_on_bar(self, state: GameState, dice: List[int]) -> List[Tuple[GameState, List[int]]]:
         r = []
@@ -89,10 +90,10 @@ class MoveGenerator(ABC):
 
     def playable_indexes_for_collect(self, state:GameState, dice: int) -> List[int]:
         src_indexes = [index for index in self.collect_range() if self.is_present_at(state, index)]
-        can_collect_with_waste = all(
-            [not on_board(self.destination(index, dice)) for index in src_indexes])
-        if can_collect_with_waste:
-            return [self.best_for_collect(src_indexes)]
+        if self.color == COLOR.WHITE and min(src_indexes)+dice >= COLLECT_END:
+            return [min(src_indexes)]
+        elif self.color == COLOR.BLACK and max(src_indexes)-dice < 0:
+            return [max(src_indexes)]
         cands = [src_index for src_index in src_indexes if self.can_move_on_board(state, src_index,
                                                                                   dice)]
         perfect = self.perfect_collect(dice)
@@ -117,8 +118,8 @@ class MoveGenerator(ABC):
             if not dice:
                 result.add(state, 0)
                 continue
-            move_state = self.move_state(state)
-            if move_state == STATE.ON_BAR:
+            board_state = self.move_state(state)
+            if board_state == STATE.ON_BAR:
                 candidates = self.moves_for_on_bar(state, dice)
                 if not candidates:
                     result.add(state, len(dice))
@@ -129,19 +130,19 @@ class MoveGenerator(ABC):
                     else:
                         partial_results.append((new_state, new_dice))
             else:
-                if move_state == STATE.COLLECTING or dice[-1] == dice[0]:
+                if board_state == STATE.COLLECTING or dice[-1] == dice[0]:
                     dices = [dice[-1]]
                 else:
                     dices = dice
                 for d in dices:
-                    if move_state == STATE.NORMAL:
+                    if board_state == STATE.NORMAL:
                         playable = self.playable_indexes_for_normal(state, d)
                     else:
                         playable = self.playable_indexes_for_collect(state,d)
                     if not playable:
                         result.add(state, len(dice))
                     for src_index in playable:
-                        dst_index = self.destination(src_index, d)
+                        dst_index = src_index+d if self.color == COLOR.WHITE else src_index-d
                         if not on_board(dst_index):
                             new_state = self.update_board(state, src_index, self.player_bag)
                             if new_state.score() is not None:
@@ -159,7 +160,7 @@ class MoveGenerator(ABC):
 
 class BlackGenerator(MoveGenerator):
     def __init__(self):
-        super().__init__()
+        super().__init__(color=COLOR.BLACK)
         self.player_bag = BLACK_BAG
         self.player_bar = BLACK_BAR
 
@@ -177,9 +178,6 @@ class BlackGenerator(MoveGenerator):
         else:
             a[dst_index] -= 1
         return GameState(tuple(a))
-
-    def destination(self, index, dice) -> int:
-        return index - dice
 
     def is_present_at(self, state, index) -> bool:
         return state.a[index] < 0
@@ -205,7 +203,7 @@ class BlackGenerator(MoveGenerator):
 
 class WhiteGenerator(MoveGenerator):
     def __init__(self):
-        super().__init__()
+        super().__init__(color=COLOR.WHITE)
         self.player_bag = WHITE_BAG
         self.player_bar = WHITE_BAR
 
@@ -218,9 +216,6 @@ class WhiteGenerator(MoveGenerator):
         else:
             a[dst_index] += 1
         return GameState(tuple(a))
-
-    def destination(self, index, dice) -> int:
-        return index + dice
 
     def is_present_at(self, state, index):
         return state.a[index] > 0
