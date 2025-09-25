@@ -33,10 +33,30 @@ BLACK_BAG = 27
 COLLECT_START = 18
 COLLECT_END = 24
 
+MOD = 1_000_000_007
+K = 17
+HASH_COEFFICIENTS = [1]
+for _ in range(27):
+    HASH_COEFFICIENTS.append((HASH_COEFFICIENTS[-1]*K) % MOD)
+
+def get_hash_code(a:List[int]) -> int:
+    """ a must be an array of 28 elements.
+    """
+    assert len(a) == 28
+    h = 0
+    for i in range(len(a)):
+        h += HASH_COEFFICIENTS[i] * a[i]
+        h = h % MOD
+    return h
+
+GAME_START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, -2, 0, 0, 0, 0]
+GAME_START_HASH = get_hash_code(GAME_START)
+
 
 class GameState:
-    def __init__(self, a):
+    def __init__(self, a, hash_code = 0):
         self.a = a
+        self._hash = hash_code or get_hash_code(self.a)
         if __debug__:
             self.debug_count_player_stones()
             self.debug_count_opponent_stones()
@@ -51,12 +71,34 @@ class GameState:
 
     @staticmethod
     def game_start():
-        a = (2, 0, 0, 0, 0, -5,
-             0, -3, 0, 0, 0, 5,
-             -5, 0, 0, 0, 3, 0,
-             5, 0, 0, 0, 0, -2,
-             0, 0, 0, 0)
-        return GameState(a)
+        return GameState(GAME_START, GAME_START_HASH)
+
+    def update(self, src_index:int, dst_index:int,color:COLOR):
+        a = self.a[:]
+        h = self._hash
+        difference = []
+        if color == COLOR.WHITE or src_index == BLACK_BAR:
+            difference.append((src_index, -1))
+        else:
+            difference.append((src_index, 1))
+        if color == COLOR.BLACK:
+            if dst_index == BLACK_BAG:
+                difference.append((dst_index, 1))
+            elif a[dst_index] == 1:
+                difference.append((WHITE_BAR, 1))
+                difference.append((dst_index, -2))
+            else:
+                difference.append((dst_index, -1))
+        elif a[dst_index] == -1:
+                difference.append((BLACK_BAR, 1))
+                difference.append((dst_index, 2))
+        else:
+                difference.append((dst_index, 1))
+        for key, value in difference:
+            a[key] += value
+            h += HASH_COEFFICIENTS[key] * value
+        h = h % MOD
+        return GameState(a, h)
 
     def _score_type(self, opponent_bag, opponent_bar, home_range, presence_fn):
         if self.a[opponent_bar] > 0 or any(presence_fn(self.a[i]) for i in home_range):
@@ -80,13 +122,10 @@ class GameState:
     def __eq__(self, other):
         if type(self) != type(other):
             return False
-        return self.a == other.a
+        return self._hash == other._hash and self.a == other.a
 
     def __hash__(self):
-        return hash(self.a)
-
-    def hash(self):
-        return self.__hash__()
+        return self._hash
 
     def __repr__(self):
         return self.a.__repr__()
