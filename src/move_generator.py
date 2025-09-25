@@ -8,118 +8,100 @@ def on_board(index):
     return 0 <= index < COLLECT_END
 
 
-class MoveGenerator(ABC):
-    def __init__(self, color: COLOR):
-        self.player_bag = None
-        self.player_bar = None
+class MoveGenerator:
+    def __init__(self, player_bag:int, player_bar:int, color: COLOR):
+        self.player_bag = player_bag
+        self.player_bar = player_bar
         self.color = color
 
-    @abstractmethod
-    def can_land_on(self, state: GameState, dst_index: int) -> bool:
-        pass
+    def can_move_on_board(self, a: List[int], src_index, dice: int) -> bool:
+        if self.color == COLOR.WHITE:
+            dst_index = src_index + dice
+            return dst_index < COLLECT_END and a[dst_index] >= -1
+        else:
+            dst_index = src_index - dice
+            return dst_index >= 0 and a[dst_index] <= 1
 
-    @abstractmethod
-    def land_index_from_bar(self, dice) -> int:
-        pass
-
-    @abstractmethod
-    def update_board(self, state: GameState, src_index: int, dst_index: int) -> GameState:
-        pass
-
-    @abstractmethod
-    def collect_range(self) -> range:
-        pass
-
-    @abstractmethod
-    def perfect_collect(self, dice) -> int:
-        pass
-
-    @abstractmethod
-    def best_for_collect(self, src_indexes) -> int:
-        pass
-
-    @abstractmethod
-    def num_stones_at_home(self, state) -> int:
-        pass
-
-    def can_move_on_board(self, state: GameState, src_index, dice: int) -> bool:
-        dst_index = src_index + dice if self.color == COLOR.WHITE else src_index - dice
-        return 0 <= dst_index < COLLECT_END and self.can_land_on(state, dst_index)
-
-    def playable_indexes_for_normal(self, state: GameState, dice: int) -> List[int]:
+    def playable_indexes_for_normal(self, a: List[int], dice: int) -> List[int]:
         if self.color == COLOR.WHITE:
             return [i for i in range(COLLECT_END)
-                    if state.a[i] > 0 and i + dice < COLLECT_END and state.a[i + dice] >= -1]
+                    if a[i] > 0 and i + dice < COLLECT_END and a[i + dice] >= -1]
         else:
             return [i for i in range(COLLECT_END)
-                    if state.a[i] < 0 <= i - dice and state.a[i - dice] <= 1]
+                    if a[i] < 0 <= i - dice and a[i - dice] <= 1]
 
-    def moves_for_on_bar(self, state: GameState, dice: List[int]) -> List[
+    def moves_for_on_bar(self, a: List[int], dice: List[int]) -> List[
         Tuple[GameState, List[int]]]:
         r = []
         dice_list = [dice[-1]] if dice[0] == dice[-1] else dice
         for d in dice_list:
-            land_index = self.land_index_from_bar(d)
-            if self.can_land_on(state, land_index):
-                new_state = self.update_board(state, self.player_bar, land_index)
+            land_index = d - 1 if self.color==COLOR.WHITE else COLLECT_END-d
+            if ((self.color == COLOR.WHITE and a[land_index] >= -1) or
+                    (self.color == COLOR.BLACK and a[land_index] <= 1)):
+                new_state = update_state(a[:], self.player_bar, land_index, self.color)
                 new_dice = dice[:]
                 new_dice.remove(d)
                 r.append((new_state, new_dice))
         return r
 
-    def playable_indexes_for_collect(self, state: GameState, dice: int) -> List[int]:
+    def playable_indexes_for_collect(self, a: List[int], dice: int) -> List[int]:
         if self.color == COLOR.WHITE:
-            src_indexes = [i for i in range(COLLECT_START, COLLECT_END) if state.a[i] > 0]
+            src_indexes = [i for i in range(COLLECT_START, COLLECT_END) if a[i] > 0]
         else:
-            src_indexes = [i for i in range(6)  if state.a[i] < 0]
+            src_indexes = [i for i in range(6)  if a[i] < 0]
         if self.color == COLOR.WHITE and min(src_indexes) + dice >= COLLECT_END:
             return [min(src_indexes)]
         elif self.color == COLOR.BLACK and max(src_indexes) - dice < 0:
             return [max(src_indexes)]
-        cands = [src_index for src_index in src_indexes if self.can_move_on_board(state, src_index,
+        cands = [src_index for src_index in src_indexes if self.can_move_on_board(a, src_index,
                                                                                   dice)]
-        perfect = self.perfect_collect(dice)
+        perfect = COLLECT_END - dice if self.color == COLOR.WHITE else dice - 1
         if perfect in src_indexes:
             cands.append(perfect)
         return cands
 
-    def move_state(self, state) -> STATE:
-        if state.a[self.player_bar] > 0:
+    def move_state(self, a) -> STATE:
+        if a[self.player_bar] > 0:
             return STATE.ON_BAR
-        if self.num_stones_at_home(state) + state.a[self.player_bag] == 15:
-            return STATE.COLLECTING
-        return STATE.NORMAL
+        if self.color == COLOR.WHITE:
+            related_stones = sum([a[i] for i in range(COLLECT_START, COLLECT_END) if a[
+                i]>0])
+            related_stones += a[WHITE_BAG]
+        else:
+            related_stones = -sum([a[i] for i in range(6) if a[i]<0])
+            related_stones += a[BLACK_BAG]
+        return STATE.COLLECTING if related_stones == 15 else STATE.NORMAL
 
-    def generate_moves(self, initial_state: GameState, initial_dice: List[int]) -> Set[GameState]:
-        partial_results = [(initial_state, initial_dice)]
-        result_list = [initial_state]
+    def generate_moves(self, initial_state: GameState, initial_dice: List[int]) -> List[List[int]]:
+        partial_results = [(initial_state.a, initial_dice)]
+        result_list = [initial_state.a]
         result_dice = len(initial_dice)
         i = 0
         while i < len(partial_results):
-            state, dice = partial_results[i]
+            a, dice = partial_results[i]
             i += 1
             if not dice:
                 if result_dice > 0:
-                    result_list, result_dice = [state], 0
+                    result_list, result_dice = [a], 0
                 else:
-                    result_list.append(state)
+                    result_list.append(a)
                 continue
-            board_state = self.move_state(state)
+            board_state = self.move_state(a)
             if board_state == STATE.ON_BAR:
-                candidates = self.moves_for_on_bar(state, dice)
+                candidates = self.moves_for_on_bar(a, dice)
                 if not candidates:
                     this_dice = len(dice)
                     if this_dice < result_dice:
-                        result_list, result_dice = [state], this_dice
+                        result_list, result_dice = [a], this_dice
                     elif this_dice == result_dice:
-                        result_list.append(state)
+                        result_list.append(a)
                     continue
                 for new_state, new_dice in candidates:
                     if not new_dice:
                         if result_dice > 0:
-                            result_list, result_dice = [state], 0
+                            result_list, result_dice = [a], 0
                         else:
-                            result_list.append(state)
+                            result_list.append(a)
                     else:
                         partial_results.append((new_state, new_dice))
             else:
@@ -129,23 +111,24 @@ class MoveGenerator(ABC):
                     dices = dice
                 for d in dices:
                     if board_state == STATE.NORMAL:
-                        playable = self.playable_indexes_for_normal(state, d)
+                        playable = self.playable_indexes_for_normal(a, d)
                     else:
-                        playable = self.playable_indexes_for_collect(state, d)
+                        playable = self.playable_indexes_for_collect(a, d)
                     if not playable:
                         this_dice = len(dice)
                         if this_dice < result_dice:
-                            result_list, result_dice = [state], this_dice
+                            result_list, result_dice = [a], this_dice
                         elif this_dice == result_dice:
-                            result_list.append(state)
+                            result_list.append(a)
                     for src_index in playable:
                         dst_index = src_index + d if self.color == COLOR.WHITE else src_index - d
                         if not on_board(dst_index):
-                            new_state = self.update_board(state, src_index, self.player_bag)
-                            if new_state.score() is not None:
-                                return {new_state}
+                            new_state = update_state(a[:], src_index, self.player_bag,
+                                                     self.color)
+                            if score_state(new_state) is not None:
+                                return [new_state]
                         else:
-                            new_state = self.update_board(state, src_index, dst_index)
+                            new_state = update_state(a[:], src_index, dst_index, self.color)
                         new_dice = dice[:]
                         new_dice.remove(d)
                         if not new_dice:
@@ -155,83 +138,9 @@ class MoveGenerator(ABC):
                                 result_list.append(new_state)
                         else:
                             partial_results.append((new_state, new_dice))
-        return set(result_list)
+        return result_list
 
 
-class BlackGenerator(MoveGenerator):
-    def __init__(self):
-        super().__init__(color=COLOR.BLACK)
-        self.player_bag = BLACK_BAG
-        self.player_bar = BLACK_BAR
 
-    def update_board(self, state, src_index: int, dst_index: int):
-        a = list(state.a)
-        if src_index == self.player_bar:
-            a[src_index] -= 1
-        else:
-            a[src_index] += 1
-        if dst_index == self.player_bag:
-            a[dst_index] += 1
-        elif a[dst_index] == 1:
-            a[WHITE_BAR] += 1
-            a[dst_index] = -1
-        else:
-            a[dst_index] -= 1
-        return GameState(tuple(a))
-
-    def can_land_on(self, state, dst_index) -> bool:
-        return state.a[dst_index] <= 1
-
-    def land_index_from_bar(self, dice) -> int:
-        return COLLECT_END - dice
-
-    def collect_range(self):
-        return range(6)
-
-    def perfect_collect(self, dice) -> int:
-        return dice - 1
-
-    def best_for_collect(self, src_indexes) -> int:
-        return max(src_indexes)
-
-    def num_stones_at_home(self, state) -> int:
-        return -sum([state.a[i] for i in range(6) if state.a[i] < 0])
-
-
-class WhiteGenerator(MoveGenerator):
-    def __init__(self):
-        super().__init__(color=COLOR.WHITE)
-        self.player_bag = WHITE_BAG
-        self.player_bar = WHITE_BAR
-
-    def update_board(self, state, src_index: int, dst_index: int):
-        a = list(state.a)
-        a[src_index] -= 1
-        if a[dst_index] == -1:
-            a[BLACK_BAR] += 1
-            a[dst_index] = 1
-        else:
-            a[dst_index] += 1
-        return GameState(tuple(a))
-
-    def can_land_on(self, state, dst_index):
-        return state.a[dst_index] >= -1
-
-    def land_index_from_bar(self, dice) -> int:
-        return dice - 1
-
-    def collect_range(self):
-        return range(COLLECT_START, COLLECT_END)
-
-    def perfect_collect(self, dice) -> int:
-        return COLLECT_END - dice
-
-    def best_for_collect(self, src_indexes) -> int:
-        return min(src_indexes)
-
-    def num_stones_at_home(self, state) -> int:
-        return sum([state.a[i] for i in range(COLLECT_START, COLLECT_END) if state.a[i] > 0])
-
-
-WhiteGeneratorFactory = lambda: WhiteGenerator()
-BlackGeneratorFactory = lambda: BlackGenerator()
+WhiteGeneratorFactory = lambda: MoveGenerator(WHITE_BAG, WHITE_BAR, COLOR.WHITE)
+BlackGeneratorFactory = lambda: MoveGenerator(BLACK_BAG, BLACK_BAR, COLOR.BLACK)

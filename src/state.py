@@ -33,6 +33,50 @@ BLACK_BAG = 27
 COLLECT_START = 18
 COLLECT_END = 24
 
+GAME_START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, -2, 0, 0, 0,
+              0]
+
+
+def score_state(a):
+    if a[WHITE_BAG] < 15 and a[BLACK_BAG] < 15:
+        return None
+    if a[WHITE_BAG] == 15:
+        stones_at_home = [i for i in range(COLLECT_START, COLLECT_END) if a[i] < 0]
+        if a[BLACK_BAR] + len(stones_at_home) > 0:
+            return 3
+        elif a[BLACK_BAG] == 0:
+            return 2
+        else:
+            return 1
+    else:
+        stones_at_home = [i for i in range(6) if a[i] > 0]
+        if a[WHITE_BAR] + len(stones_at_home) > 0:
+            return -3
+        elif a[WHITE_BAG] == 0:
+            return -2
+        else:
+            return -1
+
+def update_state(a, src_index: int, dst_index: int, color: COLOR):
+    if color == COLOR.WHITE or src_index == BLACK_BAR:
+        a[src_index] += -1
+    else:
+        a[src_index] += 1
+    if color == COLOR.BLACK:
+        if dst_index == BLACK_BAG:
+            a[dst_index] += 1
+        elif a[dst_index] == 1:
+            a[WHITE_BAR] += 1
+            a[dst_index] += -2
+        else:
+            a[dst_index] += -1
+    elif a[dst_index] == -1:
+        a[BLACK_BAR] += 1
+        a[dst_index] += 2
+    else:
+        a[dst_index] += 1
+    return a
+
 
 class GameState:
     def __init__(self, a):
@@ -51,42 +95,24 @@ class GameState:
 
     @staticmethod
     def game_start():
-        a = (2, 0, 0, 0, 0, -5,
-             0, -3, 0, 0, 0, 5,
-             -5, 0, 0, 0, 3, 0,
-             5, 0, 0, 0, 0, -2,
-             0, 0, 0, 0)
-        return GameState(a)
+        return GameState(GAME_START)
 
-    def _score_type(self, opponent_bag, opponent_bar, home_range, presence_fn):
-        if self.a[opponent_bar] > 0 or any(presence_fn(self.a[i]) for i in home_range):
-            return 3
-        if self.a[opponent_bag] == 0:
-            return 2
-        return 1
+    def update(self, src_index:int, dst_index:int,color:COLOR):
+        return GameState(update_state(self.a[:], src_index, dst_index, color))
 
     def score(self):
-        if self.a[WHITE_BAG] < 15 and self.a[BLACK_BAG] < 15:
-            return None
-        if self.a[WHITE_BAG] == 15:
-            return self._score_type(BLACK_BAG, BLACK_BAR, range(COLLECT_START,COLLECT_END),
-                                    lambda n: n < 0)
-        else:
-            return -self._score_type(WHITE_BAG, WHITE_BAR, range(6), lambda n:n>0)
+        return score_state(self.a)
 
     def __copy__(self):
         return self
 
     def __eq__(self, other):
-        if type(self) != type(other):
+        if not isinstance(other, GameState):
             return False
         return self.a == other.a
 
     def __hash__(self):
-        return hash(self.a)
-
-    def hash(self):
-        return self.__hash__()
+        return hash(tuple(self.a))
 
     def __repr__(self):
         return self.a.__repr__()

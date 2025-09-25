@@ -16,21 +16,21 @@ def construct_state(d:dict, r = None, rval = None)->GameState:
     if r is not None:
         for i in r:
             a[i] = rval
-    state = GameState(tuple(a))
+    state = GameState(a)
     return state
 
 def change_state(state, d) -> GameState:
     a = list(state.a)
     for key in d:
         a[key] = d[key]
-    state = GameState(tuple(a))
+    state = GameState(a)
     return state
 
 def opposite_perspective(state:GameState)->GameState:
     a = [-state.a[i] for i in range(COLLECT_END - 1, -1, -1)]
     for i in [BLACK_BAR, WHITE_BAR, BLACK_BAG, WHITE_BAG]:
         a.append(state.a[i])
-    return GameState(tuple(a))
+    return GameState(a)
 
 class Expectation:
     def __init__(self, length=None, expected_state=None, state_set=None, *, score=None):
@@ -58,11 +58,13 @@ class MyTestCase:
         self.expected = expected
 
     def check(self):
-        r = WhiteGenerator().generate_moves(self.state, self.dice)
+        moves = WhiteGeneratorFactory().generate_moves(self.state, self.dice)
+        r = set([GameState(m) for m in moves])
         self.expected.check(r)
 
         black_state = opposite_perspective(self.state)
-        r = BlackGenerator().generate_moves(black_state, self.dice)
+        moves = BlackGeneratorFactory().generate_moves(black_state, self.dice)
+        r = set([GameState(m) for m in moves])
         black_r:Set[GameState] = set()
         for st in r:
             black_r.add(opposite_perspective(st))
@@ -184,8 +186,6 @@ class TestMoveGenerator:
         for i in range(1, 7):
             for j in range(i + 1, 7):
                 dice = Dice.to_list(i, j)
-                r = WhiteGenerator().generate_moves(state, dice)
-                assert len(r) == 4
 
                 expected_set = set()
                 for src in [0, 10]:
@@ -214,7 +214,7 @@ class TestMoveGenerator:
         a[6] = -2
         a[8] = -2
         a[BLACK_BAR] = 9
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(2, 5)
         expected = change_state(state, {0: 0, 7: 1})
@@ -233,7 +233,7 @@ class TestMoveGenerator:
         a[11] = -2
         a[15] = -2
         a[BLACK_BAR] = 5
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(6, 5)
         expected_set = set()
@@ -248,7 +248,7 @@ class TestMoveGenerator:
         a[0] = 1
         a[1] = 1
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(3, 3)
         expected_set = set()
@@ -265,7 +265,7 @@ class TestMoveGenerator:
         a[0] = 1
         a[4] = 1
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(4, 4)
         expected_set = set()
@@ -276,7 +276,7 @@ class TestMoveGenerator:
             e[move_first * 4] += 1
             e[4] -= 1
             e[4 + move_second * 4] += 1
-            expected_set.add(GameState(tuple(e)))
+            expected_set.add(GameState(e))
         exp = Expectation(length=3, state_set=expected_set)
         MyTestCase(state, dice, exp).check()
 
@@ -286,7 +286,7 @@ class TestMoveGenerator:
         for i in range(4):
             a[i] = 1
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(4, 4)
         expected_set = set()
@@ -298,7 +298,7 @@ class TestMoveGenerator:
                     for src, moves in [(0, move_a), (1, move_b), (2, move_c), (3, move_d)]:
                         e[src] -= 1
                         e[src + 4 * moves] += 1
-                    expected_set.add(GameState(tuple(e)))
+                    expected_set.add(GameState(e))
 
         exp = Expectation(length=35, state_set=expected_set)
         MyTestCase(state, dice, exp).check()
@@ -309,7 +309,7 @@ class TestMoveGenerator:
             a[i] = 1
         a[WHITE_BAG] = 12
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(4, 5)
         e = change_state(state, {WHITE_BAG:14, HOME(3):0, HOME(2):0})
@@ -322,7 +322,7 @@ class TestMoveGenerator:
             a[i] = 1
         a[HOME(6)] = 10
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(6, 6)
 
@@ -336,7 +336,7 @@ class TestMoveGenerator:
         a[HOME(6)] = 1
         a[WHITE_BAG] = 13
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(3, 2)
 
@@ -352,7 +352,7 @@ class TestMoveGenerator:
         a[HOME(5)] = 1
         a[WHITE_BAG] = 11
         a[BLACK_BAR] = 13
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(3, 3)
 
@@ -366,7 +366,7 @@ class TestMoveGenerator:
         a[HOME(6)] = 1
         a[WHITE_BAG] = 13
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(5, 3)
         e = change_state(state, {WHITE_BAG: 14, HOME(3): 0, HOME(6):0, HOME(1):1})
@@ -379,7 +379,7 @@ class TestMoveGenerator:
         a[HOME(1)] = -2
         a[WHITE_BAG] = 10
         a[BLACK_BAR] = 13
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(1, 1)
         e = change_state(state, {HOME(3):1, HOME(2):4})
@@ -393,7 +393,7 @@ class TestMoveGenerator:
         a[HOME(1)] = 1
         a[WHITE_BAG] = 12
         a[BLACK_BAR] = 15
-        state = GameState(tuple(a))
+        state = GameState(a)
 
         dice = Dice.to_list(5, 5)
         e = change_state(state, {HOME(5): 0, HOME(3): 0, HOME(1):0, WHITE_BAG:15})

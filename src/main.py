@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from src.dice_source import Dice
 from src.game_manager import GameManager
 from src.logger import LogWriter
-from src.move_generator import WhiteGenerator, WhiteGeneratorFactory, BlackGeneratorFactory
+from src.move_generator import WhiteGeneratorFactory, BlackGeneratorFactory
 from src.player import RandomPlayer
 from src.training_data import prepare_training_data
 
