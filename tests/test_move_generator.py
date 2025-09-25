@@ -58,11 +58,13 @@ class MyTestCase:
         self.expected = expected
 
     def check(self):
-        r = WhiteGeneratorFactory().generate_moves(self.state, self.dice)
+        moves = WhiteGeneratorFactory().generate_moves(self.state, self.dice)
+        r = set([GameState(m) for m in moves])
         self.expected.check(r)
 
         black_state = opposite_perspective(self.state)
-        r = BlackGeneratorFactory().generate_moves(black_state, self.dice)
+        moves = BlackGeneratorFactory().generate_moves(black_state, self.dice)
+        r = set([GameState(m) for m in moves])
         black_r:Set[GameState] = set()
         for st in r:
             black_r.add(opposite_perspective(st))
