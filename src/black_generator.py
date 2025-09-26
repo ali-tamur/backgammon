@@ -33,11 +33,11 @@ def _playable_indexes_for_collect(a: List[int], dice: int) -> List[int]:
 
 
 def _move_state(a) -> STATE:
-    if a[BLACK_BAR] > 0:
+    if a[BLACK_BAR] < 0:
         return STATE.ON_BAR
-    related_stones = -sum([a[i] for i in range(6) if a[i] < 0])
+    related_stones = sum([a[i] for i in range(6) if a[i] < 0])
     related_stones += a[BLACK_BAG]
-    return STATE.COLLECTING if related_stones == 15 else STATE.NORMAL
+    return STATE.COLLECTING if related_stones == -15 else STATE.NORMAL
 
 
 def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[List[int]]:
