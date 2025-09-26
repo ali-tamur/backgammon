@@ -11,7 +11,7 @@ from src.training_data import state_to_tensor
 
 
 class Player(ABC):
-    def __init__(self, name, move_generator: Callable[[GameState], MoveGenerator]):
+    def __init__(self, name, move_generator: Callable[[GameState, List[int]], List[List[int]]]):
         self.name = name
         self.move_generator = move_generator
         pass
@@ -27,7 +27,7 @@ class RandomPlayer(Player):
         self.r = r
 
     def move(self, state: GameState, dice: List[int]) -> GameState:
-        moves = self.move_generator().generate_moves(state, dice)
+        moves = self.move_generator(state, dice)
         chosen_move = self.r.choice(moves)
         return GameState(chosen_move)
 
@@ -40,7 +40,7 @@ class NNPlayer(Player):
         self.temperature = temperature
 
     def move(self, state: GameState, dice: List[int]) -> GameState:
-        moves = self.move_generator().generate_moves(state, dice)
+        moves = self.move_generator(state, dice)
         tensors = tf.stack([state_to_tensor(st) for st in moves])
         raw_scores = self.model.predict(tensors, verbose=0)
         pure_weights = tf.squeeze(raw_scores, [-1]) / self.temperature

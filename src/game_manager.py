@@ -1,6 +1,5 @@
 from src.dice_source import Dice
 from src.logger import DummyLogWriter
-from src.move_generator import WhiteGeneratorFactory, BlackGeneratorFactory
 from src.player import *
 from src.pretty_print import pretty_print
 
@@ -11,7 +10,6 @@ class GameManager:
         self.players = [white, black]
         self.dice_source = dice_source
         self.logger = logger
-        self.move_generators = [WhiteGeneratorFactory, BlackGeneratorFactory]
         self.print_debug = print_debug
 
     def _run_once(self):
@@ -33,7 +31,6 @@ class GameManager:
             if state.score() is not None:
                 break
             on_turn = 1 - on_turn
-            #state = state.opponent_state()
 
         result = state.score()
         if self.print_debug:

@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 from src.dice_source import Dice
 from src.game_manager import GameManager
 from src.logger import LogWriter
-from src.move_generator import WhiteGeneratorFactory, BlackGeneratorFactory
 from src.player import RandomPlayer
 from src.training_data import prepare_training_data
+from src.white_generator import generate_white_moves
+from src.black_generator import generate_black_moves
 
 DEFAULT_LOG_SCHEMA_PATH = "schemas/log.avsc"
 DEFAULT_LOG_PATH = "/app/data/game_log.avro"
@@ -92,8 +93,8 @@ def main():
     args = parse_args()
     if args.command == "play_games":
         n_games = args.count or 1000
-        alice = RandomPlayer('alice', random_seed, WhiteGeneratorFactory)
-        bob = RandomPlayer('bob', random_seed, BlackGeneratorFactory)
+        alice = RandomPlayer('alice', random_seed, generate_white_moves)
+        bob = RandomPlayer('bob', random_seed, generate_black_moves)
         log_writer = create_log_writer()
         play_games(alice, bob, Dice(random_seed), n_games, log_writer, args.debug)
     elif args.command == "read_data":
