@@ -15,9 +15,10 @@ def my_game_engine():
 
     alice = RandomPlayer('alice', random_seed, generate_white_moves)
     bob = RandomPlayer('bob', random_seed, generate_black_moves)
-    play_games(alice, bob, Dice(random_seed), 100, DummyLogWriter(), False)
+    play_games(alice, bob, Dice(random_seed), 200, DummyLogWriter(), False)
 
 cProfile.run('my_game_engine()', 'profile.pstats')
 p = pstats.Stats('profile.pstats')
 
-p.sort_stats('cumtime').print_stats('src/')
+#p.sort_stats('cumtime').print_stats('src/')
+p.sort_stats('cumtime').print_stats()
