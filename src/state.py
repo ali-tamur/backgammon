@@ -39,11 +39,11 @@ GAME_START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 
 
 
 def score_state(a):
-    if a[WHITE_BAG] < 15 and a[BLACK_BAG] < 15:
+    if a[WHITE_BAG] < 15 and a[BLACK_BAG] > -15:
         return None
     if a[WHITE_BAG] == 15:
         stones_at_home = [i for i in range(COLLECT_START, COLLECT_END) if a[i] < 0]
-        if a[BLACK_BAR] + len(stones_at_home) > 0:
+        if len(stones_at_home)  - a[BLACK_BAR] > 0:
             return 3
         elif a[BLACK_BAG] == 0:
             return 2
@@ -60,13 +60,8 @@ def score_state(a):
 
 
 def update_black(a, src_index: int, dst_index: int):
-    if src_index == BLACK_BAR:
-        a[src_index] += -1
-    else:
-        a[src_index] += 1
-    if dst_index == BLACK_BAG:
-        a[dst_index] += 1
-    elif a[dst_index] == 1:
+    a[src_index] += 1
+    if a[dst_index] == 1:
         a[WHITE_BAR] += 1
         a[dst_index] += -2
     else:
@@ -77,7 +72,7 @@ def update_black(a, src_index: int, dst_index: int):
 def update_white(a, src_index: int, dst_index: int):
     a[src_index] += -1
     if a[dst_index] == -1:
-        a[BLACK_BAR] += 1
+        a[BLACK_BAR] -= 1
         a[dst_index] += 2
     else:
         a[dst_index] += 1
@@ -96,8 +91,8 @@ class GameState:
         assert on_board + self.a[WHITE_BAR] + self.a[WHITE_BAG] == 15
 
     def debug_count_opponent_stones(self):
-        on_board = sum([abs(self.a[i]) for i in range(COLLECT_END) if self.a[i] < 0])
-        assert on_board + self.a[BLACK_BAR] + self.a[BLACK_BAG] == 15
+        on_board = sum([(self.a[i]) for i in range(COLLECT_END) if self.a[i] < 0])
+        assert on_board + self.a[BLACK_BAR] + self.a[BLACK_BAG] == -15
 
     @staticmethod
     def game_start():

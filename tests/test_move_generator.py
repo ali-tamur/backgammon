@@ -31,7 +31,7 @@ def change_state(state, d) -> GameState:
 def opposite_perspective(state:GameState)->GameState:
     a = [-state.a[i] for i in range(COLLECT_END - 1, -1, -1)]
     for i in [BLACK_BAR, WHITE_BAR, BLACK_BAG, WHITE_BAG]:
-        a.append(state.a[i])
+        a.append(-state.a[i])
     return GameState(a)
 
 class Expectation:
@@ -106,54 +106,54 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_remaining_stone_can_neither_move_nor__get_collected(self):
-        state = construct_state({HOME(6):2,HOME(1):-2,WHITE_BAG:13, BLACK_BAG:13})
+        state = construct_state({HOME(6):2,HOME(1):-2,WHITE_BAG:13, BLACK_BAG:-13})
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(5, 5)
         MyTestCase(state, dice, exp).check()
 
     def test_no_stone_can_move(self):
-        state = construct_state({5:2,7:-2,8:-2,10:2,12:-2,13:-2,WHITE_BAG:11,BLACK_BAG:7})
+        state = construct_state({5:2,7:-2,8:-2,10:2,12:-2,13:-2,WHITE_BAG:11,BLACK_BAG:-7})
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(2, 3)
         MyTestCase(state, dice, exp).check()
 
     def test_no_stone_can_move_2(self):
         state = construct_state({HOME(5):2, WHITE_BAG:13,COLLECT_END-1:-2,COLLECT_END-2:-2,
-                                 BLACK_BAG:11})
+                                 BLACK_BAG:-11})
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(3, 4)
         MyTestCase(state, dice, exp).check()
 
     def test_land_one_stone(self):
-        state = construct_state({HOME(5):13,WHITE_BAR:2,0:-2,1:-2,3:-2,4:-2,5:-2,BLACK_BAG:5})
+        state = construct_state({HOME(5):13,WHITE_BAR:2,0:-2,1:-2,3:-2,4:-2,5:-2,BLACK_BAG:-5})
         expected = change_state(state, {2:1,WHITE_BAR:1})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(2, 3)
         MyTestCase(state, dice, exp).check()
 
     def test_land_two_stones(self):
-        state = construct_state({HOME(1):13, WHITE_BAR:2, 0:-2,1:-2,BLACK_BAG:5}, range(3,6), -2)
+        state = construct_state({HOME(1):13, WHITE_BAR:2, 0:-2,1:-2,BLACK_BAG:-5}, range(3,6), -2)
         expected = change_state(state, {2: 2, WHITE_BAR: 0})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(3, 3)
         MyTestCase(state, dice, exp).check()
 
     def test_escape_1(self):
-        state = construct_state({HOME(1):14, WHITE_BAR:1, BLACK_BAG:5}, range(5), -2)
+        state = construct_state({HOME(1):14, WHITE_BAR:1, BLACK_BAG:-5}, range(5), -2)
         expected = change_state(state, {HOME(1): 15, WHITE_BAR: 0})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(6, 6)
         MyTestCase(state, dice, exp).check()
 
     def test_escape_2_have_to_use_smaller_dice_first(self):
-        state = construct_state({HOME(1):14, 0:1, 5:-2, BLACK_BAR:13})
+        state = construct_state({HOME(1):14, 0:1, 5:-2, BLACK_BAR:-13})
         expected = change_state(state, {0:0, 7:1})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(5, 2)
         MyTestCase(state, dice, exp).check()
 
     def test_single_stone_movement(self):
-        state = construct_state({HOME(1):14, 0:1, BLACK_BAR:15})
+        state = construct_state({HOME(1):14, 0:1, BLACK_BAR:-15})
         for i in range(1, 7):
             for j in range(i + 1, 7):
                 expected = change_state(state, {0:0, i+j:1})
@@ -173,17 +173,17 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_single_stone_move_and_bolt(self):
-        state = construct_state({HOME(1):14, 0:1,BLACK_BAR:14,7:-1})
+        state = construct_state({HOME(1):14, 0:1,BLACK_BAR:-14,7:-1})
 
         for i in range(1, 7):
             j = 7 - i
             dice = Dice.to_list(i, j)
-            expected = change_state(state, {0: 0, 7:1, BLACK_BAR: 15})
+            expected = change_state(state, {0: 0, 7:1, BLACK_BAR: -15})
             exp = Expectation(length=1, expected_state=expected)
             MyTestCase(state, dice, exp).check()
 
     def test_double_stone_movement(self):
-        state = construct_state({HOME(1):13, 0:1, 10:1, BLACK_BAR:15})
+        state = construct_state({HOME(1):13, 0:1, 10:1, BLACK_BAR:-15})
 
         for i in range(1, 7):
             for j in range(i + 1, 7):
@@ -201,7 +201,7 @@ class TestMoveGenerator:
                 MyTestCase(state, dice, exp).check()
 
     def test_double_stone_movement_with_blocks(self):
-        state = construct_state({HOME(1):13, 0:1,1:1,2:-2,BLACK_BAR:7}, range(6,9),-2)
+        state = construct_state({HOME(1):13, 0:1,1:1,2:-2,BLACK_BAR:-7}, range(6,9),-2)
         expected = change_state(state, {0: 0, 5: 1, 1:0, 3:1})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(5, 2)
@@ -215,7 +215,7 @@ class TestMoveGenerator:
         a[5] = -2
         a[6] = -2
         a[8] = -2
-        a[BLACK_BAR] = 9
+        a[BLACK_BAR] = -9
         state = GameState(a)
 
         dice = Dice.to_list(2, 5)
@@ -234,7 +234,7 @@ class TestMoveGenerator:
         a[10] = -2
         a[11] = -2
         a[15] = -2
-        a[BLACK_BAR] = 5
+        a[BLACK_BAR] = -5
         state = GameState(a)
 
         dice = Dice.to_list(6, 5)
@@ -249,7 +249,7 @@ class TestMoveGenerator:
         a[HOME(1)] = 13
         a[0] = 1
         a[1] = 1
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(3, 3)
@@ -266,7 +266,7 @@ class TestMoveGenerator:
         a[HOME(1)] = 13
         a[0] = 1
         a[4] = 1
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(4, 4)
@@ -287,7 +287,7 @@ class TestMoveGenerator:
         a[HOME(1)] = 11
         for i in range(4):
             a[i] = 1
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(4, 4)
@@ -310,7 +310,7 @@ class TestMoveGenerator:
         for i in range(HOME(3), COLLECT_END):
             a[i] = 1
         a[WHITE_BAG] = 12
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(4, 5)
@@ -323,7 +323,7 @@ class TestMoveGenerator:
         for i in range(COLLECT_START + 1, COLLECT_END):
             a[i] = 1
         a[HOME(6)] = 10
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(6, 6)
@@ -337,7 +337,7 @@ class TestMoveGenerator:
         a[HOME(1)] = 1
         a[HOME(6)] = 1
         a[WHITE_BAG] = 13
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(3, 2)
@@ -353,7 +353,7 @@ class TestMoveGenerator:
         a[HOME(3)] = 1
         a[HOME(5)] = 1
         a[WHITE_BAG] = 11
-        a[BLACK_BAR] = 13
+        a[BLACK_BAR] = -13
         state = GameState(a)
 
         dice = Dice.to_list(3, 3)
@@ -367,7 +367,7 @@ class TestMoveGenerator:
         a[HOME(3)] = 1
         a[HOME(6)] = 1
         a[WHITE_BAG] = 13
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(5, 3)
@@ -380,7 +380,7 @@ class TestMoveGenerator:
         a[HOME(3)] = 5
         a[HOME(1)] = -2
         a[WHITE_BAG] = 10
-        a[BLACK_BAR] = 13
+        a[BLACK_BAR] = -13
         state = GameState(a)
 
         dice = Dice.to_list(1, 1)
@@ -394,7 +394,7 @@ class TestMoveGenerator:
         a[HOME(3)] = 1
         a[HOME(1)] = 1
         a[WHITE_BAG] = 12
-        a[BLACK_BAR] = 15
+        a[BLACK_BAR] = -15
         state = GameState(a)
 
         dice = Dice.to_list(5, 5)
