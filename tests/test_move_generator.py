@@ -54,7 +54,7 @@ class Expectation:
 
 
 class MyTestCase:
-    def __init__(self, state:GameState, dice:list[int], expected:Expectation):
+    def __init__(self, state:GameState, dice:int, expected:Expectation):
         self.state = state
         self.dice = dice
         self.expected = expected

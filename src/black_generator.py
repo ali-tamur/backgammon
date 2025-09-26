@@ -16,17 +16,17 @@ def _playable_indexes_for_normal(a: List[int], dice: int) -> List[int]:
     return [i for i in range(COLLECT_END) if a[i] < 0 <= i - dice and a[i - dice] <= 1]
 
 
-def _moves_for_on_bar(a: List[int], dice: List[int]) -> List[
-    Tuple[GameState, List[int]]]:
+def _moves_for_on_bar(a: List[int], dice: int) -> List[Tuple[GameState, int]]:
     r = []
-    dice_list = [dice[-1]] if dice[0] == dice[-1] else dice
-    for d in dice_list:
+    d1, d2 = dice % 10, (dice // 10) % 10
+    d = d1
+    while d != 0:
         land_index = COLLECT_END - d
         if a[land_index] <= 1:
             new_state = update_black(a[:], BLACK_BAR, land_index)
-            new_dice = dice[:]
-            new_dice.remove(d)
+            new_dice = dice // 10 if d == d1 else d1
             r.append((new_state, new_dice))
+        d = d2 if d == d1 and d1 != d2 else 0
     return r
 
 
@@ -49,15 +49,15 @@ def _move_state(a) -> STATE:
     return STATE.COLLECTING if related_stones == 15 else STATE.NORMAL
 
 
-def generate_black_moves(initial_state: GameState, initial_dice: List[int]) -> List[List[int]]:
+def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[List[int]]:
     partial_results = [(initial_state.a, initial_dice)]
     result_list = [initial_state.a]
-    result_dice = len(initial_dice)
+    result_dice = 2 if initial_dice < 100 else 4
     i = 0
     while i < len(partial_results):
         a, dice = partial_results[i]
         i += 1
-        if not dice:
+        if dice == 0:
             if result_dice > 0:
                 result_list, result_dice = [a], 0
             else:
@@ -67,10 +67,10 @@ def generate_black_moves(initial_state: GameState, initial_dice: List[int]) -> L
         if board_state == STATE.ON_BAR:
             candidates = _moves_for_on_bar(a, dice)
             if not candidates:
-                this_dice = len(dice)
-                if this_dice < result_dice:
-                    result_list, result_dice = [a], this_dice
-                elif this_dice == result_dice:
+                dice_size = 0 if not dice else 1 if dice < 10 else 2 if dice < 100 else 3 if dice < 1000 else 4
+                if dice_size < result_dice:
+                    result_list, result_dice = [a], dice_size
+                elif dice_size == result_dice:
                     result_list.append(a)
                 continue
             for new_state, new_dice in candidates:
@@ -82,20 +82,28 @@ def generate_black_moves(initial_state: GameState, initial_dice: List[int]) -> L
                 else:
                     partial_results.append((new_state, new_dice))
         else:
-            if board_state == STATE.COLLECTING or dice[-1] == dice[0]:
-                dices = [dice[-1]]
-            else:
-                dices = dice
-            for d in dices:
+            d1, d2 = dice % 10, (dice // 10) % 10
+            d = d1
+            while d != 0:
+                if d != d1:
+                    new_dice = d1
+                elif d1 == d2:
+                    d2 = 0
+                    new_dice = dice // 10
+                elif board_state == STATE.COLLECTING:
+                    new_dice = d2
+                    d2 = 0
+                else:
+                    new_dice = d2
                 if board_state == STATE.NORMAL:
                     playable = _playable_indexes_for_normal(a, d)
                 else:
                     playable = _playable_indexes_for_collect(a, d)
                 if not playable:
-                    this_dice = len(dice)
-                    if this_dice < result_dice:
-                        result_list, result_dice = [a], this_dice
-                    elif this_dice == result_dice:
+                    dice_size = 0 if not dice else 1 if dice < 10 else 2 if dice < 100 else 3 if dice < 1000 else 4
+                    if dice_size < result_dice:
+                        result_list, result_dice = [a], dice_size
+                    elif dice_size == result_dice:
                         result_list.append(a)
                 for src_index in playable:
                     dst_index = src_index - d
@@ -105,8 +113,6 @@ def generate_black_moves(initial_state: GameState, initial_dice: List[int]) -> L
                             return [new_state]
                     else:
                         new_state = update_black(a[:], src_index, dst_index)
-                    new_dice = dice[:]
-                    new_dice.remove(d)
                     if not new_dice:
                         if result_dice > 0:
                             result_list, result_dice = [new_state], 0
@@ -114,4 +120,5 @@ def generate_black_moves(initial_state: GameState, initial_dice: List[int]) -> L
                             result_list.append(new_state)
                     else:
                         partial_results.append((new_state, new_dice))
+                d = d2 if d == d1 else 0
     return result_list

@@ -23,11 +23,11 @@ class GameManager:
             dice = self.dice_source.throw_dice()
             state = self.players[on_turn].move(state, dice)
             if self.print_debug:
-                print(f"{dice[0]} {dice[1]}")
+                print(f"{dice%10} {(dice//10)%10}")
                 print(pretty_print(state))
                 print(f"\n\n")
                 input("...")
-            self.logger.move([dice[0], dice[1]], state)
+            self.logger.move([dice%10, (dice//10)%10], state)
             if state.score() is not None:
                 break
             on_turn = 1 - on_turn
