@@ -3,15 +3,6 @@ from typing import Tuple, List
 from src.state import *
 
 
-def _on_board(index):
-    return 0 <= index < COLLECT_END
-
-
-def _can_move_on_board(a: List[int], src_index, dice: int) -> bool:
-    dst_index = src_index - dice
-    return dst_index >= 0 and a[dst_index] <= 1
-
-
 def _playable_indexes_for_normal(a: List[int], dice: int) -> List[int]:
     return [i for i in range(COLLECT_END) if a[i] < 0 <= i - dice and a[i - dice] <= 1]
 
@@ -34,7 +25,7 @@ def _playable_indexes_for_collect(a: List[int], dice: int) -> List[int]:
     src_indexes = [i for i in range(6) if a[i] < 0]
     if max(src_indexes) - dice < 0:
         return [max(src_indexes)]
-    cands = [src_index for src_index in src_indexes if _can_move_on_board(a, src_index, dice)]
+    cands = [src_index for src_index in src_indexes if src_index-dice>=0 and a[src_index-dice] <= 1]
     perfect = dice - 1
     if perfect in src_indexes:
         cands.append(perfect)
@@ -107,7 +98,7 @@ def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[L
                         result_list.append(a)
                 for src_index in playable:
                     dst_index = src_index - d
-                    if not _on_board(dst_index):
+                    if dst_index < 0:
                         new_state = update_black(a[:], src_index, BLACK_BAG)
                         if score_state(new_state) is not None:
                             return [new_state]
