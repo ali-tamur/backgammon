@@ -1,6 +1,8 @@
-from src.move_generator import *
 from src.dice_source import Dice
-
+from src.state import *
+from src.white_generator import generate_white_moves
+from src.black_generator import generate_black_moves
+from typing import Set
 
 def generate_all_dice():
     return [Dice.to_list(i, j) for i in [1, 2, 3, 4, 5, 6] for j in [1, 2, 3, 4, 5, 6]]
@@ -58,12 +60,12 @@ class MyTestCase:
         self.expected = expected
 
     def check(self):
-        moves = WhiteGeneratorFactory().generate_moves(self.state, self.dice)
+        moves = generate_white_moves(self.state, self.dice)
         r = set([GameState(m) for m in moves])
         self.expected.check(r)
 
         black_state = opposite_perspective(self.state)
-        moves = BlackGeneratorFactory().generate_moves(black_state, self.dice)
+        moves = generate_black_moves(black_state, self.dice)
         r = set([GameState(m) for m in moves])
         black_r:Set[GameState] = set()
         for st in r:

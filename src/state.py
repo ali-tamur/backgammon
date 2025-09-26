@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from typing import List
 
 """
 Game state is represented by an array of length 28.
@@ -22,9 +21,11 @@ class STATE(Enum):
     NORMAL = auto()
     COLLECTING = auto()
 
+
 class COLOR(Enum):
     WHITE = auto()
     BLACK = auto()
+
 
 WHITE_BAR = 24
 BLACK_BAR = 25
@@ -33,8 +34,8 @@ BLACK_BAG = 27
 COLLECT_START = 18
 COLLECT_END = 24
 
-GAME_START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, -2, 0, 0, 0,
-              0]
+GAME_START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, -2, 0, 0, 0, 0]
+
 
 
 def score_state(a):
@@ -57,20 +58,25 @@ def score_state(a):
         else:
             return -1
 
-def update_state(a, src_index: int, dst_index: int, color: COLOR):
-    if color == COLOR.WHITE or src_index == BLACK_BAR:
+
+def update_black(a, src_index: int, dst_index: int):
+    if src_index == BLACK_BAR:
         a[src_index] += -1
     else:
         a[src_index] += 1
-    if color == COLOR.BLACK:
-        if dst_index == BLACK_BAG:
-            a[dst_index] += 1
-        elif a[dst_index] == 1:
-            a[WHITE_BAR] += 1
-            a[dst_index] += -2
-        else:
-            a[dst_index] += -1
-    elif a[dst_index] == -1:
+    if dst_index == BLACK_BAG:
+        a[dst_index] += 1
+    elif a[dst_index] == 1:
+        a[WHITE_BAR] += 1
+        a[dst_index] += -2
+    else:
+        a[dst_index] += -1
+    return a
+
+
+def update_white(a, src_index: int, dst_index: int):
+    a[src_index] += -1
+    if a[dst_index] == -1:
         a[BLACK_BAR] += 1
         a[dst_index] += 2
     else:
@@ -97,8 +103,11 @@ class GameState:
     def game_start():
         return GameState(GAME_START)
 
-    def update(self, src_index:int, dst_index:int,color:COLOR):
-        return GameState(update_state(self.a[:], src_index, dst_index, color))
+    def update(self, src_index: int, dst_index: int, color: COLOR):
+        if color == COLOR.WHITE:
+            return GameState(update_white(self.a[:], src_index, dst_index))
+        else:
+            return GameState(update_black(self.a[:], src_index, dst_index))
 
     def score(self):
         return score_state(self.a)
