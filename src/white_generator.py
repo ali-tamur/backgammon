@@ -3,15 +3,6 @@ from typing import Tuple, List
 from src.state import *
 
 
-def _on_board(index):
-    return 0 <= index < COLLECT_END
-
-
-def _can_move_on_board(a: List[int], src_index, dice: int) -> bool:
-    dst_index = src_index + dice
-    return dst_index < COLLECT_END and a[dst_index] >= -1
-
-
 def _playable_indexes_for_normal(a: List[int], dice: int) -> List[int]:
     return [i for i in range(COLLECT_END)
             if a[i] > 0 and i + dice < COLLECT_END and a[i + dice] >= -1]
@@ -35,7 +26,7 @@ def _playable_indexes_for_collect(a: List[int], dice: int) -> List[int]:
     src_indexes = [i for i in range(COLLECT_START, COLLECT_END) if a[i] > 0]
     if min(src_indexes) + dice >= COLLECT_END:
         return [min(src_indexes)]
-    cands = [src_index for src_index in src_indexes if _can_move_on_board(a, src_index, dice)]
+    cands = [src_index for src_index in src_indexes if src_index+dice<COLLECT_END and a[src_index+dice] >= -1]
     perfect = COLLECT_END - dice
     if perfect in src_indexes:
         cands.append(perfect)
@@ -108,7 +99,7 @@ def generate_white_moves(initial_state: GameState, initial_dice: int) -> List[Li
                         result_list.append(a)
                 for src_index in playable:
                     dst_index = src_index + d
-                    if not _on_board(dst_index):
+                    if dst_index >= COLLECT_END:
                         new_state = update_white(a[:], src_index, WHITE_BAG)
                         if score_state(new_state) is not None:
                             return [new_state]
