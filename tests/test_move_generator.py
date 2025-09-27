@@ -3,6 +3,7 @@ from src.state import *
 from src.white_generator import generate_white_moves
 from src.black_generator import generate_black_moves
 from typing import Set
+from tests.pp_utils import pretty_print_board
 
 def generate_all_dice():
     return [Dice.to_list(i, j) for i in [1, 2, 3, 4, 5, 6] for j in [1, 2, 3, 4, 5, 6]]
@@ -75,7 +76,13 @@ class MyTestCase:
 
 class TestMoveGenerator:
     def test_stone_on_bar_cannot_land(self):
-        # The opponent home is full and the stone on the bar cannot land.
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .  *3   .   .   .   . ││ *2  *2  *2  *2  *2  *2 │
+│                        ││                        │
+│                        ││                        │   1 :
+│  .   .   .   .   .   . ││ 14   .   .   .   .   . │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({10:-3,HOME(6):14, WHITE_BAR:1}, range(6), -2)
         exp = Expectation(length=1, expected_state=state)
 
@@ -83,6 +90,13 @@ class TestMoveGenerator:
             MyTestCase(state, d, exp).check()
 
     def test_stone_on_bar_cannot_land_2(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  . *11   .   .   .   . ││  .   .  *2   .  *2   . │
+│                        ││                        │
+│                        ││                        │   1 :
+│  .   .   .   .   .   . ││ 14   .   .   .   .   . │
+└────────────────────────┴┴────────────────────────┘"""
         # All the dice values point to opponent barrier and the stone on the bar cannot land.
         state = construct_state({1:-2, 3:-2,10:-11,HOME(6):14,WHITE_BAR:1})
         exp = Expectation(length=1, expected_state=state)
@@ -91,6 +105,13 @@ class TestMoveGenerator:
             MyTestCase(state, Dice.to_list(d1, d2), exp).check()
 
     def test_stone_cannot_move(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .  *3   .   .   .  *2 ││ *2  *2  *2  *2  *2   2 │
+│                        ││                        │
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         # All stones are at the end except for a couple at the start completely trapped.
         state = construct_state({10:-3,HOME(1):13, 0:2}, range(1,7), -2)
         exp = Expectation(length=1, expected_state=state)
@@ -99,6 +120,13 @@ class TestMoveGenerator:
             MyTestCase(state, d, exp).check()
 
     def test_stone_cannot_move_2(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   . *15 ││  .   .   .   .   .   3 │
+│                        ││                        │
+│                        ││                        │
+│  .   .   .   .   .   . ││  2   2   2   2   2   2 │
+└────────────────────────┴┴────────────────────────┘"""
         # The stone at the start is trapped and the others cannot move
         state = construct_state({0:3, 6:-15}, range(HOME(6), COLLECT_END), 2)
         exp = Expectation(length=1, expected_state=state)
@@ -106,18 +134,39 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_remaining_stone_can_neither_move_nor__get_collected(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │       : *13
+│                        ││                        │       :  13
+│  .   .   .   .   .   . ││  2   .   .   .   .  *2 │
+└────────────────────────┴┴────────────────────────┘ """
         state = construct_state({HOME(6):2,HOME(1):-2,WHITE_BAG:13, BLACK_BAG:-13})
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(5, 5)
         MyTestCase(state, dice, exp).check()
 
     def test_no_stone_can_move(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   2   .  *2  *2   . ││  2   .   .   .   .   . │
+│                        ││                        │       :  *7
+│                        ││                        │       :  11
+│ *2  *2   .   .   .   . ││  .   .   .   .   .   . │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({5:2,7:-2,8:-2,10:2,12:-2,13:-2,WHITE_BAG:11,BLACK_BAG:-7})
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(2, 3)
         MyTestCase(state, dice, exp).check()
 
     def test_no_stone_can_move_2(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   . *15 ││  .   .   .   .   .   3 │
+│                        ││                        │
+│                        ││                        │
+│  .   .   .   .   .   . ││  2   2   2   2   2   2 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(5):2, WHITE_BAG:13,COLLECT_END-1:-2,COLLECT_END-2:-2,
                                  BLACK_BAG:-11})
         exp = Expectation(length=1, expected_state=state)
@@ -125,6 +174,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_land_one_stone(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││ *2  *2  *2   .  *2  *2 │
+│                        ││                        │     :  *5
+│                        ││                        │   2 :
+│  .   .   .   .   .   . ││  .  13   .   .   .   . │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(5):13,WHITE_BAR:2,0:-2,1:-2,3:-2,4:-2,5:-2,BLACK_BAG:-5})
         expected = change_state(state, {2:1,WHITE_BAR:1})
         exp = Expectation(length=1, expected_state=expected)
@@ -132,6 +188,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_land_two_stones(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││ *2  *2  *2   .  *2  *2 │
+│                        ││                        │       :  *5
+│                        ││                        │   2 :
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):13, WHITE_BAR:2, 0:-2,1:-2,BLACK_BAG:-5}, range(3,6), -2)
         expected = change_state(state, {2: 2, WHITE_BAR: 0})
         exp = Expectation(length=1, expected_state=expected)
@@ -139,6 +202,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_escape_1(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .  *2  *2  *2  *2  *2 │
+│                        ││                        │       :  *5
+│                        ││                        │   1 :
+│  .   .   .   .   .   . ││  .   .   .   .   .  14 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):14, WHITE_BAR:1, BLACK_BAG:-5}, range(5), -2)
         expected = change_state(state, {HOME(1): 15, WHITE_BAR: 0})
         exp = Expectation(length=1, expected_state=expected)
@@ -146,6 +216,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_escape_2_have_to_use_smaller_dice_first(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││ *2   .   .   .   .   1 │
+│                        ││                        │ *13 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  14 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):14, 0:1, 5:-2, BLACK_BAR:-13})
         expected = change_state(state, {0:0, 7:1})
         exp = Expectation(length=1, expected_state=expected)
@@ -153,6 +230,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_single_stone_movement(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   1 │
+│                        ││                        │ *15 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  14 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):14, 0:1, BLACK_BAR:-15})
         for i in range(1, 7):
             for j in range(i + 1, 7):
@@ -173,6 +257,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_single_stone_move_and_bolt(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .  *1   . ││  .   .   .   .   .   1 │
+│                        ││                        │ *14 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  14 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):14, 0:1,BLACK_BAR:-14,7:-1})
 
         for i in range(1, 7):
@@ -183,6 +274,13 @@ class TestMoveGenerator:
             MyTestCase(state, dice, exp).check()
 
     def test_double_stone_movement(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   1   .   .   .   . ││  .   .   .   .   .   1 │
+│                        ││                        │ *15 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):13, 0:1, 10:1, BLACK_BAR:-15})
 
         for i in range(1, 7):
@@ -201,6 +299,13 @@ class TestMoveGenerator:
                 MyTestCase(state, dice, exp).check()
 
     def test_double_stone_movement_with_blocks(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .  *2  *2  *2 ││  .   .   .  *2   1   1 │
+│                        ││                        │  *7 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         state = construct_state({HOME(1):13, 0:1,1:1,2:-2,BLACK_BAR:-7}, range(6,9),-2)
         expected = change_state(state, {0: 0, 5: 1, 1:0, 3:1})
         exp = Expectation(length=1, expected_state=expected)
@@ -208,6 +313,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_double_stone_movement_with_blocks_2(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .  *2   .  *2 ││ *2   .   .   .   1   1 │
+│                        ││                        │  *9 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(1)] = 13
         a[0] = 1
@@ -225,6 +337,13 @@ class TestMoveGenerator:
 
 
     def test_only_one_dice_can_move_multiple_results(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│ *2  *2   .   .   .  *2 ││  .   1   .   .   .   1 │
+│                        ││                        │  *5 :
+│                        ││                        │
+│  .   .   .  *2   .   . ││ 13   .   .   .   .  *2 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(6)] = 13
         a[HOME(1)] = -2
@@ -245,6 +364,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_double_stone_double_dice(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   1   1 │
+│                        ││                        │ *15 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(1)] = 13
         a[0] = 1
@@ -262,6 +388,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_double_stone_double_dice_2(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   1   .   .   .   1 │
+│                        ││                        │ *15 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  13 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(1)] = 13
         a[0] = 1
@@ -283,6 +416,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_four_stones_double_dice(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   1   1   1   1 │
+│                        ││                        │ *15 :
+│                        ││                        │
+│  .   .   .   .   .   . ││  .   .   .   .   .  11 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(1)] = 11
         for i in range(4):
@@ -306,6 +446,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_collect_with_waste(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *15 :
+│                        ││                        │     :  12
+│  .   .   .   .   .   . ││  .   .   .   1   1   1 │
+└────────────────────────┴┴────────────────────────┘ """
         a = [0] * 28
         for i in range(HOME(3), COLLECT_END):
             a[i] = 1
@@ -319,6 +466,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_collect_double(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *15 :
+│                        ││                        │
+│  .   .   .   .   .   . ││ 10   1   1   1   1   1 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         for i in range(COLLECT_START + 1, COLLECT_END):
             a[i] = 1
@@ -333,6 +487,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_move_in_collect_phase(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *15 :
+│                        ││                              :  13
+│  .   .   .   .   .   . ││  1   .   .   .   .   1 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(1)] = 1
         a[HOME(6)] = 1
@@ -347,6 +508,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_partial_collect(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *13 :
+│                        ││                        │     :  11
+│  .   .   .   .   .   . ││  .   1   .   1  *2   2 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(1)] = 2
         a[HOME(2)] = -2
@@ -363,6 +531,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_move_and_collect(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *15 :
+│                        ││                        │     :  13
+│  .   .   .   .   .   . ││  1   .   .   1   .   . │
+└────────────────────────┴┴────────────────────────┘ """
         a = [0] * 28
         a[HOME(3)] = 1
         a[HOME(6)] = 1
@@ -376,6 +551,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_move_all_no_collect(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *13 :
+│                        ││                        │     :  10
+│  .   .   .   .   .   . ││  .   .   .   5   .  *2 │
+└────────────────────────┴┴────────────────────────┘"""
         a = [0] * 28
         a[HOME(3)] = 5
         a[HOME(1)] = -2
@@ -389,6 +571,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_game_end(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  .   .   .   .   .   . ││  .   .   .   .   .   . │
+│                        ││                        │ *15 :
+│                        ││                        │     :  12
+│  .   .   .   .   .   . ││  .   1   .   1   .   1 │
+└────────────────────────┴┴────────────────────────┘ """
         a = [0] * 28
         a[HOME(5)] = 1
         a[HOME(3)] = 1
@@ -403,6 +592,13 @@ class TestMoveGenerator:
         MyTestCase(state, dice, exp).check()
 
     def test_count_moves_at_start(self):
+        """\
+┌────────────────────────┬┬────────────────────────┐
+│  5   .   .   .  *3   . ││ *5   .   .   .   .   2 │
+│                        ││                        │
+│                        ││                        │
+│ *5   .   .   .   3   . ││  5   .   .   .   .  *2 │
+└────────────────────────┴┴────────────────────────┘"""
         state = GameState.game_start()
 
         dice = Dice.to_list(6, 6)
