@@ -59,24 +59,8 @@ def score_state(a):
             return -1
 
 
-def update_black(a, src_index: int, dst_index: int):
-    a[src_index] += 1
-    if a[dst_index] == 1:
-        a[WHITE_BAR] += 1
-        a[dst_index] += -2
-    else:
-        a[dst_index] += -1
-    return a
 
 
-def update_white(a, src_index: int, dst_index: int):
-    a[src_index] += -1
-    if a[dst_index] == -1:
-        a[BLACK_BAR] -= 1
-        a[dst_index] += 2
-    else:
-        a[dst_index] += 1
-    return a
 
 
 class GameState:

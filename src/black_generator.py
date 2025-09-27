@@ -1,13 +1,20 @@
 from typing import Tuple, List
 
 from src.state import *
+from line_profiler import LineProfiler, profile
 
 
-def _playable_indexes_for_normal(a: List[int], dice: int) -> List[int]:
-    return [i for i in range(COLLECT_END) if a[i] < 0 <= i - dice and a[i - dice] <= 1]
+def update_black(a, src_index: int, dst_index: int):
+    a[src_index] += 1
+    if a[dst_index] == 1:
+        a[WHITE_BAR] += 1
+        a[dst_index] -= 2
+    else:
+        a[dst_index] -= 1
+    return a
 
 
-def _moves_for_on_bar(a: List[int], dice: int) -> List[Tuple[GameState, int]]:
+def _moves_for_on_bar(a: List[int], dice: int) -> List[Tuple[List[int], int]]:
     r = []
     d1, d2 = dice % 10, (dice // 10) % 10
     d = d1
@@ -23,38 +30,31 @@ def _moves_for_on_bar(a: List[int], dice: int) -> List[Tuple[GameState, int]]:
 
 def _playable_indexes_for_collect(a: List[int], dice: int) -> List[int]:
     src_indexes = [i for i in range(6) if a[i] < 0]
-    if max(src_indexes) - dice < 0:
-        return [max(src_indexes)]
+    if src_indexes[-1] < dice:
+        return [src_indexes[-1]]
     cands = [src_index for src_index in src_indexes if src_index-dice>=0 and a[src_index-dice] <= 1]
-    perfect = dice - 1
-    if perfect in src_indexes:
-        cands.append(perfect)
+    if dice-1 in src_indexes:
+        cands.append(dice-1)
     return cands
 
 
-def _move_state(a) -> STATE:
-    if a[BLACK_BAR] < 0:
-        return STATE.ON_BAR
-    related_stones = sum([a[i] for i in range(6) if a[i] < 0])
-    related_stones += a[BLACK_BAG]
-    return STATE.COLLECTING if related_stones == -15 else STATE.NORMAL
-
-
+@profile
 def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[List[int]]:
-    partial_results = [(initial_state.a, initial_dice)]
-    result_list = [initial_state.a]
+    result_list = []
     result_dice = 2 if initial_dice < 100 else 4
-    i = 0
-    while i < len(partial_results):
-        a, dice = partial_results[i]
-        i += 1
+
+    home_stones = sum(initial_state.a[i] for i in range(6) if initial_state.a[i] < 0)
+    partial_results: List[Tuple[List[int], int, int]] = [(initial_state.a, initial_dice, home_stones)]
+
+    while partial_results:
+        a, dice, home_stones = partial_results.pop()
         if dice == 0:
             if result_dice > 0:
                 result_list, result_dice = [a], 0
             else:
                 result_list.append(a)
             continue
-        board_state = _move_state(a)
+        board_state = STATE.ON_BAR if a[BLACK_BAR] < 0 else STATE.COLLECTING if home_stones + a[BLACK_BAG] == -15 else STATE.NORMAL
         if board_state == STATE.ON_BAR:
             candidates = _moves_for_on_bar(a, dice)
             if not candidates:
@@ -71,7 +71,7 @@ def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[L
                     else:
                         result_list.append(a)
                 else:
-                    partial_results.append((new_state, new_dice))
+                    partial_results.append((new_state, new_dice, home_stones))
         else:
             d1, d2 = dice % 10, (dice // 10) % 10
             d = d1
@@ -87,7 +87,7 @@ def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[L
                 else:
                     new_dice = d2
                 if board_state == STATE.NORMAL:
-                    playable = _playable_indexes_for_normal(a, d)
+                    playable = [i for i in range(d,COLLECT_END) if a[i] < 0 and a[i - d] <= 1]
                 else:
                     playable = _playable_indexes_for_collect(a, d)
                 if not playable:
@@ -98,18 +98,23 @@ def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[L
                         result_list.append(a)
                 for src_index in playable:
                     dst_index = src_index - d
+                    new_state = a[:]
+                    new_home_stones = home_stones
                     if dst_index < 0:
-                        new_state = update_black(a[:], src_index, BLACK_BAG)
+                        update_black(new_state, src_index, BLACK_BAG)
+                        new_home_stones += 1
                         if score_state(new_state) is not None:
                             return [new_state]
                     else:
-                        new_state = update_black(a[:], src_index, dst_index)
+                        update_black(new_state, src_index, dst_index)
+                        if src_index >= 6 > dst_index:
+                            new_home_stones -= 1
                     if not new_dice:
                         if result_dice > 0:
                             result_list, result_dice = [new_state], 0
                         else:
                             result_list.append(new_state)
                     else:
-                        partial_results.append((new_state, new_dice))
+                        partial_results.append((new_state, new_dice, new_home_stones))
                 d = d2 if d == d1 else 0
     return result_list
