@@ -16,7 +16,7 @@ def get_char(st: GameState, col: int, row: int) -> str:
     return ' '
 
 
-def get_bar(st: GameState, color:COLOR):
+def get_bar(st: GameState, color: COLOR):
     n = st.a[WHITE_BAR] if color == COLOR.WHITE else st.a[BLACK_BAR]
     ch = '○' if color == COLOR.WHITE else '●'
     result = [ch] * (min(n, 3))
@@ -25,7 +25,7 @@ def get_bar(st: GameState, color:COLOR):
     return ' '.join(result)
 
 
-def get_bag(st: GameState, row:int, color: COLOR):
+def get_bag(st: GameState, row: int, color: COLOR):
     if color == COLOR.WHITE:
         n = st.a[WHITE_BAG]
         ch = '○'
@@ -55,7 +55,6 @@ class RowBuilder:
 
     def __repr__(self):
         return ''.join(self.r)
-
 
 
 class Screen:
@@ -93,7 +92,7 @@ def pretty_print(st: GameState) -> str:
     screen.add(RowBuilder("└─────────────┴┴─────────────┘"))
 
     for r_i in range(3):
-        screen.append(r_i+1, get_bag(st, r_i, COLOR.BLACK))
+        screen.append(r_i + 1, get_bag(st, r_i, COLOR.BLACK))
         screen.append(11 - r_i, get_bag(st, r_i, COLOR.WHITE))
 
     screen.append(5, get_bar(st, COLOR.BLACK))
