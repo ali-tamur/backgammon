@@ -1,3 +1,7 @@
 
 CompileFlags:
-  Remove: -fno-cxx-modules
+  Add: 
+    - -Wno-unknown-argument
+
+  Remove: 
+    - -fno-cxx-modules

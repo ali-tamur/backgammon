@@ -64,6 +64,17 @@ cc_library(
         ],
 )
 
+cc_test(
+    name = "state_test",
+    size = "small",
+    srcs = ["state_test.cc"],
+    deps = [
+        ":state",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "move",
     hdrs = ["moves.h"],
