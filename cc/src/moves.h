@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-
 #include "bits.h"
 #include "configs.h"
 #include "dice.h"
@@ -19,54 +18,65 @@ template <typename Config>
 std::vector<State<Config>> moves_on_bar(const State<Config> &p) {
   auto result = std::vector<State<Config>>{};
   for (auto d : p.dice.values(false)) {
-    if (p.b[d - 1] >= -1) {
-      result.push_back(p.update_board(WHITE_BAR, d - 1, d));
+    auto land_index = Config::LAND_START + Config::SIGN * (d - 1);
+    if (Config::is_valid_dst(p.b[land_index])) {
+      result.push_back(p.update_board(Config::PLAYER_BAR, land_index, d));
     }
   }
   return result;
 }
 
 template <typename Config>
-class Move {
- public:
-  std::vector<State<Config>> generate(Board board, int32_t dice) {
-    auto result = KeepResults<Config>();
-    auto states = std::vector<State<Config>>{State<Config>(board, dice)};
-    int32_t i = 0;
-    while (i < states.size()) {
-      auto &p = states[i++];
-      if (p.dice.size() == 0) {
-        result.add(p);
+std::vector<State<Config>> generate(const Board &board, Dice dice) {
+  static_assert(std::is_same_v<Config, WhiteConfig> ||
+                std::is_same_v<Config, BlackConfig>);
+  auto result = KeepResults<Config>();
+  auto states = std::vector<State<Config>>{State<Config>(board, dice)};
+  int32_t i = 0;
+  while (i < states.size()) {
+    auto p = states[i++];
+    result.add(p);
+    if (p.dice.size() == 0) {
+      continue;
+    }
+    auto phase = p.phase();
+    if (phase == ON_BAR) {
+      for (auto new_p : moves_on_bar(p)) {
+        states.push_back(new_p);
       }
-      auto phase = p.phase();
-      if (phase == ON_BAR) {
-        auto landings = moves_on_bar(p);
-        if (landings.size() == 0) {
-          result.add(p);
-          continue;
-        }
-        for (auto &new_p : landings) {
-          states.emplace_back(std::move(new_p));
-        }
-        continue;
-      }
+    } else {
       for (auto d : p.dice.values(phase == COLLECTING)) {
+        bool first_move_in_collect = phase == COLLECTING;
         for (auto src_index = p.bits.begin(); src_index != p.bits.end();
              ++src_index) {
-          if (phase == COLLECTING && (*src_index) + d >= COLLECT_END) {
-            auto new_p = p.update_board(*src_index, WHITE_BAG, d);
+          bool can_collect_wastefully =
+              phase == COLLECTING && first_move_in_collect &&
+              !Config::is_inboard(Config::apply_dice((*src_index), d));
+          bool can_collect_exactly =
+              phase == COLLECTING &&
+              Config::apply_dice((*src_index), d) == Config::EXACT_COLLECT;
+          first_move_in_collect = false;
+          if (can_collect_wastefully || can_collect_exactly) {
+            auto new_p = p.update_board(*src_index, Config::PLAYER_BAG, d);
             if (new_p.score() != 0) {
               return {new_p};
             }
-            states.emplace_back(new_p);
+            states.push_back(new_p);
             break;
+          } else {
+            auto dst_index = Config::apply_dice(*src_index, d);
+            if (Config::is_inboard(dst_index) &&
+                Config::is_valid_dst(p.b[dst_index])) {
+              auto new_p = p.update_board(*src_index, dst_index, d);
+              states.push_back(new_p);
+            }
           }
         }
       }
     }
-
-    return result.get_results();
-  };
+  }
+  auto gg = result.get_results();
+  return gg;
 };
 
 }  // namespace bg
