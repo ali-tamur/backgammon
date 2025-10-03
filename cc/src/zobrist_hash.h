@@ -29,6 +29,6 @@ const ZobristTableType &get_zobrist_table() {
   return INSTANCE;
 }
 
-} // namespace bg
+}  // namespace bg
 
-#endif // BG_ZOBRIST_HASH_H_
+#endif  // BG_ZOBRIST_HASH_H_

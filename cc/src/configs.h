@@ -39,7 +39,8 @@ struct WhiteConfig {
   inline static constexpr bool is_inboard(int32_t dst_index) {
     return dst_index < HOME_END;
   }
-  inline static constexpr bool move_to_home(int32_t src_index, int32_t dst_index) {
+  inline static constexpr bool move_to_home(int32_t src_index,
+                                            int32_t dst_index) {
     return src_index < HOME_START && dst_index >= HOME_START;
   }
 };
@@ -64,11 +65,12 @@ struct BlackConfig {
   inline static constexpr bool is_inboard(int32_t dst_index) {
     return dst_index >= 0;
   }
-  inline static constexpr bool move_to_home(int32_t src_index, int32_t dst_index) {
+  inline static constexpr bool move_to_home(int32_t src_index,
+                                            int32_t dst_index) {
     return src_index >= HOME_END && dst_index < HOME_END;
   }
 };
 
 }  // namespace bg
 
-#endif // BG_CONFIGS_H_
+#endif  // BG_CONFIGS_H_
