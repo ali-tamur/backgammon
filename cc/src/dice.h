@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <iostream>
 
 namespace bg {
 
@@ -54,7 +55,7 @@ class Dice {
   friend std::ostream &operator<<(std::ostream &os, const Dice &move);
 };
 
-std::ostream &operator<<(std::ostream &os, const Dice &dice) {
+inline std::ostream &operator<<(std::ostream &os, const Dice &dice) {
   os << dice.dice_;
   return os;
 }

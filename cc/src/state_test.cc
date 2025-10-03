@@ -66,7 +66,7 @@ class Expectation {
       final_b = b;
     }
     std::set<Board> expectation_set(expectations.begin(), expectations.end());
-    std::vector<State<Config>> result = move<Config>(final_b, dice);
+    std::vector<State<Config>> result = generate<Config>(final_b, dice);
     int32_t result_size = result.size();
     std::set<Board> result_set{};
     for (const auto &r : result) {
