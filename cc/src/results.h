@@ -1,5 +1,4 @@
-#ifndef BG_RESULTS_H_
-#define BG_RESULTS_H_
+#pragma once
 
 #include <unordered_set>
 
@@ -41,4 +40,3 @@ class KeepResults {
 };
 
 }  // namespace bg
-#endif  // BG_RESULTS_H_

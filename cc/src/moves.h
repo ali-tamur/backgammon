@@ -1,5 +1,4 @@
-#ifndef BG_MOVES_H_
-#define BG_MOVES_H_
+#pragma once
 
 #include <array>
 #include <numeric>
@@ -79,5 +78,18 @@ std::vector<State<Config>> move(const Board &board, Dice dice) {
   return gg;
 };
 
+std::vector<Board> white_move(const Board& board, int32_t d1, int32_t d2) {
+  const auto& states = move<WhiteConfig>(board, Dice(d1, d2));
+  std::vector<Board> result{};
+  std::transform(states.begin(), states.end(), std::back_inserter(result), [](const auto& state) {return state.get_board();});
+  return result;
+}
+
+std::vector<Board> black_move(const Board& board, int32_t d1, int32_t d2) {
+  const auto& states = move<BlackConfig>(board, Dice(d1, d2));
+  std::vector<Board> result{};
+  std::transform(states.begin(), states.end(), std::back_inserter(result), [](const auto& state) {return state.get_board();});
+  return result;
+}
+
 }  // namespace bg
-#endif  // BG_MOVES_H_

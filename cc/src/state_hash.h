@@ -1,5 +1,4 @@
-#ifndef BG_STATE_HASH_H_
-#define BG_STATE_HASH_H_
+#pragma once
 
 #include "configs.h"
 #include "state.h"
@@ -22,4 +21,3 @@ struct equal_to<::bg::State<Config>> {
 
 }  // namespace std
 
-#endif  // BG_STATE_HASH_H_

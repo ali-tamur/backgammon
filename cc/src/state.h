@@ -1,5 +1,4 @@
-#ifndef BG_STATE_H_
-#define BG_STATE_H_
+#pragma once
 
 #include <array>
 #include <iostream>
@@ -104,6 +103,10 @@ struct State {
     return os;
   }
 
+  Board get_board() const {
+    return b;
+  }
+
  private:
   State(Board board, Dice dice, Bits<Config> bits, int32_t homestones,
         uint64_t hash_)
@@ -160,4 +163,3 @@ std::ostream &operator<<(std::ostream &os, const State<Config> &state) {
 
 }  // namespace bg
 
-#endif  // BG_STATE_H_

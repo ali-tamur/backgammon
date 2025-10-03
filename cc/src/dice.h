@@ -1,5 +1,4 @@
-#ifndef BG_DICE_H_
-#define BG_DICE_H_
+#pragma once
 
 #include <algorithm>
 
@@ -62,4 +61,3 @@ std::ostream &operator<<(std::ostream &os, const Dice &dice) {
 
 }  // namespace bg
 
-#endif  // BG_DICE_H_
