@@ -26,7 +26,7 @@ std::vector<State<Config>> moves_on_bar(const State<Config> &p) {
 }
 
 template <typename Config>
-std::vector<State<Config>> move(const Board &board, Dice dice) {
+std::vector<State<Config>> generate(const Board &board, Dice dice) {
   static_assert(std::is_same_v<Config, WhiteConfig> ||
                 std::is_same_v<Config, BlackConfig>);
   auto result = KeepResults<Config>();
@@ -77,19 +77,5 @@ std::vector<State<Config>> move(const Board &board, Dice dice) {
   auto gg = result.get_results();
   return gg;
 };
-
-std::vector<Board> white_move(const Board& board, int32_t d1, int32_t d2) {
-  const auto& states = move<WhiteConfig>(board, Dice(d1, d2));
-  std::vector<Board> result{};
-  std::transform(states.begin(), states.end(), std::back_inserter(result), [](const auto& state) {return state.get_board();});
-  return result;
-}
-
-std::vector<Board> black_move(const Board& board, int32_t d1, int32_t d2) {
-  const auto& states = move<BlackConfig>(board, Dice(d1, d2));
-  std::vector<Board> result{};
-  std::transform(states.begin(), states.end(), std::back_inserter(result), [](const auto& state) {return state.get_board();});
-  return result;
-}
 
 }  // namespace bg

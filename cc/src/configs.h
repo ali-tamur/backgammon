@@ -3,6 +3,8 @@
 #include <array>
 #include <cstdint>
 
+#include "py_interface.h"
+
 namespace bg {
 
 using Board = std::array<int32_t, 28>;
