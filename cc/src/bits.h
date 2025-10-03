@@ -2,39 +2,74 @@
 #define BG_BITS_H_
 
 #include <numeric>
+#include <type_traits>
+
+#include "configs.h"
 
 namespace bg {
-class BitIterator {
- public:
-  explicit BitIterator(uint32_t n) { n_ = n; };
 
-  size_t operator*() const;
-  BitIterator& operator++();
-  bool operator==(const BitIterator& other) const;
-  bool operator!=(const BitIterator& other) const;
+template <typename Config>
+class Bits {
+  static_assert(std::is_same_v<Config, WhiteConfig> ||
+                std::is_same_v<Config, BlackConfig>);
 
  private:
-  uint32_t n_;
-};
+  class BitIterator {
+   public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = int32_t;
+    using difference_type = std::ptrdiff_t;
 
-class Bits {
+    explicit BitIterator(uint32_t n) { n_ = n; };
+    value_type operator*() const {
+      if constexpr (std::is_same_v<Config, WhiteConfig>) {
+        return __builtin_ctz(n_);
+      } else if constexpr (std::is_same_v<Config, BlackConfig>) {
+        return 31 - __builtin_clz(n_);
+      }
+    }
+
+    BitIterator &operator++() {
+      if constexpr (std::is_same_v<Config, WhiteConfig>) {
+        n_ = n_ & (n_ - 1);
+        return *this;
+      } else if constexpr (std::is_same_v<Config, BlackConfig>) {
+        n_ = n_ ^ (1U << (31 - __builtin_clz(n_)));
+        return *this;
+      }
+    }
+    bool operator==(const BitIterator &other) const { return n_ == other.n_; }
+    bool operator!=(const BitIterator &other) const { return n_ != other.n_; }
+
+   private:
+    uint32_t n_;
+  };
+
  public:
   using iterator = BitIterator;
-  using iterator_category = std::forward_iterator_tag;
-  using value_type = int32_t;
-  using difference_type = std::ptrdiff_t;
-  using pointer = value_type*;
-  using reference = value_type&;
-
   Bits() : n_{0} {}
-  void set(size_t index);
-  void unset(size_t index);
-  iterator begin() const;
-  iterator end() const;
+  void set(size_t index) { n_ |= (1U << index); }
+  void unset(size_t index) { n_ &= ~(1U << index); }
+  iterator begin() const { return BitIterator(n_); }
+  iterator end() const { return BitIterator(0); }
 
  private:
   uint32_t n_ = 0;
+  friend iterator begin(const Bits &b) { return b.begin(); }
+  friend iterator end(const Bits &b) { return b.end(); }
 };
+
+#if 0
+template <typename Config>
+typename Bits<Config>::iterator begin(const Bits<Config>& b) {
+    return b.begin();
+}
+
+template <typename Config>
+typename Bits<Config>::iterator end(const Bits<Config>& b) {
+    return b.end();
+}
+#endif
 
 };  // namespace bg
 

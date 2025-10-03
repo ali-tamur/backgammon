@@ -9,7 +9,6 @@ cc_library(
 
 cc_library(
     name = "bits",
-    srcs = ["bits.cc"],
     hdrs = ["bits.h"],
     visibility = ["//visibility:public"],
     deps = [":configs"],
@@ -20,7 +19,7 @@ cc_test(
     size = "small",
     srcs = ["bits_test.cc"],
     deps = [
-        ":bits",
+        ":bits", ":configs",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -30,7 +29,7 @@ cc_library(
     name = "results",
     hdrs = ["results.h"],
     visibility = ["//visibility:public"],
-    deps = [":configs"],
+    deps = [":configs", ":state_hash"],
 )
 
 cc_library(
@@ -39,6 +38,13 @@ cc_library(
     hdrs = ["dice.h"],
     visibility = ["//visibility:public"],
     deps = [":configs"],
+)
+
+cc_library(
+    name = "state_hash",
+    hdrs = ["state_hash.h"],
+    visibility = ["//visibility:public"],
+    deps = [":state"],
 )
 
 cc_test(
@@ -53,30 +59,7 @@ cc_test(
 )
 
 cc_library(
-    name = "state",
-    hdrs = ["state.h"],
-    visibility = ["//visibility:public"],
-    deps =
-        [
-            ":bits",
-            ":configs",
-            ":dice",
-        ],
-)
-
-cc_test(
-    name = "state_test",
-    size = "small",
-    srcs = ["state_test.cc"],
-    deps = [
-        ":state",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "move",
+    name = "moves",
     hdrs = ["moves.h"],
     visibility = ["//visibility:public"],
     deps =
@@ -89,3 +72,33 @@ cc_library(
             "@abseil-cpp//absl/strings",
         ],
 )
+
+cc_library(
+    name = "state",
+    hdrs = ["state.h"],
+    visibility = ["//visibility:public"],
+    deps =
+        [ ":zobrist_hash",
+            ":bits",
+            ":configs",
+            ":dice",
+        ],
+)
+
+cc_library(
+    name = "zobrist_hash",
+    hdrs = ["zobrist_hash.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "state_test",
+    size = "small",
+    srcs = ["state_test.cc"],
+    deps = [
+        ":state", ":moves",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
