@@ -27,7 +27,7 @@ std::vector<State<Config>> moves_on_bar(const State<Config> &p) {
 }
 
 template <typename Config>
-std::vector<State<Config>> generate(const Board &board, Dice dice) {
+std::vector<State<Config>> move(const Board &board, Dice dice) {
   static_assert(std::is_same_v<Config, WhiteConfig> ||
                 std::is_same_v<Config, BlackConfig>);
   auto result = KeepResults<Config>();
