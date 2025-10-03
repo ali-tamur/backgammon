@@ -1,5 +1,4 @@
-#ifndef BG_CONFIGS_H_
-#define BG_CONFIGS_H_
+#pragma once
 
 #include <array>
 #include <cstdint>
@@ -73,4 +72,3 @@ struct BlackConfig {
 
 }  // namespace bg
 
-#endif  // BG_CONFIGS_H_

@@ -1,5 +1,4 @@
-#ifndef BG_BITS_H_
-#define BG_BITS_H_
+#pragma once
 
 #include <numeric>
 #include <type_traits>
@@ -59,18 +58,5 @@ class Bits {
   friend iterator end(const Bits &b) { return b.end(); }
 };
 
-#if 0
-template <typename Config>
-typename Bits<Config>::iterator begin(const Bits<Config>& b) {
-    return b.begin();
-}
-
-template <typename Config>
-typename Bits<Config>::iterator end(const Bits<Config>& b) {
-    return b.end();
-}
-#endif
-
 };  // namespace bg
 
-#endif  // BG_BITS_H_

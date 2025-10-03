@@ -1,5 +1,4 @@
-#ifndef BG_ZOBRIST_HASH_H_
-#define BG_ZOBRIST_HASH_H_
+#pragma once
 
 #include <array>
 #include <cstddef>
@@ -31,4 +30,3 @@ const ZobristTableType &get_zobrist_table() {
 
 }  // namespace bg
 
-#endif  // BG_ZOBRIST_HASH_H_
