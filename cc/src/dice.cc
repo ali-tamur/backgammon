@@ -4,17 +4,17 @@ namespace bg {
 
 int32_t DiceIterator::operator*() const { return d1_; }
 
-DiceIterator& DiceIterator::operator++() {
+DiceIterator &DiceIterator::operator++() {
   d1_ = d2_;
   d2_ = 0;
   return *this;
 }
 
-bool DiceIterator::operator==(const DiceIterator& other) const {
+bool DiceIterator::operator==(const DiceIterator &other) const {
   return d1_ == other.d1_ && d2_ == other.d2_;
 }
 
-bool DiceIterator::operator!=(const DiceIterator& other) const {
+bool DiceIterator::operator!=(const DiceIterator &other) const {
   return d1_ != other.d1_ || d2_ != other.d2_;
 }
 
