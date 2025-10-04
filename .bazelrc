@@ -1,0 +1,8 @@
+
+common --action_env=PYTHON_BIN="/usr/bin/python3.10"
+build --python_path="/usr/bin/python3.10"
+build:clang --action_env=CC="/usr/bin/clang"
+build:clang --action_env=CXX="/usr/bin/clang++"
+build --config=clang
+build --symlink_prefix=/tmp/bazel
+

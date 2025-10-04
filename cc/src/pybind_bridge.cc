@@ -8,7 +8,7 @@
 namespace py = pybind11;
 using namespace bg;
 
-PYBIND11_MODULE(backgammon_core, m) {
+PYBIND11_MODULE(backgammon, m) {
     m.doc() = "Pybind11 bridge for the zero-cost C++ Backgammon Move Generator.";
 
     m.def("white_moves", &white_move,

@@ -35,8 +35,9 @@ pybind_extension(
     srcs = [
         "pybind_bridge.cc",
     ],
+    visibility = ["//visibility:public"],
     deps = [
-        "backgammon_lib",
+        ":backgammon_lib",
     ],
 )
 
