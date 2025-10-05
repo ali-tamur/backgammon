@@ -4,9 +4,6 @@ from pathlib import Path
 from typing import Optional, List
 
 import fastavro
-# import avro.schema
-# from avro.datafile import DataFileWriter, DataFileReader
-# from avro.io import DatumWriter, DatumReader
 from fastavro import parse_schema
 
 
