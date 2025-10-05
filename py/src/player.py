@@ -1,6 +1,6 @@
 import random
 from abc import ABC, abstractmethod
-from typing import Callable, List
+from collections.abc import Callable
 
 import keras
 import tensorflow as tf
@@ -10,7 +10,7 @@ from py.src.training_data import state_to_tensor
 
 
 class Player(ABC):
-    def __init__(self, name, move_generator: Callable[[GameState, int, int], List[List[int]]]):
+    def __init__(self, name, move_generator: Callable[[GameState, int, int], list[list[int]]]):
         self.name = name
         self.move_generator = move_generator
         pass
@@ -38,7 +38,7 @@ class NNPlayer(Player):
         self.model = model
         self.temperature = temperature
 
-    def move(self, state: GameState, d1: int, d2:int) -> GameState:
+    def move(self, state: GameState, d1: int, d2: int) -> GameState:
         moves = self.move_generator(state.a, d1, d2)
         tensors = tf.stack([state_to_tensor(st) for st in moves])
         raw_scores = self.model.predict(tensors, verbose=0)

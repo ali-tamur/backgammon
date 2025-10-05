@@ -4,9 +4,16 @@ from py.src.player import *
 from py.src.pretty_print import pretty_print
 from py.src.state import score_state
 
+
 class GameManager:
-    def __init__(self, white: Player, black: Player, dice_source: Dice,
-                 logger=DummyLogWriter(), print_debug=False):
+    def __init__(
+        self,
+        white: Player,
+        black: Player,
+        dice_source: Dice,
+        logger=DummyLogWriter(),
+        print_debug=False,
+    ):
         self.players = [white, black]
         self.dice_source = dice_source
         self.logger = logger
@@ -25,7 +32,7 @@ class GameManager:
             if self.print_debug:
                 print(f"{d1}-{d2}")
                 print(pretty_print(state))
-                print(f"\n\n")
+                print("\n\n")
                 input("...")
             self.logger.move([d1, d2], state)
             if score_state(state.a) is not None:

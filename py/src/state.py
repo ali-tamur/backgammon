@@ -34,8 +34,36 @@ BLACK_BAG = 27
 COLLECT_START = 18
 COLLECT_END = 24
 
-GAME_START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, -2, 0, 0, 0, 0]
-
+GAME_START = [
+    2,
+    0,
+    0,
+    0,
+    0,
+    -5,
+    0,
+    -3,
+    0,
+    0,
+    0,
+    5,
+    -5,
+    0,
+    0,
+    0,
+    3,
+    0,
+    5,
+    0,
+    0,
+    0,
+    0,
+    -2,
+    0,
+    0,
+    0,
+    0,
+]
 
 
 def score_state(a):
@@ -43,7 +71,7 @@ def score_state(a):
         return None
     if a[WHITE_BAG] == 15:
         stones_at_home = [i for i in range(COLLECT_START, COLLECT_END) if a[i] < 0]
-        if len(stones_at_home)  - a[BLACK_BAR] > 0:
+        if len(stones_at_home) - a[BLACK_BAR] > 0:
             return 3
         elif a[BLACK_BAG] == 0:
             return 2

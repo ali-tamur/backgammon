@@ -5,12 +5,12 @@ from random import Random
 
 from dotenv import load_dotenv
 
+from py.src.cc_generator import generate_black_moves, generate_white_moves
 from py.src.dice_source import Dice
 from py.src.game_manager import GameManager
-from py.src.logger import LogWriter, DummyLogWriter
+from py.src.logger import DummyLogWriter
 from py.src.player import RandomPlayer
 from py.src.training_data import prepare_training_data
-from py.src.cc_generator import generate_white_moves, generate_black_moves
 
 DEFAULT_LOG_SCHEMA_PATH = "py/schemas/log.avsc"
 DEFAULT_LOG_PATH = "/app/data/game_log.avro"
@@ -22,7 +22,9 @@ def find_project_root():
     while not (project_root / "requirements.txt").exists():
         project_root = project_root.parent
         if project_root == project_root.parent:  # To prevent infinite loop if file is not found
-            raise FileNotFoundError("Could not find project root. Make sure requirements.txt exists.")
+            raise FileNotFoundError(
+                "Could not find project root. Make sure requirements.txt exists."
+            )
     return project_root
 
 
@@ -31,26 +33,23 @@ def parse_args():
 
     subparsers = parser.add_subparsers(dest="command")
     play_games_parser = subparsers.add_parser(
-        "play_games", help="Run a simulation for a specified number of games.")
+        "play_games", help="Run a simulation for a specified number of games."
+    )
     play_games_parser.add_argument(
-        "--count",
-        type=int,
-        default=0,
-        help="The number of games to play."
+        "--count", type=int, default=0, help="The number of games to play."
     )
     play_games_parser.add_argument(
         "--debug",
-        action='store_true',
-        help="Will print the game while it is played if enabled"
+        action="store_true",
+        help="Will print the game while it is played if enabled",
     )
 
-    read_data_parser = subparsers.add_parser(
-        "read_data", help="Read a dataset of training data.")
+    read_data_parser = subparsers.add_parser("read_data", help="Read a dataset of training data.")
     read_data_parser.add_argument(
         "--player_name",
         type=str,
         required=True,
-        help="The player name whose games will be loaded"
+        help="The player name whose games will be loaded",
     )
 
     args = parser.parse_args()
@@ -83,9 +82,9 @@ def get_schema() -> Path:
 
 def create_log_writer():
     return DummyLogWriter()
-    #schema = get_schema()
-    #log_file = get_log_file()
-    #return LogWriter(log_file, schema)
+    # schema = get_schema()
+    # log_file = get_log_file()
+    # return LogWriter(log_file, schema)
 
 
 def main():
@@ -93,8 +92,8 @@ def main():
     args = parse_args()
     if args.command == "play_games":
         n_games = args.count or 1000
-        alice = RandomPlayer('alice', random_seed, generate_white_moves)
-        bob = RandomPlayer('bob', random_seed, generate_black_moves)
+        alice = RandomPlayer("alice", random_seed, generate_white_moves)
+        bob = RandomPlayer("bob", random_seed, generate_black_moves)
         log_writer = create_log_writer()
         play_games(alice, bob, Dice(1123), n_games, log_writer, args.debug)
     elif args.command == "read_data":

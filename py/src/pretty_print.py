@@ -1,48 +1,47 @@
-from typing import List
 
-from py.src.state import GameState, COLOR, WHITE_BAR, BLACK_BAR, WHITE_BAG, BLACK_BAG
+from py.src.state import BLACK_BAG, BLACK_BAR, COLOR, WHITE_BAG, WHITE_BAR, GameState
 
 
 def get_char(st: GameState, col: int, row: int) -> str:
     n = st.a[col]
     if n == 0 and row == 0:
-        return '.'
+        return "."
     if abs(n) > 5 and row == 4:
         return f"{abs(n)}"
     if n > 0 and n > row:
-        return '○'
+        return "○"
     if n < 0 and abs(n) > row:
-        return '●'
-    return ' '
+        return "●"
+    return " "
 
 
 def get_bar(st: GameState, color: COLOR):
     n = st.a[WHITE_BAR] if color == COLOR.WHITE else st.a[BLACK_BAR]
-    ch = '○' if color == COLOR.WHITE else '●'
+    ch = "○" if color == COLOR.WHITE else "●"
     result = [ch] * (min(n, 3))
     if n > 3:
         result.append(f": {n}")
-    return ' '.join(result)
+    return " ".join(result)
 
 
 def get_bag(st: GameState, row: int, color: COLOR):
     if color == COLOR.WHITE:
         n = st.a[WHITE_BAG]
-        ch = '○'
+        ch = "○"
     else:
         n = st.a[BLACK_BAG]
-        ch = '●'
+        ch = "●"
     n -= 5 * row
     if n <= 0:
         return ""
     n = min(n, 5)
     result = [ch] * n
-    return ' '.join(result)
+    return " ".join(result)
 
 
-def get_row(st: GameState, cols: List[int], row: int):
+def get_row(st: GameState, cols: list[int], row: int):
     s = ["│"] + [get_char(st, c, row) for c in cols] + ["│"]
-    return ' '.join(s)
+    return " ".join(s)
 
 
 class RowBuilder:
@@ -54,7 +53,7 @@ class RowBuilder:
             self.r.append(ch)
 
     def __repr__(self):
-        return ''.join(self.r)
+        return "".join(self.r)
 
 
 class Screen:
@@ -68,7 +67,7 @@ class Screen:
         self.rows[index].add(st)
 
     def pp(self):
-        return '\n'.join([r.__repr__() for r in self.rows])
+        return "\n".join([r.__repr__() for r in self.rows])
 
 
 def pretty_print(st: GameState) -> str:

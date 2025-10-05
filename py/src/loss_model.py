@@ -1,6 +1,5 @@
 import tensorflow as tf
 from keras import saving
-from tensorflow import keras
 
 
 @saving.register_keras_serializable()
@@ -24,6 +23,8 @@ class GameStateWeightedLoss(tf.keras.losses.Loss):
         move_number = y_true[:, 1]
         total_moves = y_true[:, 2]
         difference = 1 - y_win_loss * y_pred
-        coefficient = tf.math.abs(y_score) * tf.math.sqrt(tf.math.divide_no_nan(move_number, total_moves))
+        coefficient = tf.math.abs(y_score) * tf.math.sqrt(
+            tf.math.divide_no_nan(move_number, total_moves)
+        )
         loss = difference * coefficient
         return tf.reduce_mean(loss)

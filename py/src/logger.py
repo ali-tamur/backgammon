@@ -1,7 +1,6 @@
 import json
 import os
 from pathlib import Path
-from typing import Optional, List
 
 import fastavro
 from fastavro import parse_schema
@@ -10,7 +9,7 @@ from fastavro import parse_schema
 class PlayerLog:
     def __init__(self, record, name):
         self.record = record
-        self.players = self.record['players'].split('-')
+        self.players = self.record["players"].split("-")
         self.player_index = 0 if name == self.players[0] else 1
 
     @staticmethod
@@ -21,11 +20,11 @@ class PlayerLog:
     def game_states(self):
         if self.player_index is None:
             return None
-        state_list = self.record['state']
-        return state_list[self.player_index:len(state_list):2]
+        state_list = self.record["state"]
+        return state_list[self.player_index : len(state_list) : 2]
 
     def score(self):
-        result_for_alice = self.record['score']
+        result_for_alice = self.record["score"]
         return result_for_alice if self.player_index == 0 else -result_for_alice
 
 
@@ -42,28 +41,28 @@ class GameRecordCreator:
 
     def end_game(self, score):
         return {
-            'game_id': self.game_id,
-            'players': self.players,
-            'state': self.states,
-            'dice_roll': self.dice_rolls,
-            'score': score
+            "game_id": self.game_id,
+            "players": self.players,
+            "state": self.states,
+            "dice_roll": self.dice_rolls,
+            "score": score,
         }
 
 
 class LogWriter:
     def __init__(self, file_path: Path, schema_path: Path):
-        with open(schema_path, "rt") as f:
+        with open(schema_path) as f:
             schema_dict = json.load(f)
         self.schema = parse_schema(schema_dict)
         self.file_path = file_path
         self._check_new_file()
-        self.game_keeper: Optional[GameRecordCreator] = None
+        self.game_keeper: GameRecordCreator | None = None
         self.file = None
 
     def _check_new_file(self):
         is_new_file = not os.path.exists(self.file_path) or os.path.getsize(self.file_path) == 0
         if is_new_file:
-            with open(self.file_path, 'wb') as out_file:
+            with open(self.file_path, "wb") as out_file:
                 fastavro.writer(out_file, self.schema, [])
 
     def __enter__(self):
@@ -107,14 +106,14 @@ class DummyLogWriter:
         pass
 
 
-def read_log(file_path: Path) -> List[dict]:
+def read_log(file_path: Path) -> list[dict]:
     records = []
     try:
         with open(file_path, "rb") as f:
             avro_reader = fastavro.reader(f)
             for record in avro_reader:
                 records.append(record)
-    except IOError as e:
+    except OSError as e:
         print(f"Error reading file: {e}")
     return records
 
