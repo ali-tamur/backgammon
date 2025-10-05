@@ -1,6 +1,6 @@
 from typing import List
 
-from src.state import GameState, COLOR, WHITE_BAR, BLACK_BAR, WHITE_BAG, BLACK_BAG
+from py.src.state import GameState, COLOR, WHITE_BAR, BLACK_BAR, WHITE_BAG, BLACK_BAG
 
 
 def get_char(st: GameState, col: int, row: int) -> str:

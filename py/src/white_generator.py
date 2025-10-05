@@ -1,6 +1,6 @@
 from typing import Tuple, List, Iterator
 from dataclasses import dataclass
-from src.state import *
+from py.src.state import *
 from copy import copy, deepcopy
 from line_profiler import LineProfiler, profile
 

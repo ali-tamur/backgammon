@@ -5,8 +5,8 @@ from typing import Callable, List
 import keras
 import tensorflow as tf
 
-from src.state import GameState
-from src.training_data import state_to_tensor
+from py.src.state import GameState
+from py.src.training_data import state_to_tensor
 
 
 class Player(ABC):
