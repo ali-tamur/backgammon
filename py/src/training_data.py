@@ -4,8 +4,8 @@ from typing import List
 import numpy as np
 import tensorflow as tf
 
-from src.logger import read_for_player, PlayerLog
-from src.state import BLACK_BAR, COLLECT_START, WHITE_BAR, WHITE_BAG, BLACK_BAG
+from py.src.logger import read_for_player, PlayerLog
+from py.src.state import BLACK_BAR, COLLECT_START, WHITE_BAR, WHITE_BAG, BLACK_BAG
 
 
 def state_to_tensor(state_arr: List[int]) -> tf.Tensor:

@@ -9,7 +9,7 @@ from src.logger import DummyLogWriter
 from src.white_generator import generate_white_moves
 from src.black_generator import generate_black_moves
 
-
+from py.src.cc_generator import generate_white_moves, generate_black_moves
 def my_game_engine():
     random_seed = random.Random(31415)
 

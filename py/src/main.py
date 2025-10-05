@@ -5,15 +5,14 @@ from random import Random
 
 from dotenv import load_dotenv
 
-from src.dice_source import Dice
-from src.game_manager import GameManager
-from src.logger import LogWriter
-from src.player import RandomPlayer
-from src.training_data import prepare_training_data
-from src.white_generator import generate_white_moves
-from src.black_generator import generate_black_moves
+from py.src.dice_source import Dice
+from py.src.game_manager import GameManager
+from py.src.logger import LogWriter, DummyLogWriter
+from py.src.player import RandomPlayer
+from py.src.training_data import prepare_training_data
+from py.src.cc_generator import generate_white_moves, generate_black_moves
 
-DEFAULT_LOG_SCHEMA_PATH = "schemas/log.avsc"
+DEFAULT_LOG_SCHEMA_PATH = "py/schemas/log.avsc"
 DEFAULT_LOG_PATH = "/app/data/game_log.avro"
 
 
@@ -83,9 +82,10 @@ def get_schema() -> Path:
 
 
 def create_log_writer():
-    schema = get_schema()
-    log_file = get_log_file()
-    return LogWriter(log_file, schema)
+    return DummyLogWriter()
+    #schema = get_schema()
+    #log_file = get_log_file()
+    #return LogWriter(log_file, schema)
 
 
 def main():
@@ -96,7 +96,7 @@ def main():
         alice = RandomPlayer('alice', random_seed, generate_white_moves)
         bob = RandomPlayer('bob', random_seed, generate_black_moves)
         log_writer = create_log_writer()
-        play_games(alice, bob, Dice(random_seed), n_games, log_writer, args.debug)
+        play_games(alice, bob, Dice(1123), n_games, log_writer, args.debug)
     elif args.command == "read_data":
         player = args.player_name
         read_data(get_log_file(), player)

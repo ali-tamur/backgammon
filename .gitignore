@@ -221,3 +221,6 @@ __marimo__/
 
 # bazel
 */MODULE.bazel.lock
+
+# C++ library
+py/src/*.so

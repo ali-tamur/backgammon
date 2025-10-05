@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List,Tuple
 
 
 class Dice:
@@ -14,7 +14,7 @@ class Dice:
             d1, d2 = d2, d1
         return 10 * d1 + d2
 
-    def throw_dice(self)->int:
+    def throw_dice(self)->Tuple[int,int]:
         d1 = self.r.randint(1, 6)
         d2 = self.r.randint(1, 6)
-        return Dice.to_list(d1, d2)
+        return d1, d2
