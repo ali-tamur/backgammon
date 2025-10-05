@@ -1,9 +1,9 @@
+
+from src.black_generator import generate_black_moves
 from src.dice_source import Dice
 from src.state import *
 from src.white_generator import generate_white_moves
-from src.black_generator import generate_black_moves
-from typing import Set
-from tests.pp_utils import pretty_print_board
+
 
 def generate_all_dice():
     return [Dice.to_list(i, j) for i in [1, 2, 3, 4, 5, 6] for j in [1, 2, 3, 4, 5, 6]]
@@ -12,7 +12,8 @@ def generate_all_dice():
 def HOME(dice):
     return COLLECT_END - dice
 
-def construct_state(d:dict, r = None, rval = None)->GameState:
+
+def construct_state(d: dict, r=None, rval=None) -> GameState:
     a = [0] * 28
     for key in d:
         a[key] = d[key]
@@ -22,6 +23,7 @@ def construct_state(d:dict, r = None, rval = None)->GameState:
     state = GameState(a)
     return state
 
+
 def change_state(state, d) -> GameState:
     a = list(state.a)
     for key in d:
@@ -29,11 +31,13 @@ def change_state(state, d) -> GameState:
     state = GameState(a)
     return state
 
-def opposite_perspective(state:GameState)->GameState:
+
+def opposite_perspective(state: GameState) -> GameState:
     a = [-state.a[i] for i in range(COLLECT_END - 1, -1, -1)]
     for i in [BLACK_BAR, WHITE_BAR, BLACK_BAG, WHITE_BAG]:
         a.append(-state.a[i])
     return GameState(a)
+
 
 class Expectation:
     def __init__(self, length=None, expected_state=None, state_set=None, *, score=None):
@@ -42,20 +46,20 @@ class Expectation:
         self.state_set = state_set
         self.score = score
 
-    def check(self, result_set:Set[GameState]):
-       if self.length is not None:
-           assert len(result_set) == self.length
-       if self.state_set is not None:
-           assert result_set == self.state_set
-       if self.expected_state is not None:
-           singe_result = result_set.pop()
-           assert singe_result == self.expected_state
-           if self.score is not None:
-               assert singe_result.score() == self.score
+    def check(self, result_set: set[GameState]):
+        if self.length is not None:
+            assert len(result_set) == self.length
+        if self.state_set is not None:
+            assert result_set == self.state_set
+        if self.expected_state is not None:
+            singe_result = result_set.pop()
+            assert singe_result == self.expected_state
+            if self.score is not None:
+                assert singe_result.score() == self.score
 
 
 class MyTestCase:
-    def __init__(self, state:GameState, dice:int, expected:Expectation):
+    def __init__(self, state: GameState, dice: int, expected: Expectation):
         self.state = state
         self.dice = dice
         self.expected = expected
@@ -68,7 +72,7 @@ class MyTestCase:
         black_state = opposite_perspective(self.state)
         moves = generate_black_moves(black_state, self.dice)
         r = set([GameState(m) for m in moves])
-        black_r:Set[GameState] = set()
+        black_r: set[GameState] = set()
         for st in r:
             black_r.add(opposite_perspective(st))
         self.expected.check(black_r)
@@ -83,7 +87,7 @@ class TestMoveGenerator:
 │                        ││                        │   1 :
 │  .   .   .   .   .   . ││ 14   .   .   .   .   . │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({10:-3,HOME(6):14, WHITE_BAR:1}, range(6), -2)
+        state = construct_state({10: -3, HOME(6): 14, WHITE_BAR: 1}, range(6), -2)
         exp = Expectation(length=1, expected_state=state)
 
         for d in generate_all_dice():
@@ -98,7 +102,7 @@ class TestMoveGenerator:
 │  .   .   .   .   .   . ││ 14   .   .   .   .   . │
 └────────────────────────┴┴────────────────────────┘"""
         # All the dice values point to opponent barrier and the stone on the bar cannot land.
-        state = construct_state({1:-2, 3:-2,10:-11,HOME(6):14,WHITE_BAR:1})
+        state = construct_state({1: -2, 3: -2, 10: -11, HOME(6): 14, WHITE_BAR: 1})
         exp = Expectation(length=1, expected_state=state)
 
         for d1, d2 in [(2, 2), (2, 4), (4, 4)]:
@@ -113,7 +117,7 @@ class TestMoveGenerator:
 │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
 └────────────────────────┴┴────────────────────────┘"""
         # All stones are at the end except for a couple at the start completely trapped.
-        state = construct_state({10:-3,HOME(1):13, 0:2}, range(1,7), -2)
+        state = construct_state({10: -3, HOME(1): 13, 0: 2}, range(1, 7), -2)
         exp = Expectation(length=1, expected_state=state)
 
         for d in generate_all_dice():
@@ -128,7 +132,7 @@ class TestMoveGenerator:
 │  .   .   .   .   .   . ││  2   2   2   2   2   2 │
 └────────────────────────┴┴────────────────────────┘"""
         # The stone at the start is trapped and the others cannot move
-        state = construct_state({0:3, 6:-15}, range(HOME(6), COLLECT_END), 2)
+        state = construct_state({0: 3, 6: -15}, range(HOME(6), COLLECT_END), 2)
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(6, 6)
         MyTestCase(state, dice, exp).check()
@@ -141,7 +145,7 @@ class TestMoveGenerator:
 │                        ││                        │       :  13
 │  .   .   .   .   .   . ││  2   .   .   .   .  *2 │
 └────────────────────────┴┴────────────────────────┘ """
-        state = construct_state({HOME(6):2,HOME(1):-2,WHITE_BAG:13, BLACK_BAG:-13})
+        state = construct_state({HOME(6): 2, HOME(1): -2, WHITE_BAG: 13, BLACK_BAG: -13})
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(5, 5)
         MyTestCase(state, dice, exp).check()
@@ -154,7 +158,9 @@ class TestMoveGenerator:
 │                        ││                        │       :  11
 │ *2  *2   .   .   .   . ││  .   .   .   .   .   . │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({5:2,7:-2,8:-2,10:2,12:-2,13:-2,WHITE_BAG:11,BLACK_BAG:-7})
+        state = construct_state(
+            {5: 2, 7: -2, 8: -2, 10: 2, 12: -2, 13: -2, WHITE_BAG: 11, BLACK_BAG: -7}
+        )
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(2, 3)
         MyTestCase(state, dice, exp).check()
@@ -167,8 +173,15 @@ class TestMoveGenerator:
 │                        ││                        │
 │  .   .   .   .   .   . ││  0   2   0   0  -2  -2 │   : 13
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(5):2, WHITE_BAG:13,COLLECT_END-1:-2,COLLECT_END-2:-2,
-                                 BLACK_BAG:-11})
+        state = construct_state(
+            {
+                HOME(5): 2,
+                WHITE_BAG: 13,
+                COLLECT_END - 1: -2,
+                COLLECT_END - 2: -2,
+                BLACK_BAG: -11,
+            }
+        )
         exp = Expectation(length=1, expected_state=state)
         dice = Dice.to_list(3, 4)
         MyTestCase(state, dice, exp).check()
@@ -181,8 +194,19 @@ class TestMoveGenerator:
 │                        ││                        │   2 :
 │  .   .   .   .   .   . ││  .  13   .   .   .   . │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(5):13,WHITE_BAR:2,0:-2,1:-2,3:-2,4:-2,5:-2,BLACK_BAG:-5})
-        expected = change_state(state, {2:1,WHITE_BAR:1})
+        state = construct_state(
+            {
+                HOME(5): 13,
+                WHITE_BAR: 2,
+                0: -2,
+                1: -2,
+                3: -2,
+                4: -2,
+                5: -2,
+                BLACK_BAG: -5,
+            }
+        )
+        expected = change_state(state, {2: 1, WHITE_BAR: 1})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(2, 3)
         MyTestCase(state, dice, exp).check()
@@ -195,7 +219,9 @@ class TestMoveGenerator:
 │                        ││                        │   2 :
 │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):13, WHITE_BAR:2, 0:-2,1:-2,BLACK_BAG:-5}, range(3,6), -2)
+        state = construct_state(
+            {HOME(1): 13, WHITE_BAR: 2, 0: -2, 1: -2, BLACK_BAG: -5}, range(3, 6), -2
+        )
         expected = change_state(state, {2: 2, WHITE_BAR: 0})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(3, 3)
@@ -209,7 +235,7 @@ class TestMoveGenerator:
 │                        ││                        │   1 :
 │  .   .   .   .   .   . ││  .   .   .   .   .  14 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):14, WHITE_BAR:1, BLACK_BAG:-5}, range(5), -2)
+        state = construct_state({HOME(1): 14, WHITE_BAR: 1, BLACK_BAG: -5}, range(5), -2)
         expected = change_state(state, {HOME(1): 15, WHITE_BAR: 0})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(6, 6)
@@ -223,8 +249,8 @@ class TestMoveGenerator:
 │                        ││                        │
 │  .   .   .   .   .   . ││  .   .   .   .   .  14 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):14, 0:1, 5:-2, BLACK_BAR:-13})
-        expected = change_state(state, {0:0, 7:1})
+        state = construct_state({HOME(1): 14, 0: 1, 5: -2, BLACK_BAR: -13})
+        expected = change_state(state, {0: 0, 7: 1})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(5, 2)
         MyTestCase(state, dice, exp).check()
@@ -237,10 +263,10 @@ class TestMoveGenerator:
 │                        ││                        │
 │  .   .   .   .   .   . ││  .   .   .   .   .  14 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):14, 0:1, BLACK_BAR:-15})
+        state = construct_state({HOME(1): 14, 0: 1, BLACK_BAR: -15})
         for i in range(1, 7):
             for j in range(i + 1, 7):
-                expected = change_state(state, {0:0, i+j:1})
+                expected = change_state(state, {0: 0, i + j: 1})
                 exp = Expectation(length=1, expected_state=expected)
                 dice = Dice.to_list(i, j)
                 MyTestCase(state, dice, exp).check()
@@ -264,12 +290,12 @@ class TestMoveGenerator:
 │                        ││                        │
 │  .   .   .   .   .   . ││  .   .   .   .   .  14 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):14, 0:1,BLACK_BAR:-14,7:-1})
+        state = construct_state({HOME(1): 14, 0: 1, BLACK_BAR: -14, 7: -1})
 
         for i in range(1, 7):
             j = 7 - i
             dice = Dice.to_list(i, j)
-            expected = change_state(state, {0: 0, 7:1, BLACK_BAR: -15})
+            expected = change_state(state, {0: 0, 7: 1, BLACK_BAR: -15})
             exp = Expectation(length=1, expected_state=expected)
             MyTestCase(state, dice, exp).check()
 
@@ -281,7 +307,7 @@ class TestMoveGenerator:
 │                        ││                        │
 │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):13, 0:1, 10:1, BLACK_BAR:-15})
+        state = construct_state({HOME(1): 13, 0: 1, 10: 1, BLACK_BAR: -15})
 
         for i in range(1, 7):
             for j in range(i + 1, 7):
@@ -289,10 +315,10 @@ class TestMoveGenerator:
 
                 expected_set = set()
                 for src in [0, 10]:
-                    e = change_state(state, {src:0, src+i+j:state.a[src+i+j]+1})
+                    e = change_state(state, {src: 0, src + i + j: state.a[src + i + j] + 1})
                     expected_set.add(e)
                 for src1, src2 in [(0, 10), (10, 0)]:
-                    e = change_state(state, {src1:0, src2:0,src1+i:1,src2+j:1})
+                    e = change_state(state, {src1: 0, src2: 0, src1 + i: 1, src2 + j: 1})
                     expected_set.add(e)
 
                 exp = Expectation(length=4, state_set=expected_set)
@@ -306,8 +332,8 @@ class TestMoveGenerator:
 │                        ││                        │
 │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
 └────────────────────────┴┴────────────────────────┘"""
-        state = construct_state({HOME(1):13, 0:1,1:1,2:-2,BLACK_BAR:-7}, range(6,9),-2)
-        expected = change_state(state, {0: 0, 5: 1, 1:0, 3:1})
+        state = construct_state({HOME(1): 13, 0: 1, 1: 1, 2: -2, BLACK_BAR: -7}, range(6, 9), -2)
+        expected = change_state(state, {0: 0, 5: 1, 1: 0, 3: 1})
         exp = Expectation(length=1, expected_state=expected)
         dice = Dice.to_list(5, 2)
         MyTestCase(state, dice, exp).check()
@@ -335,7 +361,6 @@ class TestMoveGenerator:
         exp = Expectation(length=1, expected_state=expected)
         MyTestCase(state, dice, exp).check()
 
-
     def test_only_one_dice_can_move_multiple_results(self):
         """\
 ┌────────────────────────┬┬────────────────────────┐
@@ -358,7 +383,7 @@ class TestMoveGenerator:
 
         dice = Dice.to_list(6, 5)
         expected_set = set()
-        expected_set.add(change_state(state, {0:0, 5:1}))
+        expected_set.add(change_state(state, {0: 0, 5: 1}))
         expected_set.add(change_state(state, {4: 0, 9: 1}))
         exp = Expectation(length=2, state_set=expected_set)
         MyTestCase(state, dice, exp).check()
@@ -382,7 +407,7 @@ class TestMoveGenerator:
         expected_set = set()
         for move_first in range(5):
             move_second = 4 - move_first
-            e = change_state(state, {0:0,move_first*3:1,1:0,1+move_second*3:1})
+            e = change_state(state, {0: 0, move_first * 3: 1, 1: 0, 1 + move_second * 3: 1})
             expected_set.add(e)
         exp = Expectation(length=5, state_set=expected_set)
         MyTestCase(state, dice, exp).check()
@@ -437,7 +462,12 @@ class TestMoveGenerator:
                 for move_c in range(5 - move_a - move_b):
                     move_d = 4 - move_a - move_b - move_c
                     e = a[:]
-                    for src, moves in [(0, move_a), (1, move_b), (2, move_c), (3, move_d)]:
+                    for src, moves in [
+                        (0, move_a),
+                        (1, move_b),
+                        (2, move_c),
+                        (3, move_d),
+                    ]:
                         e[src] -= 1
                         e[src + 4 * moves] += 1
                     expected_set.add(GameState(e))
@@ -461,7 +491,7 @@ class TestMoveGenerator:
         state = GameState(a)
 
         dice = Dice.to_list(4, 5)
-        e = change_state(state, {WHITE_BAG:14, HOME(3):0, HOME(2):0})
+        e = change_state(state, {WHITE_BAG: 14, HOME(3): 0, HOME(2): 0})
         exp = Expectation(length=1, expected_state=e)
         MyTestCase(state, dice, exp).check()
 
@@ -503,7 +533,7 @@ class TestMoveGenerator:
 
         dice = Dice.to_list(3, 2)
 
-        e = change_state(state, {HOME(1):2, HOME(6):0})
+        e = change_state(state, {HOME(1): 2, HOME(6): 0})
         exp = Expectation(length=1, expected_state=e)
         MyTestCase(state, dice, exp).check()
 
@@ -546,7 +576,7 @@ class TestMoveGenerator:
         state = GameState(a)
 
         dice = Dice.to_list(5, 3)
-        e = change_state(state, {WHITE_BAG: 14, HOME(3): 0, HOME(6):0, HOME(1):1})
+        e = change_state(state, {WHITE_BAG: 14, HOME(3): 0, HOME(6): 0, HOME(1): 1})
         exp = Expectation(length=1, expected_state=e)
         MyTestCase(state, dice, exp).check()
 
@@ -566,7 +596,7 @@ class TestMoveGenerator:
         state = GameState(a)
 
         dice = Dice.to_list(1, 1)
-        e = change_state(state, {HOME(3):1, HOME(2):4})
+        e = change_state(state, {HOME(3): 1, HOME(2): 4})
         exp = Expectation(length=1, expected_state=e)
         MyTestCase(state, dice, exp).check()
 
@@ -587,7 +617,7 @@ class TestMoveGenerator:
         state = GameState(a)
 
         dice = Dice.to_list(5, 5)
-        e = change_state(state, {HOME(5): 0, HOME(3): 0, HOME(1):0, WHITE_BAG:15})
+        e = change_state(state, {HOME(5): 0, HOME(3): 0, HOME(1): 0, WHITE_BAG: 15})
         exp = Expectation(length=1, expected_state=e, score=3)
         MyTestCase(state, dice, exp).check()
 

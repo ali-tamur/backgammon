@@ -1,14 +1,13 @@
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import tensorflow as tf
 
-from py.src.logger import read_for_player, PlayerLog
-from py.src.state import BLACK_BAR, COLLECT_START, WHITE_BAR, WHITE_BAG, BLACK_BAG
+from py.src.logger import PlayerLog, read_for_player
+from py.src.state import BLACK_BAG, BLACK_BAR, COLLECT_START, WHITE_BAG, WHITE_BAR
 
 
-def state_to_tensor(state_arr: List[int]) -> tf.Tensor:
+def state_to_tensor(state_arr: list[int]) -> tf.Tensor:
     lst = [0] * 330
     for i in range(COLLECT_START):
         n = state_arr[i]

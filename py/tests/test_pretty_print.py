@@ -1,5 +1,3 @@
-import pytest
-
 from src.pretty_print import pretty_print
 from src.state import GameState
 
@@ -22,6 +20,6 @@ class TestPrettyPrint:
 │ ●       ○   ││ ○         ● │
 │ ● . . . ○ . ││ ○ . . . . ● │
 └─────────────┴┴─────────────┘"""
-        expected.strip('\n')
-        expected.strip(' ')
+        expected.strip("\n")
+        expected.strip(" ")
         assert result == expected
