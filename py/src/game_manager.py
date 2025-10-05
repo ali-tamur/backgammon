@@ -1,8 +1,8 @@
-from src.dice_source import Dice
-from src.logger import DummyLogWriter
-from src.player import *
-from src.pretty_print import pretty_print
-
+from py.src.dice_source import Dice
+from py.src.logger import DummyLogWriter
+from py.src.player import *
+from py.src.pretty_print import pretty_print
+from py.src.state import score_state
 
 class GameManager:
     def __init__(self, white: Player, black: Player, dice_source: Dice,
@@ -20,15 +20,15 @@ class GameManager:
             print(pretty_print(state))
             input("...")
         while True:
-            dice = self.dice_source.throw_dice()
-            state = self.players[on_turn].move(state, dice)
+            d1, d2 = self.dice_source.throw_dice()
+            state = self.players[on_turn].move(state, d1, d2)
             if self.print_debug:
-                print(f"{dice%10} {(dice//10)%10}")
+                print(f"{d1}-{d2}")
                 print(pretty_print(state))
                 print(f"\n\n")
                 input("...")
-            self.logger.move([dice%10, (dice//10)%10], state)
-            if state.score() is not None:
+            self.logger.move([d1, d2], state)
+            if score_state(state.a) is not None:
                 break
             on_turn = 1 - on_turn
 

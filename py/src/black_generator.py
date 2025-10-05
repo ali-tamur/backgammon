@@ -1,6 +1,5 @@
 from typing import Tuple, List
-
-from src.state import *
+from py.src.state import *
 from line_profiler import LineProfiler, profile
 
 
@@ -118,3 +117,4 @@ def generate_black_moves(initial_state: GameState, initial_dice: int ) -> List[L
                         partial_results.append((new_state, new_dice, new_home_stones))
                 d = d2 if d == d1 else 0
     return result_list
+

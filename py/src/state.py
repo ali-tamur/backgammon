@@ -59,16 +59,14 @@ def score_state(a):
             return -1
 
 
-
-
-
-
 class GameState:
     def __init__(self, a):
         self.a = a
+        """
         if __debug__:
             self.debug_count_player_stones()
             self.debug_count_opponent_stones()
+        """
 
     def debug_count_player_stones(self):
         on_board = sum([self.a[i] for i in range(COLLECT_END) if self.a[i] > 0])
@@ -81,12 +79,6 @@ class GameState:
     @staticmethod
     def game_start():
         return GameState(GAME_START)
-
-    def update(self, src_index: int, dst_index: int, color: COLOR):
-        if color == COLOR.WHITE:
-            return GameState(update_white(self.a[:], src_index, dst_index))
-        else:
-            return GameState(update_black(self.a[:], src_index, dst_index))
 
     def score(self):
         return score_state(self.a)
