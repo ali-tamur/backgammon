@@ -1,7 +1,7 @@
 try:
-    from cc.src import backgammon as bg
+    from cc.src import backgammon as bg  # type: ignore
 except ImportError:
-    from py.src import backgammon as bg
+    from py.src import backgammon as bg  # type: ignore
 
 
 def generate_white_moves(board, d1, d2):

@@ -1,31 +1,30 @@
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
-load("@rules_python//python:packaging.bzl", "py_wheel")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_test")
 
 cc_library(
     name = "backgammon_lib",
     srcs = [
-	"dice.cc",
-	"moves.cc",
-	"zobrist_hash.cc"
+        "dice.cc",
+        "moves.cc",
+        "zobrist_hash.cc",
     ],
     hdrs = [
-	"bits.h",
-	"configs.h",
-	"dice.h",
-	"moves.h",
+        "bits.h",
+        "configs.h",
+        "dice.h",
+        "moves.h",
         "py_interface.h",
-	"results.h",
-	"state.h",
-	"state_hash.h",
-	"zobrist_hash.h"
+        "results.h",
+        "state.h",
+        "state_hash.h",
+        "zobrist_hash.h",
     ],
     deps = [
-            "@abseil-cpp//absl/strings",
-        # "@...//pybind11" 
+        "@abseil-cpp//absl/strings",
+        # "@...//pybind11"
     ],
     alwayslink = 1,
 )
@@ -176,8 +175,7 @@ cc_library(
 
 cc_library(
     name = "zobrist_hash",
-    hdrs = ["zobrist_hash.h"],
     srcs = ["zobrist_hash.cc"],
+    hdrs = ["zobrist_hash.h"],
     visibility = ["//visibility:public"],
 )
-
