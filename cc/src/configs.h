@@ -7,7 +7,7 @@
 
 namespace bg {
 
-using Board = std::array<int32_t, 28>;
+using Board = std::array<int8_t, 28>;
 
 static constexpr int32_t COLLECT_START = 18;
 static constexpr int32_t COLLECT_END = 24;

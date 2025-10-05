@@ -4,7 +4,7 @@
 #include <array>
 #include <cstdint>
 
-using Board = std::array<int32_t, 28>;
+using Board = std::array<int8_t, 28>;
 
 namespace bg {
 
