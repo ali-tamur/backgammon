@@ -41,6 +41,13 @@ pybind_extension(
     ],
 )
 
+py_library(
+    name = "backgammon_py",
+    data = [":backgammon"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "py_interface",
     hdrs = ["py_interface.h"],
