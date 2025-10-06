@@ -11,7 +11,7 @@ select = [
     "N",   # pep8-naming
     "UP",  # pyupgrade
 ]
-ignore = []
+ignore = ["UP045"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["py"]

@@ -2,7 +2,6 @@ tensorflow
 jupyterlab
 numpy
 python-dotenv
-fastavro
 pytest
 bitarray
 line_profiler
