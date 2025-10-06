@@ -17,7 +17,7 @@ template <typename Config>
 std::vector<State<Config>> moves_on_bar(const State<Config> &p) {
   auto result = std::vector<State<Config>>{};
   for (auto d : p.dice.values(false)) {
-    auto land_index = Config::LAND_START + Config::SIGN * (d - 1);
+    auto land_index = Config::LAND_START + (Config::SIGN * (d - 1));
     if (Config::is_valid_dst(p.b[land_index])) {
       result.push_back(p.update_board(Config::PLAYER_BAR, land_index, d));
     }
@@ -62,13 +62,12 @@ std::vector<State<Config>> generate(const Board &board, Dice dice) {
             }
             states.push_back(new_p);
             break;
-          } else {
-            auto dst_index = Config::apply_dice(*src_index, d);
-            if (Config::is_inboard(dst_index) &&
-                Config::is_valid_dst(p.b[dst_index])) {
-              auto new_p = p.update_board(*src_index, dst_index, d);
-              states.push_back(new_p);
-            }
+          }
+          auto dst_index = Config::apply_dice(*src_index, d);
+          if (Config::is_inboard(dst_index) &&
+              Config::is_valid_dst(p.b[dst_index])) {
+            auto new_p = p.update_board(*src_index, dst_index, d);
+            states.push_back(new_p);
           }
         }
       }

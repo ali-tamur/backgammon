@@ -11,8 +11,6 @@ namespace bg {
 template <typename Config>
 class KeepResults {
  public:
-  KeepResults() : results{}, n_dice{-1} {}
-
   void add(State<Config> p) {
     auto this_size = p.dice.size();
     if (n_dice == -1 || this_size < n_dice) {
@@ -25,18 +23,13 @@ class KeepResults {
   }
 
   std::vector<State<Config>> get_results() {
-    std::vector<State<Config>> r{};
-    for (auto &elm : results) {
-      r.push_back(elm);
-    }
-    return r;
+    return std::vector<State<Config>>(results.begin(), results.end());
   }
 
  private:
-  std::unordered_set<State<Config>, std::hash<State<Config>>,
-                     std::equal_to<State<Config>>>
-      results;
-  std::int32_t n_dice;
+  std::unordered_set<State<Config>, std::hash<State<Config>>, std::equal_to<>>
+      results{};
+  std::int32_t n_dice = -1;
 };
 
 }  // namespace bg
