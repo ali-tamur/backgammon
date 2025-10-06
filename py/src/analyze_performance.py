@@ -2,13 +2,11 @@ import cProfile
 import pstats
 import random
 
-from py.src.black_generator import generate_black_moves
 from py.src.cc_generator import generate_black_moves, generate_white_moves
 from py.src.dice_source import Dice
 from py.src.logger import DummyLogWriter
 from py.src.main import play_games
 from py.src.player import RandomPlayer
-from py.src.white_generator import generate_white_moves
 
 
 def my_game_engine():
