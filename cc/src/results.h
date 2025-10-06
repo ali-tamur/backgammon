@@ -27,7 +27,7 @@ class KeepResults {
   }
 
  private:
-  std::unordered_set<State<Config>, std::hash<State<Config>>, std::equal_to<>>
+  std::unordered_set<State<Config>, std::hash<State<Config>>, std::equal_to<State<Config>>>
       results{};
   std::int32_t n_dice = -1;
 };

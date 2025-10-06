@@ -1,5 +1,5 @@
 
-Checks: 'performance-*,modernize-*,readability-*,bugprone-*,-modernize-use-trailing-return-type,-readability-magic-numbers'
+Checks: 'performance-*,modernize-*,readability-*,bugprone-*,-modernize-use-trailing-return-type,-readability-magic-numbers, -bugprone-easily-swappable-parameters'
 CheckOptions:
   - key: readability-identifier-length.MinimumParameterNameLength
     value: 1
