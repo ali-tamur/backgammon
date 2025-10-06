@@ -1,8 +1,8 @@
-from py.src.dice_source import Dice
-from py.src.logger import DummyLogWriter
-from py.src.player import *
-from py.src.pretty_print import pretty_print
-from py.src.state import score_state
+from python.src.dice_source import Dice
+from python.src.logger import DummyLogWriter
+from python.src.player import *
+from python.src.pretty_print import pretty_print
+from python.src.state import score_state
 
 
 class GameManager:

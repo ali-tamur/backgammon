@@ -1,5 +1,5 @@
 
-from py.src.state import BLACK_BAG, BLACK_BAR, COLOR, WHITE_BAG, WHITE_BAR, GameState
+from python.src.state import BLACK_BAG, BLACK_BAR, COLOR, WHITE_BAG, WHITE_BAR, GameState
 
 
 def get_char(st: GameState, col: int, row: int) -> str:

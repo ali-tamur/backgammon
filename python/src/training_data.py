@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from py.src.logger import PlayerLog, read_for_player
-from py.src.state import BLACK_BAG, BLACK_BAR, COLLECT_START, WHITE_BAG, WHITE_BAR
+from python.src.logger import PlayerLog, read_for_player
+from python.src.state import BLACK_BAG, BLACK_BAR, COLLECT_START, WHITE_BAG, WHITE_BAR
 
 
 def state_to_tensor(state_arr: list[int]) -> tf.Tensor:

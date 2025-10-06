@@ -1,7 +1,7 @@
 import statistics
 import time
 
-from py.src.main import main  # noqa: F401
+from python.src.main import main  # noqa: F401
 
 
 def benchmark(n=5):

@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 from typing import Optional
 
-from py.src.state import GAME_START
+from python.src.state import GAME_START
 
 
 class DummyLogWriter:
@@ -59,7 +59,7 @@ class GameRecorder:
 class LogBuffer:
     def __init__(self, batch_size, db_path):
         self.batch_size = batch_size
-        self.conn = sqlite3.connect(db_path)
+        self.conn = sqlite3.connect(str(db_path))
         self._create_table()
         self.buffer = []
 
@@ -96,8 +96,8 @@ class LogBuffer:
 
 
 class LogWriter:
-    def __init__(self, db_path: Path):
-        self.db_path = db_path
+    def __init__(self, db_path: Path | str):
+        self.db_path = Path(db_path)
         Path(db_path).parent.mkdir(exist_ok=True)
         self.log_buffer: Optional[LogBuffer] = None
         self.game_recorder: Optional[GameRecorder] = None
@@ -106,14 +106,14 @@ class LogWriter:
         self.log_buffer = LogBuffer(5000, self.db_path)
         return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         if self.log_buffer:
             self.log_buffer.close()
         return False
 
     def start_game(self, game_id, white, black):
         assert self.log_buffer
-        self.game_recorder = GameRecorder(self.log_buffer.buffer, game_id, white, black)
+        self.game_recorder = GameRecorder(self.log_buffer, game_id, white, black)
 
     def move(self, dice, state):
         assert self.game_recorder
@@ -126,8 +126,8 @@ class LogWriter:
 
 
 class LogReader:
-    def __init__(self, db_path: str):
-        self.db_path = db_path
+    def __init__(self, db_path: Path | str):
+        self.db_path = Path(db_path)
 
     def get_player_moves(self, player_name: str):
         """
