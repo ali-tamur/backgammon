@@ -20,24 +20,22 @@ bool DiceIterator::operator!=(const DiceIterator &other) const {
 
 DiceRolls::iterator DiceRolls::begin() const { return DiceIterator(d1_, d2_); }
 
-DiceRolls::iterator DiceRolls::end() const { return DiceIterator(0); }
+DiceRolls::iterator DiceRolls::end() { return DiceIterator(0); }
 
 DiceRolls Dice::values(bool use_only_max) const {
   auto d1 = dice_ % 10;
   auto d2 = (dice_ / 10) % 10;
   if (use_only_max || d1 == d2) {
-    return DiceRolls(d1);
-  } else {
-    return DiceRolls(d1, d2);
+    return DiceRolls(d1);  // NOLINT(modernize-return-braced-init-list)
   }
+  return DiceRolls(d1, d2);  // NOLINT(modernize-return-braced-init-list)
 }
 
 Dice Dice::use_dice(int32_t d) const {
   if (d == dice_ % 10) {
     return Dice(dice_ / 10);
-  } else {
-    return Dice(dice_ % 10);
   }
+  return Dice(dice_ % 10);
 }
 
 size_t Dice::size() const {

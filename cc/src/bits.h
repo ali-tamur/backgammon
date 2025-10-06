@@ -46,11 +46,10 @@ class Bits {
 
  public:
   using iterator = BitIterator;
-  Bits() : n_{0} {}
   void set(size_t index) { n_ |= (1U << index); }
   void unset(size_t index) { n_ &= ~(1U << index); }
-  iterator begin() const { return BitIterator(n_); }
-  iterator end() const { return BitIterator(0); }
+  [[nodiscard]] iterator begin() const { return BitIterator(n_); }
+  [[nodiscard]] iterator end() const { return BitIterator(0); }
 
  private:
   uint32_t n_ = 0;
@@ -59,4 +58,3 @@ class Bits {
 };
 
 };  // namespace bg
-

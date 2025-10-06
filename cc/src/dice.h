@@ -31,8 +31,8 @@ class DiceRolls {
   using iterator = DiceIterator;
   explicit DiceRolls(int32_t d1, int32_t d2 = 0) : d1_{d1}, d2_{d2} {};
 
-  iterator begin() const;
-  iterator end() const;
+  [[nodiscard]] iterator begin() const;
+  [[nodiscard]] static iterator end();
 
  private:
   int32_t d1_;
@@ -44,15 +44,15 @@ class Dice {
   Dice(int32_t dice) : dice_{dice} {}
   Dice(int32_t d1, int32_t d2)
       : dice_{d1 == d2 ? 1111 * d1
-                       : (std::min(d1, d2) * 10 + std::max(d1, d2))} {}
+                       : ((std::min(d1, d2) * 10) + std::max(d1, d2))} {}
 
-  DiceRolls values(bool use_only_max) const;
-  Dice use_dice(int32_t d) const;
-  size_t size() const;
+  [[nodiscard]] DiceRolls values(bool use_only_max) const;
+  [[nodiscard]] Dice use_dice(int32_t d) const;
+  [[nodiscard]] size_t size() const;
 
   int32_t dice_;
 
-  friend std::ostream &operator<<(std::ostream &os, const Dice &move);
+  friend std::ostream &operator<<(std::ostream &os, const Dice &dice);
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Dice &dice) {
@@ -61,4 +61,3 @@ inline std::ostream &operator<<(std::ostream &os, const Dice &dice) {
 }
 
 }  // namespace bg
-

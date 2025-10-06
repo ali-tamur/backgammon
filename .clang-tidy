@@ -1,0 +1,9 @@
+
+Checks: 'performance-*,modernize-*,readability-*,bugprone-*,-modernize-use-trailing-return-type,-readability-magic-numbers'
+CheckOptions:
+  - key: readability-identifier-length.MinimumParameterNameLength
+    value: 1
+  - key: readability-identifier-length.IgnoredParameterNames
+    value: '^[ijk]$'
+WarningsAsErrors: ''
+HeaderFilterRegex: 'cc/src/.*'

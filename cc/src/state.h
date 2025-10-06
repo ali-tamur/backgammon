@@ -34,7 +34,7 @@ struct State {
   const Board b;
   const Dice dice;
   const Bits<Config> bits;
-  const int32_t homestones;
+  const int8_t homestones;
   const uint64_t hash_;
 
   State(Board board, Dice dice)
@@ -44,7 +44,7 @@ struct State {
         homestones{get_homestones(b)},
         hash_(calculate_hash(board)) {}
 
-  int32_t phase() const {
+  [[nodiscard]] int32_t phase() const {
     if (b[Config::PLAYER_BAR] != 0) {
       return ON_BAR;
     };
@@ -54,7 +54,8 @@ struct State {
     return NORMAL;
   };
 
-  State update_board(int32_t src, int32_t dst, int32_t used_dice) const {
+  [[nodiscard]] State update_board(int32_t src, int32_t dst,
+                                   int32_t used_dice) const {
     Board new_b = b;
     auto new_homestones = homestones;
     auto new_bits = bits;
@@ -82,7 +83,7 @@ struct State {
     return result;
   };
 
-  int32_t score() const {
+  [[nodiscard]] int32_t score() const {
     if (b[WHITE_BAG] < 15 and b[BLACK_BAG] > -15) {
       return 0;
     }
@@ -102,12 +103,10 @@ struct State {
     return os;
   }
 
-  Board get_board() const {
-    return b;
-  }
+  [[nodiscard]] Board get_board() const { return b; }
 
  private:
-  State(Board board, Dice dice, Bits<Config> bits, int32_t homestones,
+  State(Board board, Dice dice, Bits<Config> bits, int8_t homestones,
         uint64_t hash_)
       : b{board},
         dice{dice},
@@ -115,17 +114,17 @@ struct State {
         homestones{homestones},
         hash_{hash_} {}
 
-  int32_t get_homestones(const Board &b) const {
+  [[nodiscard]] int8_t get_homestones(const Board &b) const {
     int32_t total = 0;
     for (int32_t i = Config::HOME_START; i < Config::HOME_END; ++i) {
       if (b[i] * Config::SIGN > 0) {
         total += b[i];
       };
     }
-    return total;
+    return static_cast<int8_t>(total);
   }
 
-  Bits<Config> get_bits(const Board &b) const {
+  [[nodiscard]] Bits<Config> get_bits(const Board &b) const {
     Bits<Config> bits = Bits<Config>();
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       if (b[i] * Config::SIGN > 0) {
@@ -135,18 +134,17 @@ struct State {
     return Bits<Config>(bits);
   };
 
-  inline void update_(Board &b, uint64_t &h, int32_t index,
-                      int32_t delta) const {
+  void update_(Board &b, uint64_t &h, int32_t index, int8_t delta) const {
     update_hash(h, index, b[index]);
     b[index] += delta;
     update_hash(h, index, b[index]);
   }
 
-  inline void update_hash(uint64_t &hash, int32_t index, int32_t value) const {
+  void update_hash(uint64_t &hash, int32_t index, int8_t value) const {
     hash ^= get_zobrist_table()[zobrist_index(index, value)];
   }
 
-  uint64_t calculate_hash(const Board &b) const {
+  [[nodiscard]] uint64_t calculate_hash(const Board &b) const {
     uint64_t h = 0;
     for (int32_t i = 0; i < 28; ++i) {
       update_hash(h, i, b[i]);
@@ -161,4 +159,3 @@ std::ostream &operator<<(std::ostream &os, const State<Config> &state) {
 }
 
 }  // namespace bg
-

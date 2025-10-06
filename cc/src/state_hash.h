@@ -20,4 +20,3 @@ struct equal_to<::bg::State<Config>> {
 };
 
 }  // namespace std
-

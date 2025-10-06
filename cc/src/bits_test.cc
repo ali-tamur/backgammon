@@ -25,7 +25,7 @@ TEST(BitsTest, SetUnset) {
   w.set(7);
   EXPECT_THAT(to_collection<WhiteConfig>(w), ElementsAreArray({7}));
 
-  #if 0
+#if 0
   w.set(9);
   EXPECT_THAT(to_collection<WhiteConfig>(w), ElementsAreArray({7, 9}));
 
