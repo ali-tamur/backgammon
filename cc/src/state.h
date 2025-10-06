@@ -135,21 +135,16 @@ struct State {
   };
 
   void update_(Board &b, uint64_t &h, int32_t index, int8_t delta) const {
-    update_hash(h, index, b[index]);
+    update_hash(h, index);
     b[index] += delta;
-    update_hash(h, index, b[index]);
   }
 
-  void update_hash(uint64_t &hash, int32_t index, int8_t value) const {
-    hash ^= get_zobrist_table()[zobrist_index(index, value)];
+  void update_hash(uint64_t &hash, int32_t index) const {
+    hash ^= get_zobrist_table()[zobrist_index(index)];
   }
 
   [[nodiscard]] uint64_t calculate_hash(const Board &b) const {
-    uint64_t h = 0;
-    for (int32_t i = 0; i < 28; ++i) {
-      update_hash(h, i, b[i]);
-    }
-    return h;
+    return 0;
   }
 };
 
