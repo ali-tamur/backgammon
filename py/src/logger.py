@@ -117,6 +117,7 @@ class LogWriter:
 
     def move(self, dice, state):
         assert self.game_recorder
+        self.game_recorder.add_move(dice, state)
 
     def end_game(self, score):
         assert self.game_recorder
