@@ -1,5 +1,5 @@
-from src.pretty_print import pretty_print
-from src.state import GameState
+from python.src.pretty_print import pretty_print
+from python.src.state import GameState
 
 
 class TestPrettyPrint:

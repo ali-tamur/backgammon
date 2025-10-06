@@ -2,10 +2,10 @@ from random import Random
 
 import pytest
 import tensorflow as tf
-from src.dice_source import Dice
-from src.game_manager import GameManager
-from src.main import find_project_root
-from src.player import NNPlayer, RandomPlayer
+from python.src.dice_source import Dice
+from python.src.game_manager import GameManager
+from python.src.main import find_project_root
+from python.src.player import NNPlayer, RandomPlayer
 
 
 class TestPlayer:

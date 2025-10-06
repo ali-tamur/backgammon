@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-import src.main as m
+import python.src.main as m
 import tensorflow as tf
 
 

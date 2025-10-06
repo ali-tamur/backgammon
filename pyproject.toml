@@ -21,3 +21,20 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = true
 
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Ignore external directories
+norecursedirs = [
+    ".*",
+    "build",
+    "dist",
+    "*.egg",
+    "external",
+    "bazel-*",
+    ".venv",
+    "node_modules"
+]
+

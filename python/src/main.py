@@ -5,12 +5,12 @@ from random import Random
 
 from dotenv import load_dotenv
 
-from py.src.cc_generator import generate_black_moves, generate_white_moves
-from py.src.dice_source import Dice
-from py.src.game_manager import GameManager
-from py.src.logger import DummyLogWriter
-from py.src.player import RandomPlayer
-from py.src.training_data import prepare_training_data
+from python.src.cc_generator import generate_black_moves, generate_white_moves
+from python.src.dice_source import Dice
+from python.src.game_manager import GameManager
+from python.src.logger import DummyLogWriter
+from python.src.player import RandomPlayer
+from python.src.training_data import prepare_training_data
 
 DEFAULT_LOG_SCHEMA_PATH = "py/schemas/log.avsc"
 DEFAULT_LOG_PATH = "/app/data/game_log.avro"

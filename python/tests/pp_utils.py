@@ -1,7 +1,7 @@
 import sys
 from typing import Any
 
-from src.state import BLACK_BAG, BLACK_BAR, WHITE_BAG, WHITE_BAR
+from python.src.state import BLACK_BAG, BLACK_BAR, WHITE_BAG, WHITE_BAR
 
 
 def color_int(n: int, color_code: str) -> str:
