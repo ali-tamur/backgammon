@@ -224,3 +224,6 @@ __marimo__/
 
 # C++ library
 py/src/*.so
+
+# Clang
+.clang-tidy
