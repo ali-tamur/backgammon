@@ -8,27 +8,34 @@ from python.src.logger import LogReader
 from python.src.state import BLACK_BAG, BLACK_BAR, COLLECT_END, WHITE_BAG, WHITE_BAR
 
 
-def state_to_tensor(state_arr: list[int]) -> tf.Tensor:
-    lst = [0] * 330
-    for i in range(COLLECT_END):
-        n = state_arr[i]
-        index = 12 * i
-        if n >= 0:
-            n = max(n, 5)
-            lst[index + n] = 1
-        else:
-            n = min(-n, 5)
-            lst[index + 6 + n] = 1
-    start_bar_index = 12 * 24
-    n = max(state_arr[WHITE_BAR], 5)
-    lst[start_bar_index + n] = 1
-    n = max(state_arr[BLACK_BAR], 5)
-    lst[start_bar_index + 6 + n] = 1
-    bear_off_index = start_bar_index + 12
-    lst[bear_off_index + state_arr[WHITE_BAG]] += 1
-    lst[bear_off_index + 15 + state_arr[BLACK_BAG]] += 1
+class OneHotEncoder:
+    def __init__(self, size):
+        self.lst = [0] * size
+        self.i = 0
 
-    numpy_array = np.array(lst)
+    def add(self, value, cap_at, can_be_negative):
+        advance = cap_at + 1 if not can_be_negative else 2 * cap_at + 1
+        value = min(value, cap_at)
+        value = max(value, -cap_at)
+        if can_be_negative:
+            value += cap_at
+        self.lst[self.i + value] = 1
+        self.i += advance
+
+
+def state_to_lst(state_arr: list[int]) -> list[int]:
+    one_hot = OneHotEncoder(250)
+    for i in range(COLLECT_END):
+        one_hot.add(state_arr[i], 4, True)
+    one_hot.add(state_arr[WHITE_BAR], 4, False)
+    one_hot.add(-state_arr[BLACK_BAR], 4, False)
+    one_hot.add(state_arr[WHITE_BAG], 10, False)
+    one_hot.add(-state_arr[BLACK_BAG], 10, False)
+    return one_hot.lst
+
+
+def state_to_tensor(state_arr: list[int]) -> tf.Tensor:
+    numpy_array = np.array(state_to_lst(state_arr))
     tensor = tf.constant(numpy_array)
     return tensor
 
