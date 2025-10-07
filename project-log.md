@@ -24,3 +24,30 @@
 
 ## (P4) Web Interface
 - [ ] Make a very simple interface to let a model play with a human player.
+
+# Diary
+
+## Oct 7, 2025: Basic NN beats random player 1276-468 in 1000 games (73% win rate)
+
+**Model Architecture:**
+- Input: 250 features (one-hot encoding of board state)
+- Hidden: 128 → 64 → 64 → 32 (relu)
+- Output: 1 neuron (tanh, outputs position evaluation score)
+
+**Training:**
+- Data: 110K games of random vs random play (~10.5M positions)
+- Loss: Custom weighted loss (win/loss signal × game_score × move_timing)
+- Optimizer: Adam (learning rate=0.001)
+- Regularization: L2 - 0.00005
+- Batch size: 32 (critical - larger batches failed to learn)
+- Epochs: Validation loss plateaus after 11th epoch.
+
+**Key learnings:**
+- Small batch size (32) was crucial for escaping poor local minima
+- Model outputs position scores; selects move with highest score
+- Loss function penalizes wrong predictions weighted by move importance
+
+**What didn't work:**
+- Large batch sizes (128, 256)
+- Heavy L2 regularization (0.02)
+- Smaller model capacity (128→64→32)
