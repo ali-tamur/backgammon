@@ -31,7 +31,7 @@ class DummyLogWriter:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def start_game(self, white, black):
+    def start_game(self, game_id: int, white: str, black: str):
         pass
 
     def move(self, dice, state):
