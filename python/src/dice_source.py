@@ -2,8 +2,8 @@ import random
 
 
 class Dice:
-    def __init__(self, random_seed):
-        self.r = random.Random(random_seed)
+    def __init__(self, r: random.Random):
+        self.r = r
 
     @staticmethod
     def to_list(d1, d2) -> int:
