@@ -22,7 +22,7 @@ class GameManager:
         self.print_debug = print_debug
         self.r = Random()
 
-    def _run_once(self):
+    def _run_once(self) -> int:
         game_id = self.r.randint(0, 1 << 64 - 1)
         state = GameState.game_start()
         on_turn = 0
@@ -48,9 +48,18 @@ class GameManager:
             print(f" Score: {result}")
             input("enter to end")
         self.logger.end_game(result)
-        return result
+        return result or 0
 
     def run(self, n_times):
+        white_score = 0
+        black_score = 0
         with self.logger:
-            for _ in range(n_times):
-                self._run_once()
+            for i in range(n_times):
+                this_score = self._run_once()
+                if self.print_debug:
+                    print(f"{i}th game: {this_score} ", flush=True)
+                if this_score > 0:
+                    white_score += this_score
+                else:
+                    black_score -= this_score
+        print(f"Games: {n_times} White: {white_score} Black: {black_score}", flush=True)

@@ -23,7 +23,8 @@ class GameStateWeightedLoss(tf.keras.losses.Loss):
         y_score = y_true[:, 2]
         y_win_loss = tf.sign(y_score)
 
-        loss_per_sample = -y_win_loss * y_pred
+        margin = 0.5
+        loss_per_sample = tf.maximum(0.0, margin - y_win_loss * y_pred)
         coefficient = tf.math.abs(y_score) * tf.math.sqrt(tf.math.divide_no_nan(move_number, total_moves))
         weighted_loss = loss_per_sample * coefficient
         return tf.reduce_mean(weighted_loss)
