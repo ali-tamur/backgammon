@@ -44,7 +44,7 @@ GAME_START = [
 # fmt: on
 
 
-def score_state(a):
+def score_state(a) -> int | None:
     if a[WHITE_BAG] < 15 and a[BLACK_BAG] > -15:
         return None
     if a[WHITE_BAG] == 15:

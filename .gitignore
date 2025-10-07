@@ -227,3 +227,7 @@ py/src/*.so
 
 # Clang
 .clang-tidy
+
+# NN models
+models
+

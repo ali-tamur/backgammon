@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 import keras
+import numpy as np
 import tensorflow as tf
 
 from python.src.state import GameState
@@ -40,10 +41,10 @@ class NNPlayer(Player):
 
     def move(self, state: GameState, d1: int, d2: int) -> GameState:
         moves = self.move_generator(state.a, d1, d2)
+        if len(moves) == 1:
+            return GameState(moves[0])
         tensors = tf.stack([state_to_tensor(st) for st in moves])
-        raw_scores = self.model.predict(tensors, verbose=0)
-        pure_weights = tf.squeeze(raw_scores, [-1]) / self.temperature
-        exp_weights = tf.math.exp(pure_weights)
-        exp_weights_np = exp_weights.numpy()
-        chosen_move = self.r.choices(moves, weights=exp_weights_np)[0]
-        return GameState(chosen_move)
+        raw_scores = self.model(tensors, training=False).numpy().squeeze()
+        weights = np.exp(raw_scores / self.temperature)
+        chosen_idx = self.r.choices(range(len(moves)), weights=weights)[0]
+        return GameState(moves[chosen_idx])
