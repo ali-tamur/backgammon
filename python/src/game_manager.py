@@ -1,8 +1,10 @@
+from random import Random, randint
+
 from python.src.dice_source import Dice
-from python.src.logger import DummyLogWriter
-from python.src.player import *
+from python.src.logger import DummyLogWriter, LogWriter
+from python.src.player import Player
 from python.src.pretty_print import pretty_print
-from python.src.state import score_state
+from python.src.state import GameState, score_state
 
 
 class GameManager:
@@ -11,18 +13,20 @@ class GameManager:
         white: Player,
         black: Player,
         dice_source: Dice,
-        logger=DummyLogWriter(),
+        logger: DummyLogWriter | LogWriter = DummyLogWriter(),  # noqa: E501
         print_debug=False,
     ):
         self.players = [white, black]
         self.dice_source = dice_source
         self.logger = logger
         self.print_debug = print_debug
+        self.r = Random()
 
     def _run_once(self):
+        game_id = self.r.randint(0, 1 << 64 - 1)
         state = GameState.game_start()
         on_turn = 0
-        self.logger.start_game("123", self.players[0].name, self.players[1].name)
+        self.logger.start_game(game_id, self.players[0].name, self.players[1].name)
         if self.print_debug:
             print(pretty_print(state))
             input("...")
@@ -34,7 +38,7 @@ class GameManager:
                 print(pretty_print(state))
                 print("\n\n")
                 input("...")
-            self.logger.move([d1, d2], state)
+            self.logger.move(10 * d1 + d2, state.a)
             if score_state(state.a) is not None:
                 break
             on_turn = 1 - on_turn

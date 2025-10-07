@@ -1,15 +1,16 @@
+from itertools import islice
 from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
 
-from python.src.logger import PlayerLog, read_for_player
-from python.src.state import BLACK_BAG, BLACK_BAR, COLLECT_START, WHITE_BAG, WHITE_BAR
+from python.src.logger import LogReader
+from python.src.state import BLACK_BAG, BLACK_BAR, COLLECT_END, WHITE_BAG, WHITE_BAR
 
 
 def state_to_tensor(state_arr: list[int]) -> tf.Tensor:
     lst = [0] * 330
-    for i in range(COLLECT_START):
+    for i in range(COLLECT_END):
         n = state_arr[i]
         index = 12 * i
         if n >= 0:
@@ -32,16 +33,10 @@ def state_to_tensor(state_arr: list[int]) -> tf.Tensor:
     return tensor
 
 
-def game_to_training_data(game: PlayerLog, accumulate_records):
-    states = game.game_states()
-    score = game.score()
-    num_moves = len(states)
-    for i in range(num_moves):
-        accumulate_records.append((score, i + 1, num_moves, state_to_tensor(states[i])))
-
-
-def prepare_training_data(log_file: Path, player_name: str):
+def prepare_training_data(log_file: Path, player_name: str, data_size: int):
+    log_reader = LogReader(log_file)
     result = []
-    for player_log in read_for_player(log_file, player_name):
-        game_to_training_data(player_log, result)
+    for log in islice(log_reader.get_player_moves(player_name), data_size):
+        board, move_n, n_moves, score = log
+        result.append((state_to_tensor(board), move_n, n_moves, score))
     return result

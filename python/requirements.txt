@@ -1,7 +1,8 @@
-tensorflow
+tensorflow[and-cuda]>=2.15.0
 jupyterlab
 numpy
 python-dotenv
 pytest
 bitarray
 line_profiler
+click

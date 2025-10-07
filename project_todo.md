@@ -3,7 +3,6 @@
 
 ## (P0) C++ Core Mechanics & Performance Improvements
 - [+] Move Generation: Complete C++ unit tests
-
 - [ ] (P3) C++ Game Manager: Carry the core C++ game loop to C++ 
 - [+] Performance Improvements: Optimize the loop to play 1000 games/second (with placeholder player)
 - [+] Integration tests fo Move Generation: Complete C++ unit tests
