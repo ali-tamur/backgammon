@@ -101,7 +101,7 @@ class GameRecorder:
         for i in range(1, len(self.states), 2):
             self._append(i, self.white, score)
         for i in range(2, len(self.states), 2):
-            self._append(i, self.black, score)
+            self._append(i, self.black, -score)
         self.log_buffer.maybe_flush()
 
     def _append(self, i, player, score):
