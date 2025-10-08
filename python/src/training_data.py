@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from python.src.logger import LogReader
+from python.src.logger import LogReader, TrainData
 from python.src.state import BLACK_BAG, BLACK_BAR, COLLECT_END, WHITE_BAG, WHITE_BAR
 
 
@@ -40,10 +40,30 @@ def state_to_tensor(state_arr: list[int]) -> tf.Tensor:
     return tensor
 
 
-def prepare_training_data(log_file: Path, player_name: str, data_size: int):
+def prepare_training_data(
+    log_file: Path, player_name: str, opponent_name: str | None = None, data_size: int | None = None
+) -> tuple[tf.Tensor, tf.Tensor]:
+    """Prepare training data from game logs.
+
+    Returns:
+        x_train: Board state tensors
+        y_train: (move_number, num_moves, score) for each position
+    """
     log_reader = LogReader(log_file)
-    result = []
-    for log in islice(log_reader.get_player_moves(player_name), data_size):
-        board, move_n, n_moves, score = log
-        result.append((state_to_tensor(board), move_n, n_moves, score))
-    return result
+
+    train_data = []
+    iterator = log_reader.get_player_moves(player_name, opponent_name)
+    if data_size:
+        iterator = islice(iterator, data_size)
+
+    for d in iterator:
+        if d is None:
+            break
+        train_data.append(d)
+
+    x_train: tf.Tensor = tf.stack([state_to_tensor(d.board) for d in train_data])
+    y_train: tf.Tensor = tf.cast(
+        tf.constant([[d.move_number, d.num_moves, d.score] for d in train_data]), dtype=tf.float32
+    )
+
+    return x_train, y_train

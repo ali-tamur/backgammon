@@ -153,21 +153,36 @@ class LogWriter:
         self.game_recorder.end_game(score)
 
 
+@dataclass
+class TrainData:
+    board: list[int]
+    move_number: int
+    num_moves: int
+    score: int
+
+
 class LogReader:
     def __init__(self, db_path: Path | str):
         self.db_path = Path(db_path)
 
-    def get_player_moves(self, player_name: str) -> Iterator[tuple[list[int], int, int, int] | None]:
+    def get_player_moves(self, player_name: str, opponent_name: str | None = None) -> Iterator[TrainData | None]:
         conn = sqlite3.connect(self.db_path)
         try:
-            cursor = conn.execute("""SELECT * FROM game_moves WHERE player = ?""", (player_name,))
+            if opponent_name is None:
+                cursor = conn.execute("""SELECT * FROM game_moves WHERE player = ?""", (player_name,))
+            else:
+                cursor = conn.execute(
+                    """SELECT * FROM game_moves WHERE player IN (?, ?) ORDER BY game_id, move_number""",
+                    (player_name, opponent_name),
+                )
             for row in cursor:
                 record = Record(*row)
-                next_board: list[int] = pickle.loads(record.next_board)
-                move_number = record.move_number
-                num_moves = record.num_moves
-                score = record.score
-                yield (next_board, move_number, num_moves, score)
+                yield TrainData(
+                    board=pickle.loads(record.next_board),
+                    move_number=record.move_number,
+                    num_moves=record.num_moves,
+                    score=record.score,
+                )
             yield None
         finally:
             conn.close()
