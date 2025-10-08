@@ -73,5 +73,5 @@ def c_interactive(white, white_model, black, black_model):
     return _play(white, white_model, black, black_model, 1, None, None, False, True)
 
 
-def c_load_data(player_name, limit, db_path):
-    return prepare_training_data(db_path, player_name, limit)
+def c_load_data(player_name: str, alt_player: str | None, limit: int, db_path: str):
+    return prepare_training_data(Path(db_path), player_name, alt_player, limit)

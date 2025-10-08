@@ -9,13 +9,9 @@ def cli():
 
 
 def player_options(f):
-    f = click.option(
-        "--white", default="random", help="The player that will play the white pieces"
-    )(f)
+    f = click.option("--white", default="random", help="The player that will play the white pieces")(f)
     f = click.option("--white-model", default="", help="The path to the model file to load")(f)
-    f = click.option(
-        "--black", default="random", help="The player that will play the black pieces"
-    )(f)
+    f = click.option("--black", default="random", help="The player that will play the black pieces")(f)
     f = click.option("--black-model", default="", help="The path to the model file to load")(f)
     return f
 
@@ -44,7 +40,8 @@ def interactive(white, white_model, black, black_model):
 
 @cli.command()
 @click.argument("player-name")
+@click.option("--alt-player", type=click.STRING, default=None, help="use to train on two players")
 @click.option("--limit", default=1000, help="Number of games to load")
 @click.option("--db-path", default="/usr/data/backgammon/db.sqlite")
-def load_data(player_name, limit, db_path):
-    c_load_data(player_name, limit, db_path)
+def load_data(player_name, alt_player, limit, db_path):
+    c_load_data(player_name, alt_player, limit, db_path)
