@@ -1,0 +1,16 @@
+
+syntax = "proto3";
+
+package backgammon;
+
+message Game {
+  uint64 game_id = 1;
+  string white = 2;
+  string black = 3;
+  int32 score = 4;
+  repeated Move moves = 5;
+}
+
+message Move {
+  repeated sint32 cell = 1 [packed=true]; 
+}
