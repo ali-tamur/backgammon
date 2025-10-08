@@ -101,7 +101,7 @@ class GameRecorder:
         for i in range(1, len(self.states), 2):
             self._append(i, self.white, score)
         for i in range(2, len(self.states), 2):
-            self._append(i, self.black, -score)
+            self._append(i, self.black, score)
         self.log_buffer.maybe_flush()
 
     def _append(self, i, player, score):
@@ -166,23 +166,39 @@ class LogReader:
         self.db_path = Path(db_path)
 
     def get_player_moves(self, player_name: str, opponent_name: str | None = None) -> Iterator[TrainData | None]:
-        conn = sqlite3.connect(self.db_path)
-        try:
-            if opponent_name is None:
-                cursor = conn.execute("""SELECT * FROM game_moves WHERE player = ?""", (player_name,))
-            else:
-                cursor = conn.execute(
-                    """SELECT * FROM game_moves WHERE player IN (?, ?) ORDER BY game_id, move_number""",
-                    (player_name, opponent_name),
-                )
-            for row in cursor:
-                record = Record(*row)
-                yield TrainData(
-                    board=pickle.loads(record.next_board),
-                    move_number=record.move_number,
-                    num_moves=record.num_moves,
-                    score=record.score,
-                )
-            yield None
-        finally:
-            conn.close()
+        chunk_size = 500_000
+        offset = 0
+        while True:
+            conn = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
+            try:
+                if opponent_name is None:
+                    cursor = conn.execute(
+                        """SELECT * FROM game_moves
+                           WHERE player = ?
+                           ORDER BY game_id, move_number
+                           LIMIT ? OFFSET ? """,
+                        (player_name, chunk_size, offset),
+                    )
+                else:
+                    cursor = conn.execute(
+                        """SELECT * FROM game_moves
+                            WHERE player IN (?, ?)
+                            ORDER BY game_id, move_number
+                            LIMIT ? OFFSET ?""",
+                        (player_name, opponent_name, chunk_size, offset),
+                    )
+                rows = cursor.fetchall()
+                if not rows:
+                    yield None
+                    return
+                for row in rows:
+                    record = Record(*row)
+                    yield TrainData(
+                        board=pickle.loads(record.next_board),
+                        move_number=record.move_number,
+                        num_moves=record.num_moves,
+                        score=record.score,
+                    )
+                offset += chunk_size
+            finally:
+                conn.close()

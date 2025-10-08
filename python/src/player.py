@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from python.src.state import GameState
-from python.src.training_data import state_to_tensor
+from python.src.training_data import state_to_numpy
 
 
 class Player(ABC):
@@ -43,7 +43,7 @@ class NNPlayer(Player):
         moves = self.move_generator(state.a, d1, d2)
         if len(moves) == 1:
             return GameState(moves[0])
-        tensors = tf.stack([state_to_tensor(st) for st in moves])
+        tensors = tf.stack([state_to_numpy(st) for st in moves])
         raw_scores = self.model(tensors, training=False).numpy().squeeze()
         weights = np.exp(raw_scores / self.temperature)
         chosen_idx = self.r.choices(range(len(moves)), weights=weights)[0]

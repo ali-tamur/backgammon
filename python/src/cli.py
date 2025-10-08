@@ -41,7 +41,6 @@ def interactive(white, white_model, black, black_model):
 @cli.command()
 @click.argument("player-name")
 @click.option("--alt-player", type=click.STRING, default=None, help="use to train on two players")
-@click.option("--limit", default=1000, help="Number of games to load")
 @click.option("--db-path", default="/usr/data/backgammon/db.sqlite")
-def load_data(player_name, alt_player, limit, db_path):
-    c_load_data(player_name, alt_player, limit, db_path)
+def load_data(player_name, alt_player, db_path):
+    c_load_data(player_name, alt_player, db_path)
