@@ -9,9 +9,8 @@
 
 namespace bg {
 
-template <typename Config>
-static constexpr int32_t score(const Board &b) {
-  if (b[Config::PLAYER_BAG] * Config::SIGN < 15) {
+template <typename Config> static constexpr int32_t score(const Board &b) {
+  if (b[Config::PLAYER_BAG] * Config::SIGN < NUM_STONES) {
     return 0;
   }
   for (auto i = Config::HOME_START; i < Config::HOME_END; ++i) {
@@ -25,37 +24,34 @@ static constexpr int32_t score(const Board &b) {
   return b[Config::OPPONENT_BAG] == 0 ? Config::SIGN * 2 : Config::SIGN * 1;
 }
 
-template <typename Config>
-struct State {
+template <typename Config> struct State {
   static_assert(std::is_same_v<Config, WhiteConfig> ||
                 std::is_same_v<Config, BlackConfig>);
 
- public:
-  const Board b;
-  const Dice dice;
-  const Bits<Config> bits;
-  const int8_t homestones;
-  const uint64_t hash_;
+public:
+  Board b;
+  Dice dice;
+  Bits<Config> bits;
+  int8_t homestones;
+  uint64_t hash_;
 
   State(Board board, Dice dice)
-      : b{board},
-        dice{dice},
-        bits{get_bits(board)},
-        homestones{get_homestones(b)},
-        hash_(calculate_hash(board)) {}
+      : b{board}, dice{dice}, bits{get_bits(board)},
+        homestones{get_homestones(b)}, hash_(0) {}
 
-  [[nodiscard]] int32_t phase() const {
+  [[nodiscard]] auto phase() const -> int32_t {
     if (b[Config::PLAYER_BAR] != 0) {
       return ON_BAR;
     };
-    if (Config::SIGN * (homestones + b[Config::PLAYER_BAG]) == 15) {
+    if (Config::SIGN * (homestones + b[Config::PLAYER_BAG]) == NUM_STONES) {
       return COLLECTING;
     }
     return NORMAL;
   };
 
-  [[nodiscard]] State update_board(int32_t src, int32_t dst,
-                                   int32_t used_dice) const {
+  // Updates the board, the bitarray, the hash and # homestones.
+  [[nodiscard]] auto update_board(int32_t src, int32_t dst,
+                                   int32_t used_dice) const -> State {
     Board new_b = b;
     auto new_homestones = homestones;
     auto new_bits = bits;
@@ -79,18 +75,17 @@ struct State {
       new_bits.set(dst);
     }
     auto new_dice = dice.use_dice(used_dice);
-    auto result = State(new_b, new_dice, new_bits, new_homestones, new_hash);
-    return result;
+    return State(new_b, new_dice, new_bits, new_homestones, new_hash);
   };
 
-  [[nodiscard]] int32_t score() const {
-    if (b[WHITE_BAG] < 15 and b[BLACK_BAG] > -15) {
+  [[nodiscard]] auto score() const -> int32_t {
+    if (b[WHITE_BAG] < NUM_STONES and b[BLACK_BAG] > -NUM_STONES) {
       return 0;
     }
     return ::bg::score<WhiteConfig>(b) + ::bg::score<BlackConfig>(b);
   }
 
-  std::ostream &pretty_print(std::ostream &os) const {
+  auto pretty_print(std::ostream &os) const -> std::ostream & {
     os << "[";
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       os << b[i];
@@ -103,18 +98,15 @@ struct State {
     return os;
   }
 
-  [[nodiscard]] Board get_board() const { return b; }
+  [[nodiscard]] auto get_board() const -> Board { return b; }
 
- private:
+private:
   State(Board board, Dice dice, Bits<Config> bits, int8_t homestones,
         uint64_t hash_)
-      : b{board},
-        dice{dice},
-        bits{bits},
-        homestones{homestones},
-        hash_{hash_} {}
+      : b{board}, dice{dice}, bits{bits}, homestones{homestones}, hash_{hash_} {
+  }
 
-  [[nodiscard]] int8_t get_homestones(const Board &b) const {
+  [[nodiscard]] auto get_homestones(const Board &b) const -> int8_t {
     int32_t total = 0;
     for (int32_t i = Config::HOME_START; i < Config::HOME_END; ++i) {
       if (b[i] * Config::SIGN > 0) {
@@ -124,14 +116,14 @@ struct State {
     return static_cast<int8_t>(total);
   }
 
-  [[nodiscard]] Bits<Config> get_bits(const Board &b) const {
+  [[nodiscard]] auto get_bits(const Board &b) const -> Bits<Config> {
     Bits<Config> bits = Bits<Config>();
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       if (b[i] * Config::SIGN > 0) {
         bits.set(i);
       }
     }
-    return Bits<Config>(bits);
+    return bits;
   };
 
   void update_(Board &b, uint64_t &h, int32_t index, int8_t delta) const {
@@ -140,12 +132,9 @@ struct State {
   }
 
   void update_hash(uint64_t &hash, int32_t index) const {
-    hash ^= get_zobrist_table()[zobrist_index(index)];
+    hash ^= get_zobrist_table()[index];
   }
 
-  [[nodiscard]] uint64_t calculate_hash(const Board &b) const {
-    return 0;
-  }
 };
 
 template <typename Config>
@@ -153,4 +142,4 @@ std::ostream &operator<<(std::ostream &os, const State<Config> &state) {
   return state.pretty_print(os);
 }
 
-}  // namespace bg
+} // namespace bg

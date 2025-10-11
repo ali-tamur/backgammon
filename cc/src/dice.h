@@ -2,11 +2,12 @@
 
 #include <algorithm>
 #include <iostream>
+#include <random>
 
 namespace bg {
 
 class DiceIterator {
- public:
+public:
   using iterator = DiceIterator;
   using iterator_category = std::forward_iterator_tag;
   using value_type = int32_t;
@@ -21,26 +22,26 @@ class DiceIterator {
   bool operator==(const DiceIterator &other) const;
   bool operator!=(const DiceIterator &other) const;
 
- private:
+private:
   int32_t d1_;
   int32_t d2_;
 };
 
 class DiceRolls {
- public:
+public:
   using iterator = DiceIterator;
   explicit DiceRolls(int32_t d1, int32_t d2 = 0) : d1_{d1}, d2_{d2} {};
 
   [[nodiscard]] iterator begin() const;
   [[nodiscard]] static iterator end();
 
- private:
+private:
   int32_t d1_;
   int32_t d2_;
 };
 
 class Dice {
- public:
+public:
   Dice(int32_t dice) : dice_{dice} {}
   Dice(int32_t d1, int32_t d2)
       : dice_{d1 == d2 ? 1111 * d1
@@ -48,11 +49,12 @@ class Dice {
 
   [[nodiscard]] DiceRolls values(bool use_only_max) const;
   [[nodiscard]] Dice use_dice(int32_t d) const;
-  [[nodiscard]] size_t size() const;
+
+  [[nodiscard]] size_t size() const; 
 
   int32_t dice_;
 
-  friend std::ostream &operator<<(std::ostream &os, const Dice &dice);
+  friend auto operator<<(std::ostream &os, const Dice &dice) -> std::ostream &;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Dice &dice) {
@@ -60,4 +62,12 @@ inline std::ostream &operator<<(std::ostream &os, const Dice &dice) {
   return os;
 }
 
-}  // namespace bg
+class DiceThrow {
+public:
+  [[nodiscard]] Dice throw_dice();
+
+private:
+  std::mt19937 gen_{std::random_device{}()};
+};
+
+} // namespace bg
