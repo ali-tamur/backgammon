@@ -9,8 +9,7 @@ using namespace ::testing;
 
 namespace bg {
 
-template <typename Config>
-std::vector<int32_t> to_collection(Bits<Config> b) {
+template <typename Config> std::vector<int32_t> to_collection(Bits<Config> b) {
   auto indices = std::vector<int32_t>{};
   for (auto i : b) {
     indices.push_back(i);
@@ -64,4 +63,4 @@ TEST(BitsTest, SetUnset) {
 #endif
 }
 
-}  // namespace bg
+} // namespace bg

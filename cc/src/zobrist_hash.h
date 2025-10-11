@@ -5,12 +5,10 @@
 
 namespace bg {
 
-using ZobristTableType = std::array<uint64_t, 32>;
+using ZobristTableType = std::array<uint32_t, 32>;
 
-inline int32_t zobrist_index(int32_t index) {
-  return index;
-}
+//inline auto zobrist_index(int32_t index) -> int32_t { return index; }
 
-const ZobristTableType &get_zobrist_table();
+auto get_zobrist_table() -> const ZobristTableType &;
 
-}  // namespace bg
+} // namespace bg

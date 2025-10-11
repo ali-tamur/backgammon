@@ -4,9 +4,9 @@
 #include <utility>
 
 #include "configs.h"
+#include "moves.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "moves.h"
 
 using namespace ::testing;
 
@@ -32,17 +32,15 @@ constexpr Change::DeltaTag DELTA{};
 
 struct Case {
   Case(std::set<Board> result, int32_t size, std::set<Board> expectation)
-      : result(std::move(result)),
-        expectation(std::move(expectation)),
+      : result(std::move(result)), expectation(std::move(expectation)),
         size(size) {}
   std::set<Board> result;
   std::set<Board> expectation;
   int32_t size;
 };
 
-template <typename Config>
-class Expectation {
- public:
+template <typename Config> class Expectation {
+public:
   Expectation(Board board, Dice dice) : b{board}, dice(dice) {}
 
   void add_expectation(const std::vector<Change> &changes) {
@@ -77,7 +75,7 @@ class Expectation {
     return Case(result_set, result_size, expectation_set);
   }
 
- private:
+private:
   Board opponent_perspective(const Board &b) {
     Board r = {};
     for (int32_t i = 0; i < COLLECT_END; ++i) {
@@ -104,8 +102,7 @@ std::vector<Dice> generate_all_dice() {
   return result;
 }
 
-template <typename T>
-class StateTest : public ::testing::Test {
+template <typename T> class StateTest : public ::testing::Test {
   using Config = T;
 };
 
@@ -683,4 +680,4 @@ TYPED_TEST(StateTest, count_moves_at_start) {
   }
 }
 
-}  // namespace bg
+} // namespace bg

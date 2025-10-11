@@ -63,4 +63,4 @@ TEST(DiceTest, DoubleRoll) {
   EXPECT_TRUE(to_collection(d5, false).empty());
 }
 
-}  // namespace bg
+} // namespace bg

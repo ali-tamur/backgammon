@@ -23,7 +23,6 @@ cc_library(
         "zobrist_hash.h",
     ],
     deps = [
-        "@abseil-cpp//absl/strings",
         # "@...//pybind11"
     ],
     alwayslink = 1,
@@ -51,6 +50,97 @@ cc_library(
     name = "py_interface",
     hdrs = ["py_interface.h"],
     visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "model",
+    hdrs = ["model.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:onnxruntime",
+    ],
+)
+
+
+cc_library(
+    name = "player",
+    hdrs = ["player.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:onnxruntime",
+        ":dice", 
+        ":moves",
+        ":py_interface",
+        ":model"
+    ],
+)
+
+cc_library(
+    name = "logger",
+    hdrs = ["logger.h"],
+    srcs = ["logger.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":py_interface",
+        ":configs",
+        ":dice",
+        "//proto:game_cc_proto"
+    ],
+)
+
+cc_library(
+    name = "game_manager",
+    hdrs = ["game_manager.h"],
+    srcs = ["game_manager.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party:onnxruntime",
+        ":configs",
+        ":dice", 
+        ":logger",
+        ":moves",
+        ":py_interface",
+        ":model",
+        ":player"
+    ],
+)
+
+cc_binary(
+      name = "game_manager_benchmark",
+      srcs = ["game_manager_benchmark.cc"],
+      deps = [
+        "//third_party:onnxruntime",
+        ":game_manager",
+        ":configs",
+        ":dice", 
+        ":logger",
+        ":moves",
+        ":py_interface",
+        ":model",
+        ":player",
+          "@google_benchmark//:benchmark",
+      ],
+      linkopts = ["-pg"],
+      copts = ["-pg"],
+  )
+
+cc_test(
+    name = "game_manager_test",
+    size = "small",
+    srcs = ["game_manager_test.cc"],
+    data = ["//third_party:onnxruntime"],
+    deps = [
+        ":game_manager",
+        ":configs",
+        ":dice", 
+        ":moves",
+        ":logger",
+        ":py_interface",
+        ":model",
+        ":player",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -132,7 +222,6 @@ cc_library(
             ":py_interface",
             ":results",
             ":state",
-            "@abseil-cpp//absl/strings",
         ],
 )
 
