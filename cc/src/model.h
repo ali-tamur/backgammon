@@ -12,10 +12,10 @@ class Model {
 public:
   Model(const std::string &model_path);
 
-  std::string GetInputName() const;
-  std::string GetOutputName() const;
-  std::vector<int64_t> GetInputShape() const;
-  std::vector<float> Predict(const std::vector<NN_INPUT> &boards);
+  auto GetInputName() const -> std::string;
+  auto GetOutputName() const -> std::string;
+  auto GetInputShape() const -> std::vector<int64_t>;
+  auto Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float>;
 
 private:
   Ort::Env env_;

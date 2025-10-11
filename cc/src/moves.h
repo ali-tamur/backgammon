@@ -27,7 +27,7 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
                 std::is_same_v<Config, BlackConfig>);
   auto result = KeepResults<Config>();
   auto states = std::vector<State<Config>>{};
-  states.reserve(256);
+  states.reserve(64);
   states.emplace_back(board, dice);
   uint32_t i = 0;
   while (i < states.size()) {

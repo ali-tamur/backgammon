@@ -17,14 +17,14 @@ namespace bg {
 enum PlayerTypes : int8_t { RANDOM, NN };
 
 template <enum PlayerTypes, typename Config> class Player {
-  Board move(const Board &board, Dice dice);
+  auto move(const Board &board, Dice dice) -> Board;
 };
 
 template <typename Config> class Player<RANDOM, Config> {
 public:
   Player(std::string name, std::mt19937 r) : name{std::move(name)}, r_{r} {}
 
-  Board move(const Board &board, Dice dice) {
+  auto move(const Board &board, Dice dice) -> Board {
     const std::vector<State<Config>> &states = generate<Config>(board, dice);
     std::uniform_int_distribution<int> dist_(0, states.size() - 1);
     auto index = dist_(r_);
@@ -43,7 +43,7 @@ public:
   Player(std::string name, std::mt19937 r, const std::string &model_path)
       : name{std::move(name)}, r_{r}, model_{Model(model_path)} {}
 
-  Board move(const Board &board, Dice dice) {
+  auto move(const Board &board, Dice dice) -> Board {
     const std::vector<State<Config>> &states = generate<Config>(board, dice);
     std::vector<Board> boards;
     std::transform(states.begin(), states.end(), std::back_inserter(boards),

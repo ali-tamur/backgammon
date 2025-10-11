@@ -35,7 +35,7 @@ int32_t GameManager::run_once(LogWriter *logger) {
   return this_score;
 }
 
-std::tuple<int32_t, int32_t> GameManager::run(int32_t n_times) {
+auto GameManager::run(int32_t n_times) -> std::tuple<int32_t, int32_t> {
   int32_t white_score = 0;
   int32_t black_score = 0;
   LogWriter logger{options_.db_path, !options_.will_log};
@@ -50,8 +50,7 @@ std::tuple<int32_t, int32_t> GameManager::run(int32_t n_times) {
       black_score -= this_score;
     }
   }
-  // std::cout << n_times << " games played. Result: " << white_score << " - "
-  // << black_score << "\n";
+  //std::cout << n_times << " games played. Result: " << white_score << " - " << black_score << "\n";
   return std::make_tuple(white_score, black_score);
 }
 

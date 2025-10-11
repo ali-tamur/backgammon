@@ -42,7 +42,7 @@ private:
 
 class Dice {
 public:
-  Dice(int32_t dice) : dice_{dice} {}
+  explicit Dice(int32_t dice) : dice_{dice} {}
   Dice(int32_t d1, int32_t d2)
       : dice_{d1 == d2 ? 1111 * d1
                        : ((std::min(d1, d2) * 10) + std::max(d1, d2))} {}
