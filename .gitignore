@@ -232,3 +232,5 @@ py/src/*.so
 models
 games
 
+# Personal
+project-structure.md
