@@ -28,7 +28,7 @@ public:
     const std::vector<State<Config>> &states = generate<Config>(board, dice);
     std::uniform_int_distribution<int> dist_(0, states.size() - 1);
     auto index = dist_(r_);
-    const State<Config>& choosen_state = states[index];
+    const State<Config> &choosen_state = states[index];
     return choosen_state.b;
   }
 
@@ -40,16 +40,14 @@ private:
 
 template <typename Config> class Player<NN, Config> {
 public:
-  Player(std::string name, std::mt19937 r, const std::string& model_path)
+  Player(std::string name, std::mt19937 r, const std::string &model_path)
       : name{std::move(name)}, r_{r}, model_{Model(model_path)} {}
 
   Board move(const Board &board, Dice dice) {
     const std::vector<State<Config>> &states = generate<Config>(board, dice);
-    std::vector<Board> boards;  
-    std::transform(states.begin(), 
-                   states.end(), 
-                   std::back_inserter(boards), 
-                   [] (const State<Config>& state) -> auto {return state.b;});
+    std::vector<Board> boards;
+    std::transform(states.begin(), states.end(), std::back_inserter(boards),
+                   [](const State<Config> &state) -> auto { return state.b; });
     if (boards.size() == 1) {
       return boards[0];
     }
@@ -57,16 +55,16 @@ public:
     std::transform(boards.begin(), boards.end(), std::back_inserter(nn_input),
                    &board_to_nn_input);
     auto values = model_.Predict(nn_input);
-    std::vector<float> weights; 
-    std::transform(
-        values.begin(), values.end(), std::back_inserter(weights),
-        [this](float val) { return std::exp(val / temperature_); });
+    std::vector<float> weights;
+    std::transform(values.begin(), values.end(), std::back_inserter(weights),
+                   [this](float val) { return std::exp(val / temperature_); });
     std::discrete_distribution<> dist{weights.begin(), weights.end()};
     int32_t index = dist(r_);
     return boards[index];
   }
 
   std::string name;
+
 private:
   std::mt19937 r_;
   Model model_;

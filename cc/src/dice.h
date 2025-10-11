@@ -50,7 +50,7 @@ public:
   [[nodiscard]] DiceRolls values(bool use_only_max) const;
   [[nodiscard]] Dice use_dice(int32_t d) const;
 
-  [[nodiscard]] size_t size() const; 
+  [[nodiscard]] size_t size() const;
 
   int32_t dice_;
 

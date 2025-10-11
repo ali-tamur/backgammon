@@ -37,13 +37,14 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
       if (phase == ON_BAR) {
         for (auto &new_p : moves_on_bar(p)) {
           states.push_back(new_p);
-        } 
+        }
       } else {
         // In the collecting phase we should consider the largest dice first.
         for (auto d : p.dice.values(phase == COLLECTING)) {
           bool first_move_in_collect = phase == COLLECTING;
           auto bits_copy = p.bits;
-          for (auto src_index = bits_copy.begin(); src_index != bits_copy.end(); ++src_index) {
+          for (auto src_index = bits_copy.begin(); src_index != bits_copy.end();
+               ++src_index) {
             bool can_collect_wastefully =
                 phase == COLLECTING && first_move_in_collect &&
                 !Config::is_inboard(Config::apply_dice((*src_index), d));

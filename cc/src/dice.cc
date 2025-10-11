@@ -47,7 +47,6 @@ auto Dice::size() const -> size_t {
          : dice_ < 1000 ? 3
                         : 4;
 }
-                        
 
 [[nodiscard]] Dice DiceThrow::throw_dice() {
   std::uniform_int_distribution<int> dist_(1, 6);

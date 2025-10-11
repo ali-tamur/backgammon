@@ -64,6 +64,6 @@ struct BlackConfig {
 static constexpr Board GAME_START = {2, 0, 0,  0,  0, -5, 0, -3, 0, 0,
                                      0, 5, -5, 0,  0, 0,  3, 0,  5, 0,
                                      0, 0, 0,  -2, 0, 0,  0, 0};
-                
+
 static constexpr int32_t NUM_STONES = 15;
 } // namespace bg

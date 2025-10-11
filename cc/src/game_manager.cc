@@ -50,7 +50,8 @@ std::tuple<int32_t, int32_t> GameManager::run(int32_t n_times) {
       black_score -= this_score;
     }
   }
-  //std::cout << n_times << " games played. Result: " << white_score << " - " << black_score << "\n";
+  // std::cout << n_times << " games played. Result: " << white_score << " - "
+  // << black_score << "\n";
   return std::make_tuple(white_score, black_score);
 }
 

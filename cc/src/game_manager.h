@@ -23,8 +23,8 @@ public:
   using MOVE = std::function<Board(const Board &board, Dice)>;
   GameManager(MOVE white, MOVE black, DiceThrow dice_source,
               GameOptions options)
-      : white_{std::move(white)}, black_{std::move(black)}, dice_throw_{dice_source},
-        options_{std::move(options)} {}
+      : white_{std::move(white)}, black_{std::move(black)},
+        dice_throw_{dice_source}, options_{std::move(options)} {}
 
   auto run_once(LogWriter *logger) -> int32_t;
   std::tuple<int32_t, int32_t> run(int32_t n_times);
