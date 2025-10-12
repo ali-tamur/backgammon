@@ -17,10 +17,10 @@ public:
 
   explicit DiceIterator(int32_t d1, int32_t d2 = 0) : d1_{d1}, d2_{d2} {};
 
-  int32_t operator*() const;
-  iterator &operator++();
-  bool operator==(const DiceIterator &other) const;
-  bool operator!=(const DiceIterator &other) const;
+  auto operator*() const -> int32_t;
+  auto operator++() -> iterator &;
+  auto operator==(const DiceIterator &other) const -> bool;
+  auto operator!=(const DiceIterator &other) const -> bool;
 
 private:
   int32_t d1_;
@@ -32,8 +32,8 @@ public:
   using iterator = DiceIterator;
   explicit DiceRolls(int32_t d1, int32_t d2 = 0) : d1_{d1}, d2_{d2} {};
 
-  [[nodiscard]] iterator begin() const;
-  [[nodiscard]] static iterator end();
+  [[nodiscard]] auto begin() const -> iterator;
+  [[nodiscard]] static auto end() -> iterator;
 
 private:
   int32_t d1_;
@@ -42,32 +42,30 @@ private:
 
 class Dice {
 public:
-  explicit Dice(int32_t dice) : dice_{dice} {}
-  Dice(int32_t d1, int32_t d2)
-      : dice_{d1 == d2 ? 1111 * d1
-                       : ((std::min(d1, d2) * 10) + std::max(d1, d2))} {}
+  explicit Dice(uint32_t dice) : dice_{dice} {}
+  Dice(int32_t d1, int32_t d2);
 
-  [[nodiscard]] DiceRolls values(bool use_only_max) const;
-  [[nodiscard]] Dice use_dice(int32_t d) const;
+  [[nodiscard]] auto values(bool use_only_max) const -> DiceRolls;
+  [[nodiscard]] auto use_dice(int32_t d) const -> Dice;
+  [[nodiscard]] auto size() const -> size_t;
 
-  [[nodiscard]] size_t size() const;
-
-  int32_t dice_;
+  uint32_t dice_;
 
   friend auto operator<<(std::ostream &os, const Dice &dice) -> std::ostream &;
 };
 
-inline std::ostream &operator<<(std::ostream &os, const Dice &dice) {
+inline auto operator<<(std::ostream &os, const Dice &dice) -> std::ostream & {
   os << dice.dice_;
   return os;
 }
 
 class DiceThrow {
 public:
-  [[nodiscard]] Dice throw_dice();
+  [[nodiscard]] auto throw_dice() -> Dice;
 
 private:
   std::mt19937 gen_{std::random_device{}()};
 };
+
 
 } // namespace bg
