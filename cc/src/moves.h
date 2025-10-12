@@ -32,7 +32,7 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
   uint32_t i = 0;
   while (i < states.size()) {
     State<Config> p = states[i++];
-    if (p.dice.size() > 0) {
+    if (!p.dice.is_empty()) {
       auto phase = p.phase();
       if (phase == ON_BAR) {
         for (auto &new_p : moves_on_bar(p)) {

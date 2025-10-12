@@ -132,7 +132,7 @@ private:
   }
 
   void update_hash(uint64_t &hash, int32_t index) const {
-    hash ^= get_zobrist_table()[index];
+    hash ^= ZOBRIST_TABLE[index];
   }
 };
 

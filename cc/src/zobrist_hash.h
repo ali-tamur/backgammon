@@ -2,10 +2,9 @@
 
 #include <array>
 #include <cstdint>
+#include <random>
 
 namespace bg {
-
 using ZobristTableType = std::array<uint32_t, 32>;
-auto get_zobrist_table() -> const ZobristTableType &;
-
+extern const ZobristTableType ZOBRIST_TABLE; 
 } // namespace bg

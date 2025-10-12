@@ -6,8 +6,8 @@
 #include <random>
 
 namespace bg {
-auto get_zobrist_table() -> const ZobristTableType & {
-  static const ZobristTableType INSTANCE = [] {
+
+auto get_zobrist_table() -> ZobristTableType {
     size_t table_size = 32;
     ZobristTableType table{};
     std::random_device rd{};
@@ -17,8 +17,8 @@ auto get_zobrist_table() -> const ZobristTableType & {
       table[i] = dist(generator);
     }
     return table;
-  }();
-  return INSTANCE;
-}
+  }
+
+  const ZobristTableType ZOBRIST_TABLE = get_zobrist_table();
 
 } // namespace bg
