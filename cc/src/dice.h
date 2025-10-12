@@ -47,7 +47,12 @@ public:
 
   [[nodiscard]] auto values(bool use_only_max) const -> DiceRolls;
   [[nodiscard]] auto use_dice(int32_t d) const -> Dice;
-  [[nodiscard]] auto size() const -> size_t;
+  [[nodiscard]] auto is_empty() const -> bool { 
+    return dice_ == 0; 
+  }
+  [[nodiscard]] auto size() const -> size_t {
+    return __builtin_popcount(dice_);
+  }
 
   uint32_t dice_;
 
