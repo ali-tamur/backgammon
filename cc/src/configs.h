@@ -28,15 +28,18 @@ struct WhiteConfig {
   static constexpr int32_t LAND_START = 0;
   static constexpr int32_t EXACT_COLLECT = COLLECT_END;
   static constexpr std::string_view COLOR = "white";
-  static constexpr bool is_valid_dst(int32_t value) { return value >= -1; }
-  static constexpr int32_t apply_dice(int32_t src_index, int32_t dice) {
+  static constexpr auto is_valid_dst(int32_t value) -> bool { return value >= -1; }
+  static constexpr auto apply_dice(int32_t src_index, int32_t dice) -> int32_t {
     return src_index + dice;
   }
-  static constexpr bool is_inboard(int32_t dst_index) {
+  static constexpr auto is_inboard(int32_t dst_index) -> bool {
     return dst_index < HOME_END;
   }
-  static constexpr bool move_to_home(int32_t src_index, int32_t dst_index) {
+  static constexpr auto move_to_home(int32_t src_index, int32_t dst_index) -> bool {
     return src_index < HOME_START && dst_index >= HOME_START;
+  }
+  static constexpr auto is_already_analyzed(int32_t last_cell, int32_t now_cell) -> bool {
+    return now_cell < last_cell;
   }
 };
 
@@ -51,13 +54,16 @@ struct BlackConfig {
   static constexpr int32_t LAND_START = COLLECT_END - 1;
   static constexpr int32_t EXACT_COLLECT = -1;
   static constexpr std::string_view COLOR = "black";
-  static constexpr bool is_valid_dst(int32_t value) { return value <= 1; }
-  static constexpr int32_t apply_dice(int32_t src_index, int32_t dice) {
+  static constexpr auto is_valid_dst(int32_t value) -> bool { return value <= 1; }
+  static constexpr auto apply_dice(int32_t src_index, int32_t dice) -> int32_t {
     return src_index - dice;
   }
-  static constexpr bool is_inboard(int32_t dst_index) { return dst_index >= 0; }
-  static constexpr bool move_to_home(int32_t src_index, int32_t dst_index) {
+  static constexpr auto is_inboard(int32_t dst_index) -> bool { return dst_index >= 0; }
+  static constexpr auto move_to_home(int32_t src_index, int32_t dst_index) -> bool {
     return src_index >= HOME_END && dst_index < HOME_END;
+  }
+  static constexpr auto is_already_analyzed(int32_t last_cell, int32_t now_cell) -> bool {
+    return now_cell > last_cell;
   }
 };
 

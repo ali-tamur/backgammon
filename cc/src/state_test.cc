@@ -55,7 +55,7 @@ public:
     expectations.push_back(e);
   }
 
-  Case get_test_result() {
+  auto get_test_result() -> Case {
     Board final_b;
     if (Config::COLOR == "black") {
       final_b = opponent_perspective(b);
@@ -76,7 +76,7 @@ public:
   }
 
 private:
-  Board opponent_perspective(const Board &b) {
+  auto opponent_perspective(const Board &b) -> Board {
     Board r = {};
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       r[i] = -b[COLLECT_END - 1 - i];
@@ -92,7 +92,7 @@ private:
   std::vector<Board> expectations;
 };
 
-std::vector<Dice> generate_all_dice() {
+auto generate_all_dice() -> std::vector<Dice> {
   auto result = std::vector<Dice>{};
   for (int32_t d1 = 1; d1 <= 6; ++d1) {
     for (int32_t d2 = d1; d2 <= 6; ++d2) {
