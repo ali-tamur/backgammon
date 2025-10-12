@@ -4,13 +4,14 @@
 #include "dice.h"
 #include "proto/game.pb.h"
 #include <filesystem>
+#include <utility>
 
 namespace bg {
 
 class LogWriter {
 public:
-  LogWriter(std::filesystem::path db_path, bool is_dummy = false)
-      : db_path_(db_path), is_dummy_{is_dummy} {}
+  explicit LogWriter(std::filesystem::path db_path, bool is_dummy = false)
+      : db_path_(std::move(db_path)), is_dummy_{is_dummy} {}
   ~LogWriter();
 
   void start_game(uint64_t game_id, std::string white_name,
@@ -22,12 +23,12 @@ public:
 private:
   std::filesystem::path db_path_;
   bool is_dummy_;
-  std::vector<Game> buffer_{};
+  std::vector<Game> buffer_;
 };
 
 class LogReader {
 public:
-  LogReader(const std::string &db_path) : db_path_(db_path) {}
+  explicit LogReader(std::string db_path) : db_path_(std::move(db_path)) {}
 
 private:
   std::string db_path_;

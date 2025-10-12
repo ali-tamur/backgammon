@@ -1,6 +1,5 @@
 #pragma once
 
-#include <numeric>
 #include <type_traits>
 
 #include "configs.h"
@@ -13,17 +12,18 @@ template <typename Config> class Bits {
 
 private:
   class BitIterator {
+    static constexpr int32_t N_BITS = 32;
   public:
     using iterator_category = std::forward_iterator_tag;
     using value_type = int32_t;
     using difference_type = std::ptrdiff_t;
 
     explicit BitIterator(uint32_t n) { n_ = n; };
-    value_type operator*() const {
+    auto operator*() const -> value_type {
       if constexpr (std::is_same_v<Config, WhiteConfig>) {
         return __builtin_ctz(n_);
       } else if constexpr (std::is_same_v<Config, BlackConfig>) {
-        return 31 - __builtin_clz(n_);
+        return N_BITS - 1 - __builtin_clz(n_);
       }
     }
 
@@ -32,12 +32,12 @@ private:
         n_ = n_ & (n_ - 1);
         return *this;
       } else if constexpr (std::is_same_v<Config, BlackConfig>) {
-        n_ = n_ ^ (1U << (31 - __builtin_clz(n_)));
+        n_ = n_ ^ (1U << (N_BITS - 1 - __builtin_clz(n_)));
         return *this;
       }
     }
-    bool operator==(const BitIterator &other) const { return n_ == other.n_; }
-    bool operator!=(const BitIterator &other) const { return n_ != other.n_; }
+    auto operator==(const BitIterator &other) const -> bool { return n_ == other.n_; }
+    auto operator!=(const BitIterator &other) const -> bool { return n_ != other.n_; }
 
   private:
     uint32_t n_;

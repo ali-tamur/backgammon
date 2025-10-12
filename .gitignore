@@ -219,6 +219,9 @@ __marimo__/
 # kernprof
 *.lprof
 
+# benchmark
+gmon.out
+
 # bazel
 */MODULE.bazel.lock
 

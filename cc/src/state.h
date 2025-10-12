@@ -51,7 +51,7 @@ public:
 
   // Updates the board, the bitarray, the hash and # homestones.
   [[nodiscard]] auto update_board(int32_t src, int32_t dst,
-                                   int32_t used_dice) const -> State {
+                                  int32_t used_dice) const -> State {
     Board new_b = b;
     auto new_homestones = homestones;
     auto new_bits = bits;
@@ -134,11 +134,10 @@ private:
   void update_hash(uint64_t &hash, int32_t index) const {
     hash ^= get_zobrist_table()[index];
   }
-
 };
 
 template <typename Config>
-std::ostream &operator<<(std::ostream &os, const State<Config> &state) {
+auto operator<<(std::ostream &os, const State<Config> &state) -> std::ostream & {
   return state.pretty_print(os);
 }
 
