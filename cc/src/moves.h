@@ -26,17 +26,17 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
   static_assert(std::is_same_v<Config, WhiteConfig> ||
                 std::is_same_v<Config, BlackConfig>);
   auto result = KeepResults<Config>();
-  auto states = std::vector<State<Config>>{};
+  auto states = std::vector<std::tuple<State<Config>, size_t>>{};
   states.reserve(64);
-  states.emplace_back(board, dice);
+  states.emplace_back(std::make_tuple(State<Config>(board, dice), Config::LAND_START));
   uint32_t i = 0;
   while (i < states.size()) {
-    State<Config> p = states[i++];
+    auto [p, last_cell] = states[i++];
     if (!p.dice.is_empty()) {
       auto phase = p.phase();
       if (phase == ON_BAR) {
         for (auto &new_p : moves_on_bar(p)) {
-          states.push_back(new_p);
+          states.push_back(std::make_tuple(new_p, Config::LAND_START));
         }
       } else {
         // In the collecting phase we should consider the largest dice first.
@@ -45,6 +45,10 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
           auto bits_copy = p.bits;
           for (auto src_index = bits_copy.begin(); src_index != bits_copy.end();
                ++src_index) {
+            if (Config::is_already_analyzed(last_cell, *src_index)) {
+              first_move_in_collect = false;
+              continue;
+            }
             bool can_collect_wastefully =
                 phase == COLLECTING && first_move_in_collect &&
                 !Config::is_inboard(Config::apply_dice((*src_index), d));
@@ -59,14 +63,14 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
                 // further.
                 return {new_p};
               }
-              states.push_back(new_p);
+              states.push_back(std::make_tuple(new_p, *src_index));
               break;
             }
             auto dst_index = Config::apply_dice(*src_index, d);
             if (Config::is_inboard(dst_index) &&
                 Config::is_valid_dst(p.b[dst_index])) {
               auto new_p = p.update_board(*src_index, dst_index, d);
-              states.push_back(new_p);
+              states.push_back(std::make_tuple(new_p, *src_index));
             }
           }
         }
