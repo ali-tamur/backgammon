@@ -1,8 +1,9 @@
 #pragma once
 
-#include "py_interface.h"
 #include <onnxruntime_cxx_api.h>
 #include <string>
+
+#include "configs.h"
 
 namespace bg {
 

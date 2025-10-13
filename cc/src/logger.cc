@@ -2,13 +2,13 @@
 
 #include "proto/game.pb.h"
 #include <cassert>
-#include <fstream>
 #include <vector>
 
 namespace bg {
 
 LogWriter::~LogWriter() { flush(); }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 void LogWriter::start_game(uint64_t game_id, std::string white_name,
                            std::string black_name) {
   if (is_dummy_) {
@@ -21,6 +21,7 @@ void LogWriter::start_game(uint64_t game_id, std::string white_name,
   buffer_.emplace_back(game);
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 void LogWriter::add_move(Dice dice, const Board &board) {
   if (is_dummy_) {
     return;

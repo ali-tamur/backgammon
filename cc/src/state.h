@@ -137,7 +137,8 @@ private:
 };
 
 template <typename Config>
-auto operator<<(std::ostream &os, const State<Config> &state) -> std::ostream & {
+auto operator<<(std::ostream &os, const State<Config> &state)
+    -> std::ostream & {
   return state.pretty_print(os);
 }
 

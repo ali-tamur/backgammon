@@ -1,6 +1,5 @@
 #pragma once
 
-#include "configs.h"
 #include "state.h"
 
 namespace std {

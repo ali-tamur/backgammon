@@ -20,10 +20,10 @@ std::vector<int32_t> to_collection(Dice d, bool will_use_max) {
 TEST(DiceTest, Rolls) {
   Dice dice{3, 5};
   EXPECT_EQ(2, dice.size());
-  EXPECT_THAT(to_collection(Dice(3,5), false), ElementsAreArray({5, 3}));
-  EXPECT_THAT(to_collection(Dice(3,5), true), ElementsAreArray({5}));
-  EXPECT_THAT(to_collection(Dice(4,4), false), ElementsAreArray({4}));
-  EXPECT_THAT(to_collection(Dice(4,4), true), ElementsAreArray({4}));
+  EXPECT_THAT(to_collection(Dice(3, 5), false), ElementsAreArray({5, 3}));
+  EXPECT_THAT(to_collection(Dice(3, 5), true), ElementsAreArray({5}));
+  EXPECT_THAT(to_collection(Dice(4, 4), false), ElementsAreArray({4}));
+  EXPECT_THAT(to_collection(Dice(4, 4), true), ElementsAreArray({4}));
 }
 
 TEST(DiceTest, UseDice) {

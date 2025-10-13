@@ -3,7 +3,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
-#include "py_interface.h"
+#include "configs.h"
 
 namespace py = pybind11;
 using namespace bg;

@@ -1,6 +1,6 @@
+#include <cassert>
 #include <onnxruntime_cxx_api.h>
 #include <string>
-#include <cassert>
 
 #include "model.h"
 

@@ -3,10 +3,7 @@
 #include "configs.h"
 #include "dice.h"
 #include "game_manager.h"
-#include "moves.h"
 #include "player.h"
-#include "py_interface.h"
-#include "state.h"
 #include <random>
 
 static void BM_GameManager(benchmark::State &state) {

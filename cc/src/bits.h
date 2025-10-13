@@ -13,6 +13,7 @@ template <typename Config> class Bits {
 private:
   class BitIterator {
     static constexpr int32_t N_BITS = 32;
+
   public:
     using iterator_category = std::forward_iterator_tag;
     using value_type = int32_t;
@@ -27,7 +28,7 @@ private:
       }
     }
 
-    BitIterator &operator++() {
+    auto operator++() -> BitIterator & {
       if constexpr (std::is_same_v<Config, WhiteConfig>) {
         n_ = n_ & (n_ - 1);
         return *this;
@@ -36,8 +37,12 @@ private:
         return *this;
       }
     }
-    auto operator==(const BitIterator &other) const -> bool { return n_ == other.n_; }
-    auto operator!=(const BitIterator &other) const -> bool { return n_ != other.n_; }
+    auto operator==(const BitIterator &other) const -> bool {
+      return n_ == other.n_;
+    }
+    auto operator!=(const BitIterator &other) const -> bool {
+      return n_ != other.n_;
+    }
 
   private:
     uint32_t n_;
@@ -47,13 +52,13 @@ public:
   using iterator = BitIterator;
   void set(size_t index) { n_ |= (1U << index); }
   void unset(size_t index) { n_ &= ~(1U << index); }
-  [[nodiscard]] iterator begin() const { return BitIterator(n_); }
-  [[nodiscard]] iterator end() const { return BitIterator(0); }
+  [[nodiscard]] auto begin() const -> iterator { return BitIterator(n_); }
+  [[nodiscard]] auto end() const -> iterator { return BitIterator(0); }
 
 private:
   uint32_t n_ = 0;
-  friend iterator begin(const Bits &b) { return b.begin(); }
-  friend iterator end(const Bits &b) { return b.end(); }
+  friend auto begin(const Bits &b) -> iterator { return b.begin(); }
+  friend auto end(const Bits &b) -> iterator { return b.end(); }
 };
 
 }; // namespace bg
