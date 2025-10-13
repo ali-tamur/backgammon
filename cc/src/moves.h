@@ -28,7 +28,8 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
   auto result = KeepResults<Config>();
   auto states = std::vector<std::tuple<State<Config>, size_t>>{};
   states.reserve(64);
-  states.emplace_back(std::make_tuple(State<Config>(board, dice), Config::LAND_START));
+  states.emplace_back(
+      std::make_tuple(State<Config>(board, dice), Config::LAND_START));
   uint32_t i = 0;
   while (i < states.size()) {
     auto [p, last_cell] = states[i++];

@@ -4,6 +4,8 @@ load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_test")
 
+package(default_visibility = ["//visibility:public"])
+
 cc_library(
     name = "backgammon_lib",
     srcs = [
@@ -16,7 +18,6 @@ cc_library(
         "configs.h",
         "dice.h",
         "moves.h",
-        "py_interface.h",
         "results.h",
         "state.h",
         "state_hash.h",
@@ -33,7 +34,6 @@ pybind_extension(
     srcs = [
         "pybind_bridge.cc",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         ":backgammon_lib",
     ],
@@ -43,122 +43,18 @@ py_library(
     name = "backgammon_py",
     data = [":backgammon"],
     imports = ["."],
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
-    name = "py_interface",
-    hdrs = ["py_interface.h"],
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
-    name = "model",
-    hdrs = ["model.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//third_party:onnxruntime",
-    ],
-)
-
-
-cc_library(
-    name = "player",
-    hdrs = ["player.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//third_party:onnxruntime",
-        ":dice", 
-        ":moves",
-        ":py_interface",
-        ":model"
-    ],
-)
-
-cc_library(
-    name = "logger",
-    hdrs = ["logger.h"],
-    srcs = ["logger.cc"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":py_interface",
-        ":configs",
-        ":dice",
-        "//proto:game_cc_proto"
-    ],
-)
-
-cc_library(
-    name = "game_manager",
-    hdrs = ["game_manager.h"],
-    srcs = ["game_manager.cc"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//third_party:onnxruntime",
-        ":configs",
-        ":dice", 
-        ":logger",
-        ":moves",
-        ":py_interface",
-        ":model",
-        ":player"
-    ],
-)
-
-cc_binary(
-      name = "game_manager_benchmark",
-      srcs = ["game_manager_benchmark.cc"],
-      deps = [
-        "//third_party:onnxruntime",
-        ":game_manager",
-        ":configs",
-        ":dice", 
-        ":logger",
-        ":moves",
-        ":py_interface",
-        ":model",
-        ":player",
-          "@google_benchmark//:benchmark",
-      ],
-      linkopts = ["-pg"],
-      copts = ["-pg"],
-  )
-
-cc_test(
-    name = "game_manager_test",
-    size = "small",
-    srcs = ["game_manager_test.cc"],
-    data = ["//third_party:onnxruntime"],
-    deps = [
-        ":game_manager",
-        ":configs",
-        ":dice", 
-        ":moves",
-        ":logger",
-        ":py_interface",
-        ":model",
-        ":player",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
 )
 
 cc_library(
     name = "configs",
     hdrs = ["configs.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":py_interface",
-    ],
 )
 
 cc_library(
     name = "bits",
     hdrs = ["bits.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":configs",
-        ":py_interface",
     ],
 )
 
@@ -169,7 +65,6 @@ cc_test(
     deps = [
         ":bits",
         ":configs",
-        ":py_interface",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -182,7 +77,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":configs",
-        ":py_interface",
     ],
 )
 
@@ -192,19 +86,47 @@ cc_test(
     srcs = ["dice_test.cc"],
     deps = [
         ":dice",
-        ":py_interface",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "results",
-    hdrs = ["results.h"],
-    visibility = ["//visibility:public"],
+    name = "model",
+    hdrs = ["model.h"],
     deps = [
         ":configs",
-        ":py_interface",
+        "//third_party:onnxruntime",
+    ],
+)
+
+cc_library(
+    name = "player",
+    hdrs = ["player.h"],
+    deps = [
+        ":dice",
+        ":model",
+        ":moves",
+        "//third_party:onnxruntime",
+    ],
+)
+
+cc_library(
+    name = "logger",
+    srcs = ["logger.cc"],
+    hdrs = ["logger.h"],
+    deps = [
+        ":configs",
+        ":dice",
+        "//proto:game_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "results",
+    hdrs = ["results.h"],
+    deps = [
+        ":configs",
         ":state_hash",
     ],
 )
@@ -213,13 +135,11 @@ cc_library(
     name = "moves",
     srcs = ["moves.cc"],
     hdrs = ["moves.h"],
-    visibility = ["//visibility:public"],
     deps =
         [
             ":bits",
             ":configs",
             ":dice",
-            ":py_interface",
             ":results",
             ":state",
         ],
@@ -228,13 +148,11 @@ cc_library(
 cc_library(
     name = "state",
     hdrs = ["state.h"],
-    visibility = ["//visibility:public"],
     deps =
         [
             ":bits",
             ":configs",
             ":dice",
-            ":py_interface",
             ":zobrist_hash",
         ],
 )
@@ -245,7 +163,6 @@ cc_test(
     srcs = ["state_test.cc"],
     deps = [
         ":moves",
-        ":py_interface",
         ":state",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -255,9 +172,7 @@ cc_test(
 cc_library(
     name = "state_hash",
     hdrs = ["state_hash.h"],
-    visibility = ["//visibility:public"],
     deps = [
-        ":py_interface",
         ":state",
     ],
 )
@@ -266,5 +181,55 @@ cc_library(
     name = "zobrist_hash",
     srcs = ["zobrist_hash.cc"],
     hdrs = ["zobrist_hash.h"],
-    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "game_manager",
+    srcs = ["game_manager.cc"],
+    hdrs = ["game_manager.h"],
+    deps = [
+        ":configs",
+        ":dice",
+        ":logger",
+        ":model",
+        ":moves",
+        ":player",
+        "//third_party:onnxruntime",
+    ],
+)
+
+cc_binary(
+    name = "game_manager_benchmark",
+    srcs = ["game_manager_benchmark.cc"],
+    copts = ["-pg"],
+    linkopts = ["-pg"],
+    deps = [
+        ":configs",
+        ":dice",
+        ":game_manager",
+        ":logger",
+        ":model",
+        ":moves",
+        ":player",
+        "//third_party:onnxruntime",
+        "@google_benchmark//:benchmark",
+    ],
+)
+
+cc_test(
+    name = "game_manager_test",
+    size = "small",
+    srcs = ["game_manager_test.cc"],
+    data = ["//third_party:onnxruntime"],
+    deps = [
+        ":configs",
+        ":dice",
+        ":game_manager",
+        ":logger",
+        ":model",
+        ":moves",
+        ":player",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )

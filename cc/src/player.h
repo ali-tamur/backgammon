@@ -10,7 +10,6 @@
 #include "dice.h"
 #include "model.h"
 #include "moves.h"
-#include "py_interface.h"
 
 namespace bg {
 

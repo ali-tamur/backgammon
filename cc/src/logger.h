@@ -3,8 +3,6 @@
 #include "configs.h"
 #include "dice.h"
 #include "proto/game.pb.h"
-#include <filesystem>
-#include <utility>
 
 namespace bg {
 

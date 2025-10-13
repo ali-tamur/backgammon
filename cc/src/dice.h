@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <iostream>
 #include <random>
 
@@ -47,9 +46,7 @@ public:
 
   [[nodiscard]] auto values(bool use_only_max) const -> DiceRolls;
   [[nodiscard]] auto use_dice(int32_t d) const -> Dice;
-  [[nodiscard]] auto is_empty() const -> bool { 
-    return dice_ == 0; 
-  }
+  [[nodiscard]] auto is_empty() const -> bool { return dice_ == 0; }
   [[nodiscard]] auto size() const -> size_t {
     return __builtin_popcount(dice_);
   }
@@ -71,6 +68,5 @@ public:
 private:
   std::mt19937 gen_{std::random_device{}()};
 };
-
 
 } // namespace bg
