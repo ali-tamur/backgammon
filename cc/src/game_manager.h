@@ -3,7 +3,6 @@
 #include "dice.h"
 #include "logger.h"
 #include "py_interface.h"
-#include <filesystem>
 #include <string>
 #include <utility>
 
@@ -15,7 +14,7 @@ struct GameOptions {
   bool is_interactive;
   bool print_score;
   bool will_log;
-  std::filesystem::path db_path;
+  std::ostream *log_output;
 };
 
 class GameManager {

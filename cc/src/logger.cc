@@ -13,7 +13,7 @@ void LogWriter::start_game(uint64_t game_id, std::string white_name,
                            std::string black_name) {
   if (is_dummy_) {
     return;
-}
+  }
   Game game;
   game.set_game_id(game_id);
   game.set_white(white_name);
@@ -24,7 +24,7 @@ void LogWriter::start_game(uint64_t game_id, std::string white_name,
 void LogWriter::add_move(Dice dice, const Board &board) {
   if (is_dummy_) {
     return;
-}
+  }
   assert(buffer_.size() > 0 && "call start_game before add_move");
   auto &game = buffer_[buffer_.size() - 1];
   auto *cells = game.add_moves()->mutable_cell();
@@ -38,7 +38,7 @@ void LogWriter::add_move(Dice dice, const Board &board) {
 void LogWriter::end_game(int32_t score) {
   if (is_dummy_) {
     return;
-}
+  }
   auto &game = buffer_[buffer_.size() - 1];
   game.set_score(score);
   if (buffer_.size() >= 1000) {
@@ -49,15 +49,43 @@ void LogWriter::end_game(int32_t score) {
 void LogWriter::flush() {
   if (is_dummy_) {
     return;
-}
-  std::ofstream outs(db_path_, std::ios::binary | std::ios::app);
+  }
+
   for (const auto &game : buffer_) {
     std::string serialized = game.SerializeAsString();
     uint32_t size = serialized.size();
-    outs.write(reinterpret_cast<const char *>(&size), sizeof(size));
-    outs.write(serialized.data(), size);
+    out_.write(reinterpret_cast<const char *>(&size), sizeof(size));
+    out_.write(serialized.data(), size);
   }
+  out_.flush();
   buffer_.clear();
-};
+}
+
+auto LogReader::read_all() -> std::vector<Game> {
+  std::vector<Game> games;
+
+  while (in_) {
+    uint32_t size;
+    in_.read(reinterpret_cast<char *>(&size), sizeof(size));
+    if (!in_ || size == 0) {
+      break;
+    }
+
+    std::string data(size, '\0');
+    in_.read(data.data(), size);
+    if (!in_) {
+      break;
+    }
+
+    Game game;
+    if (!game.ParseFromString(data)) {
+      std::cerr << "Failed to parse game\n";
+      continue;
+    }
+    games.push_back(game);
+  }
+
+  return games;
+}
 
 } // namespace bg

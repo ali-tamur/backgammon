@@ -1,4 +1,5 @@
 #include "game_manager.h"
+#include <filesystem>
 #include <iostream>
 #include <random>
 
@@ -13,6 +14,7 @@ namespace bg {
 
 TEST(GameManagerTest, Basic) {
   std::cout << "Test starts \n";
+
   std::mt19937 gen_{std::random_device{}()};
   auto alice = Player<RANDOM, WhiteConfig>("alice", gen_);
   auto bob = Player<RANDOM, BlackConfig>("bob", gen_);
@@ -21,7 +23,9 @@ TEST(GameManagerTest, Basic) {
   options.white_name = alice.name;
   options.black_name = bob.name;
   options.is_interactive = false;
-  options.will_log = false;
+  options.will_log = true;
+  std::stringstream ss;
+  options.log_output = &ss;
   auto white_move = [&alice](const Board &b, Dice d) -> auto {
     return alice.move(b, d);
   };
@@ -35,7 +39,10 @@ TEST(GameManagerTest, Basic) {
                 black_score <= 3 && white_score * black_score == 0 &&
                 white_score + black_score > 0,
             true);
-  EXPECT_EQ(5, 5);
+
+  LogReader reader(ss);
+  auto games = reader.read_all();
+  EXPECT_EQ(games.size(), 1);
 };
 
 } // namespace bg

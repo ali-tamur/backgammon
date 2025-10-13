@@ -10,8 +10,8 @@ namespace bg {
 
 class LogWriter {
 public:
-  explicit LogWriter(std::filesystem::path db_path, bool is_dummy = false)
-      : db_path_(std::move(db_path)), is_dummy_{is_dummy} {}
+  explicit LogWriter(std::ostream &out, bool is_dummy = false)
+      : out_(out), is_dummy_{is_dummy} {}
   ~LogWriter();
 
   void start_game(uint64_t game_id, std::string white_name,
@@ -21,17 +21,18 @@ public:
   void flush();
 
 private:
-  std::filesystem::path db_path_;
+  std::ostream &out_;
   bool is_dummy_;
   std::vector<Game> buffer_;
 };
 
 class LogReader {
 public:
-  explicit LogReader(std::string db_path) : db_path_(std::move(db_path)) {}
+  explicit LogReader(std::istream &in) : in_(in) {}
+  auto read_all() -> std::vector<Game>;
 
 private:
-  std::string db_path_;
+  std::istream &in_;
 };
 
 } // namespace bg
