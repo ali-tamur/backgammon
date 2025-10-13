@@ -72,7 +72,7 @@ public:
     for (const auto &r : result) {
       result_set.insert(r.b);
     }
-    return Case(result_set, result_size, expectation_set);
+    return {result_set, result_size, expectation_set};
   }
 
 private:

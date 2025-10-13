@@ -23,6 +23,7 @@ static void BM_GameManager(benchmark::State &state) {
   options.black_name = bob.name;
   options.is_interactive = false;
   options.will_log = false;
+  options.log_output = nullptr;
   auto white_move = [&alice](const Board &b, Dice d) -> auto {
     return alice.move(b, d);
   };
