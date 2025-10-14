@@ -2,6 +2,7 @@
 
 #include <onnxruntime_cxx_api.h>
 #include <string>
+#include <vector>
 
 #include "configs.h"
 

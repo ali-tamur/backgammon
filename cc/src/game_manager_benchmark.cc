@@ -9,29 +9,21 @@
 static void BM_GameManager(benchmark::State &state) {
   using namespace bg;
   int32_t num_games = state.range(0);
+  GameOptions opt;
+    opt.white_model = "";
+    opt.black_model = "";
+    opt.white_name = "alice";
+    opt.black_name = "bob";
+    opt.n_games = num_games;
+    opt.log_path = "";
+    opt.temperature = 0.0;
+    opt.is_interactive = false;
+    opt.print_score = false;
 
-  // std::cout << "Test starts \n";
-  std::mt19937 gen_{std::random_device{}()};
-  auto alice = Player<RANDOM, WhiteConfig>("alice", gen_);
-  auto bob = Player<RANDOM, BlackConfig>("bob", gen_);
-  auto dice_throw = DiceThrow();
-  GameOptions options{};
-  options.white_name = alice.name;
-  options.black_name = bob.name;
-  options.is_interactive = false;
-  options.will_log = false;
-  options.log_output = nullptr;
-  auto white_move = [&alice](const Board &b, Dice d) -> auto {
-    return alice.move(b, d);
-  };
-  auto black_move = [&bob](const Board &b, Dice d) -> auto {
-    return bob.move(b, d);
-  };
-  auto game_manager = GameManager(white_move, black_move, dice_throw, options);
+  auto game_manager = game_manager_factory(opt);
 
   for (auto _ : state) {
-    auto [white_score, black_score] = game_manager.run(num_games);
-    //    std::cout << "[" << white_score << "-" << black_score << "]\n";
+    auto [white_score, black_score] = game_manager.run();
     benchmark::DoNotOptimize(white_score);
     benchmark::DoNotOptimize(black_score);
   }
@@ -39,4 +31,4 @@ static void BM_GameManager(benchmark::State &state) {
 
 BENCHMARK(BM_GameManager)->Arg(10000);
 
-BENCHMARK_MAIN();
+BENCHMARK_MAIN(); // missing type specifier

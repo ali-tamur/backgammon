@@ -10,6 +10,7 @@
 #include "dice.h"
 #include "model.h"
 #include "moves.h"
+#include "configs.h"
 
 namespace bg {
 
@@ -21,10 +22,10 @@ template <enum PlayerTypes, typename Config> class Player {
 
 template <typename Config> class Player<RANDOM, Config> {
 public:
-  Player(std::string name, std::mt19937 r) : name{std::move(name)}, r_{r} {}
+  Player(std::string name, std::mt19937 r) : name{std::move(name)}, r_{r} { }
 
   auto move(const Board &board, Dice dice) -> Board {
-    const std::vector<State<Config>> &states = generate<Config>(board, dice);
+    const std::vector<State<Config>>& states = generate<Config>(board, dice);
     std::uniform_int_distribution<int> dist_(0, states.size() - 1);
     auto index = dist_(r_);
     const State<Config> &choosen_state = states[index];
@@ -39,8 +40,9 @@ private:
 
 template <typename Config> class Player<NN, Config> {
 public:
-  Player(std::string name, std::mt19937 r, const std::string &model_path)
-      : name{std::move(name)}, r_{r}, model_{Model(model_path)} {}
+  Player(std::string name, std::mt19937 r, const std::string &model_path, float temperature = DEFAULT_TEMPERATURE)
+      : name{std::move(name)}, r_{r}, model_{Model(model_path)}, temperature_(temperature) {
+      }
 
   auto move(const Board &board, Dice dice) -> Board {
     const std::vector<State<Config>> &states = generate<Config>(board, dice);
@@ -67,7 +69,21 @@ public:
 private:
   std::mt19937 r_;
   Model model_;
-  float temperature_ = 0.1;
+  float temperature_;
 };
+
+template<typename Config>
+auto construct_random_player_move(std::string name, std::mt19937 r) -> MOVE {
+    auto alice = Player<RANDOM, Config>(name, r);
+    auto move = [alice](const Board& board, Dice dice) mutable -> auto { return alice.move(board, dice); };
+    return move;
+}
+
+template<typename Config>
+auto construct_nn_player_move(std::string name, std::mt19937 r, std::string model_path, float temperature) -> MOVE {
+    auto alice = std::make_shared<Player<NN, Config>>(name, r, model_path, temperature);
+    auto move = [alice](const Board& board, Dice dice) mutable -> auto { return alice->move(board, dice); };
+    return move;
+}
 
 } // namespace bg

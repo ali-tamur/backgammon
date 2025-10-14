@@ -9,15 +9,14 @@ namespace bg {
 LogWriter::~LogWriter() { flush(); }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void LogWriter::start_game(uint64_t game_id, std::string white_name,
-                           std::string black_name) {
+void LogWriter::start_game(uint64_t game_id ) {
   if (is_dummy_) {
     return;
   }
   Game game;
   game.set_game_id(game_id);
-  game.set_white(white_name);
-  game.set_black(black_name);
+  game.set_white(white_name_);
+  game.set_black(black_name_);
   buffer_.emplace_back(game);
 }
 
@@ -55,10 +54,10 @@ void LogWriter::flush() {
   for (const auto &game : buffer_) {
     std::string serialized = game.SerializeAsString();
     uint32_t size = serialized.size();
-    out_.write(reinterpret_cast<const char *>(&size), sizeof(size));
-    out_.write(serialized.data(), size);
+    out_->write(reinterpret_cast<const char *>(&size), sizeof(size));
+    out_->write(serialized.data(), size);
   }
-  out_.flush();
+  out_->flush();
   buffer_.clear();
 }
 

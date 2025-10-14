@@ -94,6 +94,8 @@ cc_test(
 cc_library(
     name = "model",
     hdrs = ["model.h"],
+    data = ["//third_party:onnxruntime"],
+    srcs = ["model.cc"],
     deps = [
         ":configs",
         "//third_party:onnxruntime",
@@ -202,7 +204,12 @@ cc_binary(
     name = "game_manager_benchmark",
     srcs = ["game_manager_benchmark.cc"],
     copts = ["-pg"],
-    linkopts = ["-pg"],
+    linkopts = [
+      "-pg",
+      "-rtlib=compiler-rt", 
+      "-unwindlib=libunwind", 
+      "-static-libstdc++",
+    ],
     deps = [
         ":configs",
         ":dice",
@@ -229,7 +236,28 @@ cc_test(
         ":model",
         ":moves",
         ":player",
+        "//third_party:onnxruntime",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cc_binary(
+    name = "play_games_main",
+    srcs = ["play_games_main.cc"],
+    local_defines = [ "PROJECT_GAMES_DIR=\\\"../../\\\"", ],
+    copts = ["-pg"],
+    linkopts = ["-pg"],
+    deps = [
+        ":configs",
+        ":dice",
+        ":game_manager",
+        ":logger",
+        ":model",
+        ":moves",
+        ":player",
+        "//third_party:onnxruntime",
+        "@google_benchmark//:benchmark",
+        "@cli11//:cli11",
     ],
 )
