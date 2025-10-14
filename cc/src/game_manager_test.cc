@@ -4,6 +4,8 @@
 
 #include "dice.h"
 #include "player.h"
+#include "configs.h"
+#include "model.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -21,18 +23,15 @@ TEST(GameManagerTest, Basic) {
   GameOptions options{};
   options.white_name = alice.name;
   options.black_name = bob.name;
+  options.white_model = "";
+  options.black_model = "";
+  options.n_games = 1;
   options.is_interactive = false;
-  options.will_log = true;
+  options.print_score = true;
   std::stringstream ss;
-  options.log_output = &ss;
-  auto white_move = [&alice](const Board &b, Dice d) -> auto {
-    return alice.move(b, d);
-  };
-  auto black_move = [&bob](const Board &b, Dice d) -> auto {
-    return bob.move(b, d);
-  };
-  auto game_manager = GameManager(white_move, black_move, dice_throw, options);
-  auto [white_score, black_score] = game_manager.run(1);
+  options.outstream = &ss;
+  auto game_manager = game_manager_factory(options);
+  auto [white_score, black_score] = game_manager.run();
   std::cout << "White: " << white_score << " Black: " << black_score;
   EXPECT_EQ(white_score >= 0 && white_score <= 3 && black_score >= 0 &&
                 black_score <= 3 && white_score * black_score == 0 &&

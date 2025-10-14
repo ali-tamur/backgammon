@@ -1,37 +1,56 @@
 #pragma once
 
+#include "configs.h"
 #include "dice.h"
 #include "logger.h"
+#include "player.h"
 #include <string>
 #include <utility>
 
 namespace bg {
 
-struct GameOptions {
-  std::string white_name;
-  std::string black_name;
-  bool is_interactive;
-  bool print_score;
-  bool will_log;
-  std::ostream *log_output;
-};
-
 class GameManager {
 public:
-  using MOVE = std::function<Board(const Board &board, Dice)>;
-  GameManager(MOVE white, MOVE black, DiceThrow dice_source,
-              GameOptions options)
-      : white_{std::move(white)}, black_{std::move(black)},
-        dice_throw_{dice_source}, options_{std::move(options)} {}
-
+  GameManager( MOVE white, MOVE black, LogWriter logger, int32_t n_games, bool is_interactive, bool print_score) : 
+    white_{std::move(white)}, black_(std::move(black)), logger_(std::move(logger)), n_games_(n_games), is_interactive_(is_interactive), print_score_(print_score), dice_throw_(DiceThrow()) {}
+            
   auto run_once(LogWriter *logger) -> int32_t;
-  std::tuple<int32_t, int32_t> run(int32_t n_times);
+  auto run() -> std::tuple<int32_t, int32_t>;
 
 private:
   MOVE white_;
   MOVE black_;
+  LogWriter logger_;
+  int32_t n_games_;
+  bool is_interactive_;
+  bool print_score_;
   DiceThrow dice_throw_;
-  GameOptions options_;
 };
+
+struct GameOptions {
+  std::string white_name;
+  std::string black_name;
+
+  // leave empty iff white plays randomly.
+  std::string white_model;
+
+  // leave empty iff black plays randomly.
+  std::string black_model;
+
+  float temperature = DEFAULT_TEMPERATURE;
+  
+  bool is_interactive;
+  bool print_score;
+
+
+  // leave empty iff there'll be no log.
+  std::string log_path;
+  int32_t n_games;
+
+  // for unit testing
+  std::ostream* outstream = nullptr;
+};
+
+auto game_manager_factory(const GameOptions& options) -> GameManager; 
 
 } // namespace bg

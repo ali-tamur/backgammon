@@ -2,8 +2,15 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <string_view>
 #include <vector>
+
+#ifdef PROJECT_GAMES_DIR
+static constexpr const char* PROJECT_ROOT = PROJECT_GAMES_DIR;
+#else
+static constexpr const char* PROJECT_ROOT = "";
+#endif
 
 static constexpr size_t BOARD_SIZE = 28;
 using Board = std::array<int8_t, BOARD_SIZE>;
@@ -90,5 +97,10 @@ static constexpr Board GAME_START = {2, 0, 0,  0,  0, -5, 0, -3, 0, 0,
                                      0, 0, 0,  -2, 0, 0,  0, 0};
 
 static constexpr int32_t NUM_STONES = 15;
+
+class Dice;
+using MOVE = std::function<Board(const Board &board, Dice)>;
+
+static constexpr float DEFAULT_TEMPERATURE = 0.1;
 
 } // namespace bg
