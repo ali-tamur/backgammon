@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <concepts>
 #include <cstdint>
 #include <functional>
 #include <string_view>
@@ -77,6 +78,9 @@ struct BlackConfig {
     return now_cell > last_cell;
   }
 };
+
+template <typename T>
+concept Config = std::same_as<T, WhiteConfig> || std::same_as<T, BlackConfig>;
 
 static constexpr Board GAME_START = {2, 0, 0, 0, 0, -5, 0, -3, 0, 0,  0, 5, -5, 0,
                                      0, 0, 3, 0, 5, 0,  0, 0,  0, -2, 0, 0, 0,  0};

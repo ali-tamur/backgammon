@@ -1,18 +1,19 @@
 #pragma once
 
+#include "configs.h"
 #include "state.h"
 
 namespace std {
-template <typename Config>
-struct hash<::bg::State<Config>> {
-  auto operator()(const ::bg::State<Config> &state) const -> size_t {
+template <bg::Config C>
+struct hash<::bg::State<C>> {
+  auto operator()(const ::bg::State<C> &state) const -> size_t {
     return static_cast<size_t>(state.hash_);
   }
 };
 
-template <typename Config>
-struct equal_to<::bg::State<Config>> {
-  auto operator()(const ::bg::State<Config> &a, const ::bg::State<Config> &b) const -> bool {
+template <bg::Config C>
+struct equal_to<::bg::State<C>> {
+  auto operator()(const ::bg::State<C> &a, const ::bg::State<C> &b) const -> bool {
     return a.b == b.b;
   }
 };
