@@ -1,15 +1,16 @@
 #include "logger.h"
 
-#include "proto/game.pb.h"
 #include <cassert>
 #include <vector>
+
+#include "proto/game.pb.h"
 
 namespace bg {
 
 LogWriter::~LogWriter() { flush(); }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
-void LogWriter::start_game(uint64_t game_id ) {
+void LogWriter::start_game(uint64_t game_id) {
   if (is_dummy_) {
     return;
   }
@@ -41,7 +42,7 @@ void LogWriter::end_game(int32_t score) {
   }
   auto &game = buffer_[buffer_.size() - 1];
   game.set_score(score);
-  if (buffer_.size() >= 1000) {
+  if (buffer_.size() >= 1000) [[unlikely]] {
     flush();
   }
 }
@@ -88,4 +89,4 @@ auto LogReader::read_all() -> std::vector<Game> {
   return games;
 }
 
-} // namespace bg
+}  // namespace bg

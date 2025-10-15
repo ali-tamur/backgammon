@@ -15,8 +15,8 @@ auto init_dice_lookup() -> std::array<uint32_t, DICE_N2> {
   for (int32_t d1_d2 = 0; d1_d2 < DICE_N2; ++d1_d2) {
     int32_t d1 = (d1_d2 / DICE_N);
     int32_t d2 = (d1_d2 % DICE_N);
-    uint32_t value = (d1 == d2) ? BIT_MASK << (4 * d1)
-                                : (0b0001 << (4 * d1)) | (0b0001 << (4 * d2));
+    uint32_t value =
+        (d1 == d2) ? BIT_MASK << (4 * d1) : (0b0001 << (4 * d1)) | (0b0001 << (4 * d2));
     result[d1_d2] = value;
   }
   return result;
@@ -24,11 +24,11 @@ auto init_dice_lookup() -> std::array<uint32_t, DICE_N2> {
 
 static const std::array<uint32_t, DICE_N2> DICE_LOOKUP = init_dice_lookup();
 
-static const std::array<int32_t, 4 * DICE_N> MAX_DICE_LOOKUP = {
-    6, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1};
+static const std::array<int32_t, 4 * DICE_N> MAX_DICE_LOOKUP = {6, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4,
+                                                                3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1};
 
-static const std::array<int32_t, 4 * DICE_N> MIN_DICE_LOOKUP = {
-    1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6};
+static const std::array<int32_t, 4 * DICE_N> MIN_DICE_LOOKUP = {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
+                                                                4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6};
 
 auto init_dice_mask() -> std::array<uint32_t, DICE_N + 1> {
   std::array<uint32_t, DICE_N + 1> result;
@@ -61,15 +61,11 @@ auto DiceIterator::operator!=(const DiceIterator &other) const -> bool {
   return d1_ != other.d1_ || d2_ != other.d2_;
 }
 
-auto DiceRolls::begin() const -> DiceRolls::iterator {
-  return DiceIterator(d1_, d2_);
-}
+auto DiceRolls::begin() const -> DiceRolls::iterator { return DiceIterator(d1_, d2_); }
 
 auto DiceRolls::end() -> DiceRolls::iterator { return DiceIterator(0); }
 
-Dice::Dice(int32_t d1, int32_t d2) {
-  dice_ = DICE_LOOKUP[((d1 - 1) * DICE_N) + d2 - 1];
-}
+Dice::Dice(int32_t d1, int32_t d2) { dice_ = DICE_LOOKUP[((d1 - 1) * DICE_N) + d2 - 1]; }
 
 auto Dice::values(bool use_only_max) const -> DiceRolls {
   if (dice_ == 0) {
@@ -87,5 +83,5 @@ auto Dice::use_dice(int32_t d) const -> Dice {
   return Dice(result);
 }
 
-} // namespace bg
+}  // namespace bg
 // NOLINTEND(readability-magic-numbers)

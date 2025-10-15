@@ -6,7 +6,7 @@
 namespace bg {
 
 class DiceIterator {
-public:
+ public:
   using iterator = DiceIterator;
   using iterator_category = std::forward_iterator_tag;
   using value_type = int32_t;
@@ -21,35 +21,33 @@ public:
   auto operator==(const DiceIterator &other) const -> bool;
   auto operator!=(const DiceIterator &other) const -> bool;
 
-private:
+ private:
   int32_t d1_;
   int32_t d2_;
 };
 
 class DiceRolls {
-public:
+ public:
   using iterator = DiceIterator;
   explicit DiceRolls(int32_t d1, int32_t d2 = 0) : d1_{d1}, d2_{d2} {};
 
   [[nodiscard]] auto begin() const -> iterator;
   [[nodiscard]] static auto end() -> iterator;
 
-private:
+ private:
   int32_t d1_;
   int32_t d2_;
 };
 
 class Dice {
-public:
+ public:
   explicit Dice(uint32_t dice) : dice_{dice} {}
   Dice(int32_t d1, int32_t d2);
 
   [[nodiscard]] auto values(bool use_only_max) const -> DiceRolls;
   [[nodiscard]] auto use_dice(int32_t d) const -> Dice;
   [[nodiscard]] auto is_empty() const -> bool { return dice_ == 0; }
-  [[nodiscard]] auto size() const -> size_t {
-    return __builtin_popcount(dice_);
-  }
+  [[nodiscard]] auto size() const -> size_t { return __builtin_popcount(dice_); }
 
   uint32_t dice_;
 
@@ -62,11 +60,11 @@ inline auto operator<<(std::ostream &os, const Dice &dice) -> std::ostream & {
 }
 
 class DiceThrow {
-public:
+ public:
   [[nodiscard]] auto throw_dice() -> Dice;
 
-private:
+ private:
   std::mt19937 gen_{std::random_device{}()};
 };
 
-} // namespace bg
+}  // namespace bg

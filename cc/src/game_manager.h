@@ -1,23 +1,31 @@
 #pragma once
 
+#include <string>
+#include <utility>
+
 #include "configs.h"
 #include "dice.h"
 #include "logger.h"
 #include "player.h"
-#include <string>
-#include <utility>
 
 namespace bg {
 
 class GameManager {
-public:
-  GameManager( MOVE white, MOVE black, LogWriter logger, int32_t n_games, bool is_interactive, bool print_score) : 
-    white_{std::move(white)}, black_(std::move(black)), logger_(std::move(logger)), n_games_(n_games), is_interactive_(is_interactive), print_score_(print_score), dice_throw_(DiceThrow()) {}
-            
+ public:
+  GameManager(MOVE white, MOVE black, LogWriter logger, int32_t n_games, bool is_interactive,
+              bool print_score)
+      : white_{std::move(white)},
+        black_(std::move(black)),
+        logger_(std::move(logger)),
+        n_games_(n_games),
+        is_interactive_(is_interactive),
+        print_score_(print_score),
+        dice_throw_(DiceThrow()) {}
+
   auto run_once(LogWriter *logger) -> int32_t;
   auto run() -> std::tuple<int32_t, int32_t>;
 
-private:
+ private:
   MOVE white_;
   MOVE black_;
   LogWriter logger_;
@@ -38,19 +46,18 @@ struct GameOptions {
   std::string black_model;
 
   float temperature = DEFAULT_TEMPERATURE;
-  
+
   bool is_interactive;
   bool print_score;
-
 
   // leave empty iff there'll be no log.
   std::string log_path;
   int32_t n_games;
 
   // for unit testing
-  std::ostream* outstream = nullptr;
+  std::ostream *outstream = nullptr;
 };
 
-auto game_manager_factory(const GameOptions& options) -> GameManager; 
+auto game_manager_factory(const GameOptions &options) -> GameManager;
 
-} // namespace bg
+}  // namespace bg
