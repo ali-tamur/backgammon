@@ -2,6 +2,7 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include <algorithm>
 #include <iostream>
 #include <random>
 #include <string>
@@ -17,21 +18,21 @@ namespace bg {
 
 enum PlayerTypes : int8_t { RANDOM, NN };
 
-template <enum PlayerTypes, typename Config>
+template <enum PlayerTypes, Config C>
 class Player {
   auto move(const Board &board, Dice dice) -> Board;
 };
 
-template <typename Config>
-class Player<RANDOM, Config> {
+template <Config C>
+class Player<RANDOM, C> {
  public:
   Player(std::string name, std::mt19937 r) : name{std::move(name)}, r_{r} {}
 
   auto move(const Board &board, Dice dice) -> Board {
-    const std::vector<State<Config>> &states = generate<Config>(board, dice);
+    const std::vector<State<C>> &states = generate<C>(board, dice);
     std::uniform_int_distribution<int> dist_(0, states.size() - 1);
     auto index = dist_(r_);
-    const State<Config> &choosen_state = states[index];
+    const State<C> &choosen_state = states[index];
     return choosen_state.b;
   }
 
@@ -41,27 +42,27 @@ class Player<RANDOM, Config> {
   std::mt19937 r_;
 };
 
-template <typename Config>
-class Player<NN, Config> {
+template <Config C>
+class Player<NN, C> {
  public:
   Player(std::string name, std::mt19937 r, const std::string &model_path,
          float temperature = DEFAULT_TEMPERATURE)
       : name{std::move(name)}, r_{r}, model_{Model(model_path)}, temperature_(temperature) {}
 
   auto move(const Board &board, Dice dice) -> Board {
-    const std::vector<State<Config>> &states = generate<Config>(board, dice);
+    const std::vector<State<C>> &states = generate<C>(board, dice);
     std::vector<Board> boards;
-    std::transform(states.begin(), states.end(), std::back_inserter(boards),
-                   [](const State<Config> &state) -> auto { return state.b; });
+    std::ranges::transform(states, std::back_inserter(boards),
+                           [](const State<C> &state) { return state.b; });
     if (boards.size() == 1) {
       return boards[0];
     }
     std::vector<NN_INPUT> nn_input;
-    std::transform(boards.begin(), boards.end(), std::back_inserter(nn_input), &board_to_nn_input);
+    std::ranges::transform(boards, std::back_inserter(nn_input), &board_to_nn_input);
     auto values = model_.Predict(nn_input);
     std::vector<float> weights;
-    std::transform(values.begin(), values.end(), std::back_inserter(weights),
-                   [this](float val) { return std::exp(val / temperature_); });
+    std::ranges::transform(values, std::back_inserter(weights),
+                           [this](float val) { return std::exp(val / temperature_); });
     std::discrete_distribution<> dist{weights.begin(), weights.end()};
     int32_t index = dist(r_);
     return boards[index];
@@ -75,19 +76,19 @@ class Player<NN, Config> {
   float temperature_;
 };
 
-template <typename Config>
+template <Config C>
 auto construct_random_player_move(std::string name, std::mt19937 r) -> MOVE {
-  auto alice = Player<RANDOM, Config>(name, r);
+  auto alice = Player<RANDOM, C>(name, r);
   auto move = [alice](const Board &board, Dice dice) mutable -> auto {
     return alice.move(board, dice);
   };
   return move;
 }
 
-template <typename Config>
+template <Config C>
 auto construct_nn_player_move(std::string name, std::mt19937 r, std::string model_path,
                               float temperature) -> MOVE {
-  auto alice = std::make_shared<Player<NN, Config>>(name, r, model_path, temperature);
+  auto alice = std::make_shared<Player<NN, C>>(name, r, model_path, temperature);
   auto move = [alice](const Board &board, Dice dice) mutable -> auto {
     return alice->move(board, dice);
   };

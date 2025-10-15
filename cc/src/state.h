@@ -9,30 +9,28 @@
 
 namespace bg {
 
-template <typename Config>
+template <Config C>
 static constexpr int32_t score(const Board &b) {
-  if (b[Config::PLAYER_BAG] * Config::SIGN < NUM_STONES) {
+  if (b[C::PLAYER_BAG] * C::SIGN < NUM_STONES) {
     return 0;
   }
-  for (auto i = Config::HOME_START; i < Config::HOME_END; ++i) {
-    if (b[i] * Config::SIGN < 0) {
-      return 3 * Config::SIGN;
+  for (auto i = C::HOME_START; i < C::HOME_END; ++i) {
+    if (b[i] * C::SIGN < 0) {
+      return 3 * C::SIGN;
     }
   }
-  if (b[Config::OPPONENT_BAR] * Config::SIGN < 0) {
-    return 3 * Config::SIGN;
+  if (b[C::OPPONENT_BAR] * C::SIGN < 0) {
+    return 3 * C::SIGN;
   }
-  return b[Config::OPPONENT_BAG] == 0 ? Config::SIGN * 2 : Config::SIGN * 1;
+  return b[C::OPPONENT_BAG] == 0 ? C::SIGN * 2 : C::SIGN * 1;
 }
 
-template <typename Config>
+template <Config C>
 struct State {
-  static_assert(std::is_same_v<Config, WhiteConfig> || std::is_same_v<Config, BlackConfig>);
-
  public:
   Board b;
   Dice dice;
-  Bits<Config> bits;
+  Bits<C> bits;
   int8_t homestones;
   uint64_t hash_;
 
@@ -40,10 +38,10 @@ struct State {
       : b{board}, dice{dice}, bits{get_bits(board)}, homestones{get_homestones(b)}, hash_(0) {}
 
   [[nodiscard]] auto phase() const -> int32_t {
-    if (b[Config::PLAYER_BAR] != 0) {
+    if (b[C::PLAYER_BAR] != 0) {
       return ON_BAR;
     };
-    if (Config::SIGN * (homestones + b[Config::PLAYER_BAG]) == NUM_STONES) {
+    if (C::SIGN * (homestones + b[C::PLAYER_BAG]) == NUM_STONES) {
       return COLLECTING;
     }
     return NORMAL;
@@ -55,21 +53,21 @@ struct State {
     auto new_homestones = homestones;
     auto new_bits = bits;
     uint64_t new_hash = hash_;
-    update_(new_b, new_hash, src, -Config::SIGN);
+    update_(new_b, new_hash, src, -C::SIGN);
     if (new_b[src] == 0) {
       new_bits.unset(src);
     }
-    if (new_b[dst] == -Config::SIGN) {
-      update_(new_b, new_hash, Config::OPPONENT_BAR, -Config::SIGN);
-      update_(new_b, new_hash, dst, 2 * Config::SIGN);
+    if (new_b[dst] == -C::SIGN) {
+      update_(new_b, new_hash, C::OPPONENT_BAR, -C::SIGN);
+      update_(new_b, new_hash, dst, 2 * C::SIGN);
     } else {
-      update_(new_b, new_hash, dst, Config::SIGN);
+      update_(new_b, new_hash, dst, C::SIGN);
     }
-    if (Config::move_to_home(src, dst)) {
-      new_homestones += Config::SIGN;
+    if (C::move_to_home(src, dst)) {
+      new_homestones += C::SIGN;
     }
-    if (dst == Config::PLAYER_BAG) {
-      new_homestones -= Config::SIGN;
+    if (dst == C::PLAYER_BAG) {
+      new_homestones -= C::SIGN;
     } else {
       new_bits.set(dst);
     }
@@ -100,23 +98,23 @@ struct State {
   [[nodiscard]] auto get_board() const -> Board { return b; }
 
  private:
-  State(Board board, Dice dice, Bits<Config> bits, int8_t homestones, uint64_t hash_)
+  State(Board board, Dice dice, Bits<C> bits, int8_t homestones, uint64_t hash_)
       : b{board}, dice{dice}, bits{bits}, homestones{homestones}, hash_{hash_} {}
 
   [[nodiscard]] auto get_homestones(const Board &b) const -> int8_t {
     int32_t total = 0;
-    for (int32_t i = Config::HOME_START; i < Config::HOME_END; ++i) {
-      if (b[i] * Config::SIGN > 0) {
+    for (int32_t i = C::HOME_START; i < C::HOME_END; ++i) {
+      if (b[i] * C::SIGN > 0) {
         total += b[i];
       };
     }
     return static_cast<int8_t>(total);
   }
 
-  [[nodiscard]] auto get_bits(const Board &b) const -> Bits<Config> {
-    Bits<Config> bits = Bits<Config>();
+  [[nodiscard]] auto get_bits(const Board &b) const -> Bits<C> {
+    Bits<C> bits = Bits<C>();
     for (int32_t i = 0; i < COLLECT_END; ++i) {
-      if (b[i] * Config::SIGN > 0) {
+      if (b[i] * C::SIGN > 0) {
         bits.set(i);
       }
     }
@@ -131,8 +129,8 @@ struct State {
   void update_hash(uint64_t &hash, int32_t index) const { hash ^= ZOBRIST_TABLE[index]; }
 };
 
-template <typename Config>
-auto operator<<(std::ostream &os, const State<Config> &state) -> std::ostream & {
+template <Config C>
+auto operator<<(std::ostream &os, const State<C> &state) -> std::ostream & {
   return state.pretty_print(os);
 }
 

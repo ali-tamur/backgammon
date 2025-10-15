@@ -3,6 +3,7 @@
 #include <onnxruntime_cxx_api.h>
 
 #include <cassert>
+#include <ranges>
 #include <string>
 
 namespace bg {
@@ -23,13 +24,13 @@ Model::Model(const std::string &model_path)
   input_shape_ = tensor_info.GetShape();
 }
 
-std::string Model::GetInputName() const { return input_name_; }
+auto Model::GetInputName() const -> std::string { return input_name_; }
 
-std::string Model::GetOutputName() const { return output_name_; }
+auto Model::GetOutputName() const -> std::string { return output_name_; }
 
-std::vector<int64_t> Model::GetInputShape() const { return input_shape_; }
+auto Model::GetInputShape() const -> std::vector<int64_t> { return input_shape_; }
 
-std::vector<float> Model::Predict(const std::vector<NN_INPUT> &boards) {
+auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float> {
   assert(boards.size() == 250);
 
   auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
@@ -64,10 +65,10 @@ std::vector<float> Model::Predict(const std::vector<NN_INPUT> &boards) {
 
 class OneHotEncoding {
  public:
-  OneHotEncoding(size_t size) : a_(size, 0.0f) {}
+  explicit OneHotEncoding(size_t size) : a_(size, 0.0F) {}
 
   void add(int32_t value, int32_t max_value, bool can_be_negative) {
-    int32_t advance = can_be_negative ? 2 * max_value + 1 : max_value + 1;
+    int32_t advance = can_be_negative ? (2 * max_value) + 1 : max_value + 1;
     value = std::min(value, max_value);
     value = std::max(value, -max_value);
     if (value < 0) {
@@ -77,14 +78,14 @@ class OneHotEncoding {
     index_ += advance;
   }
 
-  std::vector<float> &&get() { return std::move(a_); }
+  auto get() -> std::vector<float> && { return std::move(a_); }
 
  private:
   std::vector<float> a_;
   int32_t index_ = 0;
 };
 
-NN_INPUT board_to_nn_input(const Board &board) {
+auto board_to_nn_input(const Board &board) -> NN_INPUT {
   auto onehot = OneHotEncoding(250);
   for (int32_t i = 0; i < bg::COLLECT_END; ++i) {
     onehot.add(board[i], 4, true);

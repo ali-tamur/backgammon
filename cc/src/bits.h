@@ -6,10 +6,8 @@
 
 namespace bg {
 
-template <typename Config>
+template <Config C>
 class Bits {
-  static_assert(std::is_same_v<Config, WhiteConfig> || std::is_same_v<Config, BlackConfig>);
-
  private:
   class BitIterator {
     static constexpr int32_t N_BITS = 32;
@@ -21,18 +19,18 @@ class Bits {
 
     explicit BitIterator(uint32_t n) { n_ = n; };
     auto operator*() const -> value_type {
-      if constexpr (std::is_same_v<Config, WhiteConfig>) {
+      if constexpr (std::is_same_v<C, WhiteConfig>) {
         return __builtin_ctz(n_);
-      } else if constexpr (std::is_same_v<Config, BlackConfig>) {
+      } else if constexpr (std::is_same_v<C, BlackConfig>) {
         return N_BITS - 1 - __builtin_clz(n_);
       }
     }
 
     auto operator++() -> BitIterator & {
-      if constexpr (std::is_same_v<Config, WhiteConfig>) {
+      if constexpr (std::is_same_v<C, WhiteConfig>) {
         n_ = n_ & (n_ - 1);
         return *this;
-      } else if constexpr (std::is_same_v<Config, BlackConfig>) {
+      } else if constexpr (std::is_same_v<C, BlackConfig>) {
         n_ = n_ ^ (1U << (N_BITS - 1 - __builtin_clz(n_)));
         return *this;
       }

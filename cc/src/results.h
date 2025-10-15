@@ -8,10 +8,10 @@
 
 namespace bg {
 
-template <typename Config>
+template <Config C>
 class KeepResults {
  public:
-  void add(State<Config> p) {
+  void add(State<C> p) {
     auto this_size = p.dice.size();
     if (n_dice == -1 || this_size < n_dice) {
       n_dice = this_size;
@@ -22,13 +22,12 @@ class KeepResults {
     }
   }
 
-  auto get_results() -> std::vector<State<Config>> {
-    return std::vector<State<Config>>(results.begin(), results.end());
+  auto get_results() -> std::vector<State<C>> {
+    return std::vector<State<C>>(results.begin(), results.end());
   }
 
  private:
-  std::unordered_set<State<Config>, std::hash<State<Config>>, std::equal_to<State<Config>>>
-      results{};
+  std::unordered_set<State<C>, std::hash<State<C>>, std::equal_to<State<C>>> results{};
   int32_t n_dice = -1;
 };
 
