@@ -23,13 +23,11 @@ auto moves_on_bar(const State<Config> &p) -> std::vector<State<Config>> {
 
 template <typename Config>
 auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
-  static_assert(std::is_same_v<Config, WhiteConfig> ||
-                std::is_same_v<Config, BlackConfig>);
+  static_assert(std::is_same_v<Config, WhiteConfig> || std::is_same_v<Config, BlackConfig>);
   auto result = KeepResults<Config>();
   auto states = std::vector<std::tuple<State<Config>, size_t>>{};
   states.reserve(64);
-  states.emplace_back(
-      std::make_tuple(State<Config>(board, dice), Config::LAND_START));
+  states.emplace_back(std::make_tuple(State<Config>(board, dice), Config::LAND_START));
   uint32_t i = 0;
   while (i < states.size()) {
     auto [p, last_cell] = states[i++];
@@ -44,18 +42,15 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
         for (auto d : p.dice.values(phase == COLLECTING)) {
           bool first_move_in_collect = phase == COLLECTING;
           auto bits_copy = p.bits;
-          for (auto src_index = bits_copy.begin(); src_index != bits_copy.end();
-               ++src_index) {
+          for (auto src_index = bits_copy.begin(); src_index != bits_copy.end(); ++src_index) {
             if (Config::is_already_analyzed(last_cell, *src_index)) {
               first_move_in_collect = false;
               continue;
             }
-            bool can_collect_wastefully =
-                phase == COLLECTING && first_move_in_collect &&
-                !Config::is_inboard(Config::apply_dice((*src_index), d));
+            bool can_collect_wastefully = phase == COLLECTING && first_move_in_collect &&
+                                          !Config::is_inboard(Config::apply_dice((*src_index), d));
             bool can_collect_exactly =
-                phase == COLLECTING &&
-                Config::apply_dice((*src_index), d) == Config::EXACT_COLLECT;
+                phase == COLLECTING && Config::apply_dice((*src_index), d) == Config::EXACT_COLLECT;
             first_move_in_collect = false;
             if (can_collect_wastefully || can_collect_exactly) {
               auto new_p = p.update_board(*src_index, Config::PLAYER_BAG, d);
@@ -68,8 +63,7 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
               break;
             }
             auto dst_index = Config::apply_dice(*src_index, d);
-            if (Config::is_inboard(dst_index) &&
-                Config::is_valid_dst(p.b[dst_index])) {
+            if (Config::is_inboard(dst_index) && Config::is_valid_dst(p.b[dst_index])) {
               auto new_p = p.update_board(*src_index, dst_index, d);
               states.push_back(std::make_tuple(new_p, *src_index));
             }
@@ -82,4 +76,4 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<Config>> {
   return result.get_results();
 };
 
-} // namespace bg
+}  // namespace bg

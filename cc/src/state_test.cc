@@ -4,9 +4,9 @@
 #include <utility>
 
 #include "configs.h"
-#include "moves.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "moves.h"
 
 using namespace ::testing;
 
@@ -32,15 +32,15 @@ constexpr Change::DeltaTag DELTA{};
 
 struct Case {
   Case(std::set<Board> result, int32_t size, std::set<Board> expectation)
-      : result(std::move(result)), expectation(std::move(expectation)),
-        size(size) {}
+      : result(std::move(result)), expectation(std::move(expectation)), size(size) {}
   std::set<Board> result;
   std::set<Board> expectation;
   int32_t size;
 };
 
-template <typename Config> class Expectation {
-public:
+template <typename Config>
+class Expectation {
+ public:
   Expectation(Board board, Dice dice) : b{board}, dice(dice) {}
 
   void add_expectation(const std::vector<Change> &changes) {
@@ -75,7 +75,7 @@ public:
     return {result_set, result_size, expectation_set};
   }
 
-private:
+ private:
   auto opponent_perspective(const Board &b) -> Board {
     Board r = {};
     for (int32_t i = 0; i < COLLECT_END; ++i) {
@@ -102,7 +102,8 @@ auto generate_all_dice() -> std::vector<Dice> {
   return result;
 }
 
-template <typename T> class StateTest : public ::testing::Test {
+template <typename T>
+class StateTest : public ::testing::Test {
   using Config = T;
 };
 
@@ -121,9 +122,8 @@ TYPED_TEST(StateTest, stone_on_bar_cannot_land) {
   //  │                        ││                        │   1 :
   //  │  .   .   .   .   .   . ││ 14   .   .   .   .   . │
   //  └────────────────────────┴┴────────────────────────┘
-  auto b =
-      std::array<int8_t, 28>{-2, -2, -2, -2, -2, -2, 0, 0, 0, 0, -3, 0, 0, 0,
-                             0,  0,  0,  0,  14, 0,  0, 0, 0, 0, 1,  0, 0, 0};
+  auto b = std::array<int8_t, 28>{-2, -2, -2, -2, -2, -2, 0, 0, 0, 0, -3, 0, 0, 0,
+                                  0,  0,  0,  0,  14, 0,  0, 0, 0, 0, 1,  0, 0, 0};
   for (auto dice : generate_all_dice()) {
     Expectation<TypeParam> e(b, dice);
     e.add_expectation({});
@@ -142,9 +142,8 @@ TYPED_TEST(StateTest, stone_on_bar_cannot_land_2) {
   //  └────────────────────────┴┴────────────────────────┘
   // Indexes: [0:23, W-bolted, B-bolted, W-collect, B-collect]
   // W numbers always positive, B numbers always negative.
-  auto b =
-      std::array<int8_t, 28>{0, -2, 0, -2, 0,  0, 0, 0, 0, 0, -11, 0, 0, 0,
-                             0, 0,  0, 0,  14, 0, 0, 0, 0, 0, 1,   0, 0, 0};
+  auto b = std::array<int8_t, 28>{0, -2, 0, -2, 0,  0, 0, 0, 0, 0, -11, 0, 0, 0,
+                                  0, 0,  0, 0,  14, 0, 0, 0, 0, 0, 1,   0, 0, 0};
   for (const auto &[d1, d2] : {std::make_pair(2, 2), {2, 4}, {4, 4}}) {
     Expectation<TypeParam> e(b, Dice(d1, d2));
     e.add_expectation({});
@@ -163,9 +162,8 @@ TYPED_TEST(StateTest, stone_cannot_move) {
   //  └────────────────────────┴┴────────────────────────┘
   // Indexes: [0:23, W-bolted, B-bolted, W-collect, B-collect]
   // W numbers always positive, B numbers always negative.
-  auto b =
-      std::array<int8_t, 28>{2, -2, -2, -2, -2, -2, -2, 0, 0, 0,  -3, 0, 0, 0,
-                             0, 0,  0,  0,  0,  0,  0,  0, 0, 13, 0,  0, 0, 0};
+  auto b = std::array<int8_t, 28>{2, -2, -2, -2, -2, -2, -2, 0, 0, 0,  -3, 0, 0, 0,
+                                  0, 0,  0,  0,  0,  0,  0,  0, 0, 13, 0,  0, 0, 0};
 
   for (auto dice : generate_all_dice()) {
     Expectation<TypeParam> e(b, dice);
@@ -255,9 +253,8 @@ TYPED_TEST(StateTest, land_one_stone) {
   //  │                        ││                        │   2 :
   //  │  .   .   .   .   .   . ││  .  13   .   .   .   . │
   //  └────────────────────────┴┴────────────────────────┘
-  auto b =
-      std::array<int8_t, 28>{-2, -2, 0, -2, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0,
-                             0,  0,  0, 0,  0,  13, 0, 0, 0, 0, 2, 0, 0, -5};
+  auto b = std::array<int8_t, 28>{-2, -2, 0, -2, -2, -2, 0, 0, 0, 0, 0, 0, 0, 0,
+                                  0,  0,  0, 0,  0,  13, 0, 0, 0, 0, 2, 0, 0, -5};
   Expectation<TypeParam> e(b, Dice(4, 3));
   e.add_expectation({{2, 1, VALUE}, {WHITE_BAR, 1, VALUE}});
   auto r = e.get_test_result();
@@ -272,9 +269,8 @@ TYPED_TEST(StateTest, land_two_stones) {
   //  │                        ││                        │   2 :
   //  │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
   //  └────────────────────────┴┴────────────────────────┘
-  auto b =
-      std::array<int8_t, 28>{-2, -2, 0, -2, -2, -2, 0, 0, 0, 0,  0, 0, 0, 0,
-                             0,  0,  0, 0,  0,  0,  0, 0, 0, 13, 2, 0, 0, -5};
+  auto b = std::array<int8_t, 28>{-2, -2, 0, -2, -2, -2, 0, 0, 0, 0,  0, 0, 0, 0,
+                                  0,  0,  0, 0,  0,  0,  0, 0, 0, 13, 2, 0, 0, -5};
   Expectation<TypeParam> e(b, Dice(3, 3));
   e.add_expectation({{2, 2, VALUE}, {WHITE_BAR, 0, VALUE}});
   auto r = e.get_test_result();
@@ -289,9 +285,8 @@ TYPED_TEST(StateTest, escape_1) {
   //  │                        ││                        │   1 :
   //  │  .   .   .   .   .   . ││  .   .   .   .   .  14 │
   //  └────────────────────────┴┴────────────────────────┘
-  auto b =
-      std::array<int8_t, 28>{-2, -2, -2, -2, -2, 0, 0, 0, 0, 0,  0, 0, 0, 0,
-                             0,  0,  0,  0,  0,  0, 0, 0, 0, 14, 1, 0, 0, -5};
+  auto b = std::array<int8_t, 28>{-2, -2, -2, -2, -2, 0, 0, 0, 0, 0,  0, 0, 0, 0,
+                                  0,  0,  0,  0,  0,  0, 0, 0, 0, 14, 1, 0, 0, -5};
   Expectation<TypeParam> e(b, Dice(6, 6));
   e.add_expectation({{WHITE_BAR, 0, VALUE}, {COLLECT_END - 1, 15, VALUE}});
   auto r = e.get_test_result();
@@ -385,10 +380,8 @@ TYPED_TEST(StateTest, double_stone_movement) {
       }
       for (int32_t src1 : {0, 10}) {
         auto src2 = 10 - src1;
-        e.add_expectation({{src1, 0, VALUE},
-                           {src2, 0, VALUE},
-                           {src1 + i, 1, VALUE},
-                           {src2 + j, 1, VALUE}});
+        e.add_expectation(
+            {{src1, 0, VALUE}, {src2, 0, VALUE}, {src1 + i, 1, VALUE}, {src2 + j, 1, VALUE}});
       }
       auto r = e.get_test_result();
       EXPECT_EQ(r.size, 4);
@@ -404,12 +397,10 @@ TYPED_TEST(StateTest, double_stone_movement_with_blocks) {
   //  │                        ││                        │
   //  │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
   //  └────────────────────────┴┴────────────────────────┘
-  auto b =
-      std::array<int8_t, 28>{1, 1, -2, 0, 0, 0, -2, -2, -2, 0,  0, 0,  0, 0,
-                             0, 0, 0,  0, 0, 0, 0,  0,  0,  13, 0, -7, 0, 0};
+  auto b = std::array<int8_t, 28>{1, 1, -2, 0, 0, 0, -2, -2, -2, 0,  0, 0,  0, 0,
+                                  0, 0, 0,  0, 0, 0, 0,  0,  0,  13, 0, -7, 0, 0};
   Expectation<TypeParam> e(b, Dice(5, 2));
-  e.add_expectation(
-      {{0, 0, VALUE}, {1, 0, VALUE}, {3, 1, VALUE}, {5, 1, VALUE}});
+  e.add_expectation({{0, 0, VALUE}, {1, 0, VALUE}, {3, 1, VALUE}, {5, 1, VALUE}});
   auto r = e.get_test_result();
   EXPECT_EQ(r.size, 1);
   EXPECT_EQ(r.result, r.expectation);
@@ -423,9 +414,8 @@ TYPED_TEST(StateTest, double_stone_movement_with_blocks_2) {
   //  │  .   .   .   .   .   . ││  .   .   .   .   .  13 │
   //  └────────────────────────┴┴────────────────────────┘
 
-  auto b =
-      std::array<int8_t, 28>{1, 1, 0, 0, 0, -2, -2, 0, -2, 0,  0, 0,  0, 0,
-                             0, 0, 0, 0, 0, 0,  0,  0, 0,  13, 0, -9, 0, 0};
+  auto b = std::array<int8_t, 28>{1, 1, 0, 0, 0, -2, -2, 0, -2, 0,  0, 0,  0, 0,
+                                  0, 0, 0, 0, 0, 0,  0,  0, 0,  13, 0, -9, 0, 0};
   Expectation<TypeParam> e(b, Dice(5, 2));
   e.add_expectation({{0, 0, VALUE}, {7, 1, VALUE}});
   auto r = e.get_test_result();
@@ -440,9 +430,8 @@ TYPED_TEST(StateTest, only_one_dice_can_move_multiple_results) {
   //  │                        ││                        │
   //  │  .   .   .  *2   .   . ││ 13   .   .   .   .  *2 │
   //  └────────────────────────┴┴────────────────────────┘
-  auto b =
-      std::array<int8_t, 28>{1, 0,  0, 0, 1,  0, -2, 0, 0, 0,  -2, -2, 0, 0,
-                             0, -2, 0, 0, 13, 0, 0,  0, 0, -2, 0,  -5, 0, 0};
+  auto b = std::array<int8_t, 28>{1, 0,  0, 0, 1,  0, -2, 0, 0, 0,  -2, -2, 0, 0,
+                                  0, -2, 0, 0, 13, 0, 0,  0, 0, -2, 0,  -5, 0, 0};
   Expectation<TypeParam> e(b, Dice(5, 6));
   e.add_expectation({{0, 0, VALUE}, {5, 1, VALUE}});
   e.add_expectation({{4, 0, VALUE}, {9, 1, VALUE}});
@@ -537,9 +526,8 @@ TYPED_TEST(StateTest, collect_with_waste) {
   auto b = std::array<int8_t, 28>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0,  0,
                                   0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, -15, 12, 0};
   Expectation<TypeParam> e(b, Dice(4, 5));
-  e.add_expectation({{WHITE_BAG, 14, VALUE},
-                     {COLLECT_END - 3, 0, VALUE},
-                     {COLLECT_END - 2, 0, VALUE}});
+  e.add_expectation(
+      {{WHITE_BAG, 14, VALUE}, {COLLECT_END - 3, 0, VALUE}, {COLLECT_END - 2, 0, VALUE}});
   auto r = e.get_test_result();
   EXPECT_EQ(r.size, 1);
   EXPECT_EQ(r.result, r.expectation);
@@ -622,8 +610,7 @@ TYPED_TEST(StateTest, move_all_no_collect) {
   auto b = std::array<int8_t, 28>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0, 0,   0,  0,
                                   0, 0, 0, 0, 0, 0, 0, 5, 0, -2, 0, -13, 10, 0};
   Expectation<TypeParam> e(b, Dice(1, 1));
-  e.add_expectation(
-      {{COLLECT_END - 3, -4, DELTA}, {COLLECT_END - 2, 4, DELTA}});
+  e.add_expectation({{COLLECT_END - 3, -4, DELTA}, {COLLECT_END - 2, 4, DELTA}});
   auto r = e.get_test_result();
   EXPECT_EQ(r.size, 1);
   EXPECT_EQ(r.result, r.expectation);
@@ -680,4 +667,4 @@ TYPED_TEST(StateTest, count_moves_at_start) {
   }
 }
 
-} // namespace bg
+}  // namespace bg

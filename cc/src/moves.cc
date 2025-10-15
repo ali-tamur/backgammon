@@ -3,8 +3,7 @@
 #include "configs.h"
 
 namespace bg {
-auto white_move(const Board &board, int32_t d1, int32_t d2)
-    -> std::vector<Board> {
+auto white_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board> {
   const auto &states = generate<WhiteConfig>(board, Dice(d1, d2));
   std::vector<Board> result{};
   std::transform(states.begin(), states.end(), std::back_inserter(result),
@@ -12,8 +11,7 @@ auto white_move(const Board &board, int32_t d1, int32_t d2)
   return result;
 }
 
-auto black_move(const Board &board, int32_t d1, int32_t d2)
-    -> std::vector<Board> {
+auto black_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board> {
   const auto &states = generate<BlackConfig>(board, Dice(d1, d2));
   std::vector<Board> result{};
   std::transform(states.begin(), states.end(), std::back_inserter(result),
@@ -21,4 +19,4 @@ auto black_move(const Board &board, int32_t d1, int32_t d2)
   return result;
 }
 
-} // namespace bg
+}  // namespace bg

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <onnxruntime_cxx_api.h>
+
 #include <string>
 #include <vector>
 
@@ -11,7 +12,7 @@ namespace bg {
 using NN_INPUT = std::vector<float>;
 
 class Model {
-public:
+ public:
   Model(const std::string &model_path);
 
   auto GetInputName() const -> std::string;
@@ -19,7 +20,7 @@ public:
   auto GetInputShape() const -> std::vector<int64_t>;
   auto Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float>;
 
-private:
+ private:
   Ort::Env env_;
   Ort::Session session_;
   Ort::AllocatorWithDefaultOptions allocator_;
@@ -30,4 +31,4 @@ private:
 
 auto board_to_nn_input(const Board &board) -> NN_INPUT;
 
-} // namespace bg
+}  // namespace bg

@@ -6,15 +6,15 @@
 
 namespace bg {
 
-template <typename Config> class Bits {
-  static_assert(std::is_same_v<Config, WhiteConfig> ||
-                std::is_same_v<Config, BlackConfig>);
+template <typename Config>
+class Bits {
+  static_assert(std::is_same_v<Config, WhiteConfig> || std::is_same_v<Config, BlackConfig>);
 
-private:
+ private:
   class BitIterator {
     static constexpr int32_t N_BITS = 32;
 
-  public:
+   public:
     using iterator_category = std::forward_iterator_tag;
     using value_type = int32_t;
     using difference_type = std::ptrdiff_t;
@@ -37,28 +37,24 @@ private:
         return *this;
       }
     }
-    auto operator==(const BitIterator &other) const -> bool {
-      return n_ == other.n_;
-    }
-    auto operator!=(const BitIterator &other) const -> bool {
-      return n_ != other.n_;
-    }
+    auto operator==(const BitIterator &other) const -> bool { return n_ == other.n_; }
+    auto operator!=(const BitIterator &other) const -> bool { return n_ != other.n_; }
 
-  private:
+   private:
     uint32_t n_;
   };
 
-public:
+ public:
   using iterator = BitIterator;
   void set(size_t index) { n_ |= (1U << index); }
   void unset(size_t index) { n_ &= ~(1U << index); }
   [[nodiscard]] auto begin() const -> iterator { return BitIterator(n_); }
   [[nodiscard]] auto end() const -> iterator { return BitIterator(0); }
 
-private:
+ private:
   uint32_t n_ = 0;
   friend auto begin(const Bits &b) -> iterator { return b.begin(); }
   friend auto end(const Bits &b) -> iterator { return b.end(); }
 };
 
-}; // namespace bg
+};  // namespace bg

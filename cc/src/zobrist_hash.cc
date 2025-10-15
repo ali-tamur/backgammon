@@ -21,4 +21,4 @@ auto get_zobrist_table() -> ZobristTableType {
 
 const ZobristTableType ZOBRIST_TABLE = get_zobrist_table();
 
-} // namespace bg
+}  // namespace bg
