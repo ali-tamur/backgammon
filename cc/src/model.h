@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "configs.h"
+#include "proto/game.pb.h"
 
 namespace bg {
 
@@ -15,9 +16,9 @@ class Model {
  public:
   Model(const std::string &model_path);
 
-  auto GetInputName() const -> std::string;
-  auto GetOutputName() const -> std::string;
-  auto GetInputShape() const -> std::vector<int64_t>;
+  [[nodiscard]] auto GetInputName() const -> std::string;
+  [[nodiscard]] auto GetOutputName() const -> std::string;
+  [[nodiscard]] auto GetInputShape() const -> std::vector<int64_t>;
   auto Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float>;
 
  private:
@@ -30,5 +31,6 @@ class Model {
 };
 
 auto board_to_nn_input(const Board &board) -> NN_INPUT;
+auto position_to_model_input(const Position &position) -> NN_INPUT;
 
 }  // namespace bg

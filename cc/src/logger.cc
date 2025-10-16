@@ -27,7 +27,7 @@ void LogWriter::add_move(Dice dice, const Board &board) {
   }
   assert(buffer_.size() > 0 && "call start_game before add_move");
   auto &game = buffer_[buffer_.size() - 1];
-  auto *cells = game.add_moves()->mutable_cell();
+  auto *cells = game.add_positions()->mutable_cell();
   cells->Reserve(BOARD_SIZE);
   for (int8_t val : board) {
     cells->Add(val);
@@ -40,7 +40,7 @@ void LogWriter::end_game(int32_t score) {
     return;
   }
   auto &game = buffer_[buffer_.size() - 1];
-  game.set_score(score);
+  game.set_final_score(score);
   if (buffer_.size() >= 1000) [[unlikely]] {
     flush();
   }

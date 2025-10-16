@@ -63,9 +63,19 @@ auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float> {
   return std::vector<float>(output_data, output_data + output_size);
 }
 
+static constexpr int32_t CELL_LIMIT = 4;
+static constexpr int32_t BAG_LIMIT = 10;
+
+static constexpr size_t NN_INPUT_SIZE =
+    (COLLECT_END * ((2 * CELL_LIMIT) + 1)) +  // Each board cell: [-4, 4]
+    (CELL_LIMIT + 1) +                        // WHITE_BAR: [0, 4]
+    (CELL_LIMIT + 1) +                        // BLACK_BAR: [0, 4]
+    (BAG_LIMIT + 1) +                         // WHITE_BAG: [0, 10]
+    (BAG_LIMIT + 1);                          // BLACK_BAG: [0, 10]
+
 class OneHotEncoding {
  public:
-  explicit OneHotEncoding(size_t size) : a_(size, 0.0F) {}
+  explicit OneHotEncoding() : a_(NN_INPUT_SIZE, 0.0F) {}
 
   void add(int32_t value, int32_t max_value, bool can_be_negative) {
     int32_t advance = can_be_negative ? (2 * max_value) + 1 : max_value + 1;
@@ -85,16 +95,26 @@ class OneHotEncoding {
   int32_t index_ = 0;
 };
 
-auto board_to_nn_input(const Board &board) -> NN_INPUT {
-  auto onehot = OneHotEncoding(250);
-  for (int32_t i = 0; i < bg::COLLECT_END; ++i) {
-    onehot.add(board[i], 4, true);
+template <typename Accessor>
+auto board_to_nn_input_impl(Accessor get_cell) -> NN_INPUT {
+  auto onehot = OneHotEncoding();
+  for (int32_t i = 0; i < COLLECT_END; ++i) {
+    onehot.add(get_cell(i), CELL_LIMIT, true);
   }
-  onehot.add(board[WHITE_BAR], 4, false);
-  onehot.add(-board[BLACK_BAR], 4, false);
-  onehot.add(board[WHITE_BAG], 10, false);
-  onehot.add(-board[BLACK_BAG], 10, false);
-  return std::move(onehot.get());
+  onehot.add(get_cell(WHITE_BAR), CELL_LIMIT, false);
+  onehot.add(-get_cell(BLACK_BAR), CELL_LIMIT, false);
+  onehot.add(get_cell(WHITE_BAG), BAG_LIMIT, false);
+  onehot.add(-get_cell(BLACK_BAG), BAG_LIMIT, false);
+  return onehot.get();
+}
+
+// Public overloads
+auto board_to_nn_input(const Board &board) -> NN_INPUT {
+  return board_to_nn_input_impl([&](int i) { return board[i]; });
+}
+
+auto position_to_nn_input(const Position &position) -> NN_INPUT {
+  return board_to_nn_input_impl([&](int i) { return position.cell(i); });
 }
 
 }  // namespace bg
