@@ -3,6 +3,7 @@
 #include <cassert>
 #include <vector>
 
+#include "configs.h"
 #include "proto/game.pb.h"
 
 namespace bg {
@@ -16,8 +17,6 @@ void LogWriter::start_game(uint64_t game_id) {
   }
   Game game;
   game.set_game_id(game_id);
-  game.set_white(white_name_);
-  game.set_black(black_name_);
   buffer_.emplace_back(game);
 }
 
@@ -29,7 +28,7 @@ void LogWriter::add_move(Dice dice, const Board &board) {
   assert(buffer_.size() > 0 && "call start_game before add_move");
   auto &game = buffer_[buffer_.size() - 1];
   auto *cells = game.add_moves()->mutable_cell();
-  cells->Reserve(28);
+  cells->Reserve(BOARD_SIZE);
   for (int8_t val : board) {
     cells->Add(val);
   }

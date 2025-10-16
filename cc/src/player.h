@@ -3,7 +3,6 @@
 #include <onnxruntime_cxx_api.h>
 
 #include <algorithm>
-#include <iostream>
 #include <random>
 #include <string>
 #include <utility>
@@ -26,7 +25,7 @@ class Player {
 template <Config C>
 class Player<RANDOM, C> {
  public:
-  Player(std::string name, std::mt19937 r) : name{std::move(name)}, r_{r} {}
+  Player(std::mt19937 r) : r_{r} {}
 
   auto move(const Board &board, Dice dice) -> Board {
     const std::vector<State<C>> &states = generate<C>(board, dice);
@@ -36,8 +35,6 @@ class Player<RANDOM, C> {
     return choosen_state.b;
   }
 
-  std::string name;
-
  private:
   std::mt19937 r_;
 };
@@ -45,9 +42,8 @@ class Player<RANDOM, C> {
 template <Config C>
 class Player<NN, C> {
  public:
-  Player(std::string name, std::mt19937 r, const std::string &model_path,
-         float temperature = DEFAULT_TEMPERATURE)
-      : name{std::move(name)}, r_{r}, model_{Model(model_path)}, temperature_(temperature) {}
+  Player(std::mt19937 r, const std::string &model_path, float temperature = DEFAULT_TEMPERATURE)
+      : r_{r}, model_{Model(model_path)}, temperature_(temperature) {}
 
   auto move(const Board &board, Dice dice) -> Board {
     const std::vector<State<C>> &states = generate<C>(board, dice);
@@ -68,8 +64,6 @@ class Player<NN, C> {
     return boards[index];
   }
 
-  std::string name;
-
  private:
   std::mt19937 r_;
   Model model_;
@@ -77,8 +71,8 @@ class Player<NN, C> {
 };
 
 template <Config C>
-auto construct_random_player_move(std::string name, std::mt19937 r) -> MOVE {
-  auto alice = Player<RANDOM, C>(name, r);
+auto construct_random_player_move(std::mt19937 r) -> MOVE {
+  auto alice = Player<RANDOM, C>(r);
   auto move = [alice](const Board &board, Dice dice) mutable -> auto {
     return alice.move(board, dice);
   };
@@ -86,9 +80,8 @@ auto construct_random_player_move(std::string name, std::mt19937 r) -> MOVE {
 }
 
 template <Config C>
-auto construct_nn_player_move(std::string name, std::mt19937 r, std::string model_path,
-                              float temperature) -> MOVE {
-  auto alice = std::make_shared<Player<NN, C>>(name, r, model_path, temperature);
+auto construct_nn_player_move(std::mt19937 r, std::string model_path, float temperature) -> MOVE {
+  auto alice = std::make_shared<Player<NN, C>>(r, model_path, temperature);
   auto move = [alice](const Board &board, Dice dice) mutable -> auto {
     return alice->move(board, dice);
   };

@@ -36,13 +36,10 @@ class GameManager {
 };
 
 struct GameOptions {
-  std::string white_name;
-  std::string black_name;
-
-  // leave empty iff white plays randomly.
+  // "random" or path to the saved keras model.
   std::string white_model;
 
-  // leave empty iff black plays randomly.
+  // "random" or path to the saved keras model.
   std::string black_model;
 
   float temperature = DEFAULT_TEMPERATURE;
@@ -52,6 +49,7 @@ struct GameOptions {
 
   // leave empty iff there'll be no log.
   std::string log_path;
+
   int32_t n_games;
 
   // for unit testing

@@ -16,14 +16,10 @@ namespace bg {
 
 TEST(GameManagerTest, Basic) {
   std::mt19937 gen_{std::random_device{}()};
-  auto alice = Player<RANDOM, WhiteConfig>("alice", gen_);
-  auto bob = Player<RANDOM, BlackConfig>("bob", gen_);
   auto dice_throw = DiceThrow();
   GameOptions options{};
-  options.white_name = alice.name;
-  options.black_name = bob.name;
-  options.white_model = "";
-  options.black_model = "";
+  options.white_model = "random";
+  options.black_model = "random";
   options.n_games = 1;
   options.is_interactive = false;
   options.print_score = true;

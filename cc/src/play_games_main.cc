@@ -16,18 +16,14 @@ auto main(int argc, char **argv) -> int {
 
   CLI::App app{"Play games for training"};
 
-  GameOptions opt{.white_name = "alice",
-                  .black_name = "bob",
-                  .white_model = "",
-                  .black_model = "",
+  GameOptions opt{.white_model = "random",
+                  .black_model = "random",
                   .temperature = DEFAULT_TEMPERATURE,
                   .is_interactive = false,
                   .print_score = true,
                   .log_path = "",
                   .n_games = DEFAULT_N_GAMES};
 
-  app.add_option("--w_name", opt.white_name, "Name of the white player");
-  app.add_option("--b_name", opt.black_name, "Name of the black player");
   app.add_option("--w_model", opt.white_model, "Path of the white model if white is of type NN)");
   app.add_option("--b_model", opt.black_model, "Path of the black model if black is of type NN)");
   app.add_option("--temperature", opt.temperature, "Exploration/explotation ratio for nn players");
@@ -36,10 +32,10 @@ auto main(int argc, char **argv) -> int {
   app.add_option("--log_path", opt.log_path, "Path to game logs");
   app.add_option("--n_games", opt.n_games, "Number of games to play");
 
-  if (opt.white_model != "") {
+  if (opt.white_model != "random") {
     opt.white_model = PROJECT_ROOT + opt.white_model;
   }
-  if (opt.black_model != "") {
+  if (opt.black_model != "random") {
     opt.black_model = PROJECT_ROOT + opt.black_model;
   }
   if (opt.log_path != "") {

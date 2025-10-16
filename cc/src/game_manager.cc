@@ -62,32 +62,30 @@ auto GameManager::run() -> std::tuple<int32_t, int32_t> {
 auto game_manager_factory(const GameOptions &options) -> GameManager {
   std::mt19937 gen{std::random_device{}()};
   MOVE white_move;
-  if (options.white_model == "") {
-    white_move = construct_random_player_move<WhiteConfig>(options.white_name, gen);
+  if (options.white_model == "random") {
+    white_move = construct_random_player_move<WhiteConfig>(gen);
   } else {
     auto white_path =
         (std::filesystem::path(PROJECT_ROOT) / "models" / options.white_model).string();
-    white_move = construct_nn_player_move<WhiteConfig>(options.white_name, gen, white_path,
-                                                       options.temperature);
+    white_move = construct_nn_player_move<WhiteConfig>(gen, white_path, options.temperature);
   }
   MOVE black_move;
-  if (options.black_model == "") {
-    black_move = construct_random_player_move<BlackConfig>(options.black_name, gen);
+  if (options.black_model == "random") {
+    black_move = construct_random_player_move<BlackConfig>(gen);
   } else {
     auto black_path =
         (std::filesystem::path(PROJECT_ROOT) / "models" / options.black_model).string();
-    black_move = construct_nn_player_move<BlackConfig>(options.black_name, gen, black_path,
-                                                       options.temperature);
+    black_move = construct_nn_player_move<BlackConfig>(gen, black_path, options.temperature);
   }
   LogWriter logger;
 
   if (options.outstream != nullptr) {
-    logger = LogWriter(options.outstream, options.white_name, options.black_name, false);
+    logger = LogWriter(options.outstream, false);
   } else if (options.log_path == "") {
-    logger = LogWriter("", options.white_name, options.black_name, true);
+    logger = LogWriter("", true);
   } else {
     auto logger_path = (std::filesystem::path(PROJECT_ROOT) / "games" / options.log_path).string();
-    logger = LogWriter(logger_path, options.white_name, options.black_name, true);
+    logger = LogWriter(logger_path, true);
   }
   return GameManager(white_move, black_move, std::move(logger), options.n_games,
                      options.is_interactive, options.print_score);
