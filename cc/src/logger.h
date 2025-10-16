@@ -18,23 +18,14 @@ class LogWriter {
   auto operator=(LogWriter &&) -> LogWriter & = default;
   LogWriter() = default;
 
-  LogWriter(const std::filesystem::path &path, std::string white_name, std::string black_name,
-            bool is_dummy = false)
-      : white_name_(std::move(white_name)),
-        black_name_(std::move(black_name)),
-        is_dummy_(is_dummy) {
+  LogWriter(const std::filesystem::path &path, bool is_dummy = false) : is_dummy_(is_dummy) {
     if (!is_dummy_) {
       file_stream_.emplace(path, std::ios::binary | std::ios::app);
       out_ = &file_stream_.value();
     }
   }
 
-  LogWriter(std::ostream *out, std::string white_name, std::string black_name,
-            bool is_dummy = false)
-      : out_(out),
-        white_name_(std::move(white_name)),
-        black_name_(std::move(black_name)),
-        is_dummy_{is_dummy} {}
+  LogWriter(std::ostream *out, bool is_dummy = false) : out_(out), is_dummy_{is_dummy} {}
   ~LogWriter();
 
   void start_game(uint64_t game_id);
@@ -45,8 +36,6 @@ class LogWriter {
  private:
   std::optional<std::ofstream> file_stream_;
   std::ostream *out_;
-  std::string white_name_;
-  std::string black_name_;
   bool is_dummy_;
   std::vector<Game> buffer_;
 };

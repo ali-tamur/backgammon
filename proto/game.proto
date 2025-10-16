@@ -5,8 +5,8 @@ package bg;
 
 message Game {
   uint64 game_id = 1;
-  string white = 2;
-  string black = 3;
+  string white = 2;  // deprecated
+  string black = 3;  // deprecated
   int32 score = 4;
   repeated Move moves = 5;
   repeated sint32 dice = 6 [packed=true];

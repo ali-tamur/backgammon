@@ -1,8 +1,7 @@
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
-load("@rules_python//python:py_library.bzl", "py_library")
-load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@rules_python//python:py_library.bzl", "py_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -257,7 +256,25 @@ cc_binary(
         ":moves",
         ":player",
         "//third_party:onnxruntime",
-        "@google_benchmark//:benchmark",
+        "@cli11//:cli11",
+    ],
+)
+
+cc_binary(
+    name = "training_data_main",
+    srcs = ["training_data_main.cc"],
+    local_defines = [ "PROJECT_GAMES_DIR=\\\"../../\\\"", ],
+    copts = ["-pg"],
+    linkopts = ["-pg"],
+    deps = [
+        ":configs",
+        ":dice",
+        ":game_manager",
+        ":logger",
+        ":model",
+        ":moves",
+        ":player",
+        "//third_party:onnxruntime",
         "@cli11//:cli11",
     ],
 )
