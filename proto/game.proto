@@ -3,15 +3,47 @@ syntax = "proto3";
 
 package bg;
 
-message Game {
-  uint64 game_id = 1;
-  string white = 2;  // deprecated
-  string black = 3;  // deprecated
-  int32 score = 4;
-  repeated Move moves = 5;
-  repeated sint32 dice = 6 [packed=true];
+message Score {
+  float white_win = 1;
+  float white_gammon = 2;
+  float black_win = 3;
+  float black_gammon = 4;
 }
 
-message Move {
+message Position {
   repeated sint32 cell = 1 [packed=true]; 
+}
+
+enum FirstPlayer {
+  UNDEFINED = 0;
+  WHITE = 1;
+  BLACK = 2;
+}
+
+message Game {
+  uint64 game_id = 1;
+  int32 final_score = 2;
+  FirstPlayer player = 3;
+
+  // The first is always the position at the start
+  // of the game. Others are the positions after the
+  // player on turn has played.
+  repeated Position positions = 4;
+
+  repeated sint32 dice = 5 [packed=true];
+}
+
+// The training data is generated always from the
+// white players point of view and always with black 
+// to move. (or game has ended)
+message ModelInput {
+  repeated float cell = 1;  // exactly 250 floats. See board_to_nn_input function.
+}
+
+message TrainingData {
+  ModelInput input = 1;
+  Score score = 2;
+  Score td = 3;
+  int32 move_number = 4;
+  int32 number_of_moves = 5;
 }

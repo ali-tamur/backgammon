@@ -25,6 +25,24 @@
 ## (P4) Web Interface
 - [ ] Make a very simple interface to let a model play with a human player.
 
+## NN Design Decisions:
+1. NN input will always be from White point of view and when it is black's turn to move. With this representation we will not need to encode "whose turn is it", whihc is good because
+that single input feature would have a disproportionate affect on the output.
+
+2. We will only train for the white player so + scores will always mean win, and - scores
+will always mean loss. Corollary: the score of a position P with white to move is equal to the reverse score of the position with the pieces flipped and it is black to move.
+
+3. As a consequence, we need to update game manager so that the black player will start the
+game 50% of the time.
+
+4. The first toy model has a single output feature, but having a 4-tuple as in TD-backgammon
+is probably better: P(W win), P(B win), P(W gammon), P(B gammon) we can represent backgammons
+results simply as gammon results.
+
+5. There will be 2 types of training data with associated loss functions:
+* The Game Result: The loss depends on the actual game result. If we adapt 4th decision, the output vector will simply represent probabilities, simplifying the semantics. The affect of the game score on a particular position will depend on how close the game end is. We need to experiment to choose a good middle ground so that the derivatives for the early moves will neither be too large, nor too small.
+* Temporal Difference: Given a position P, let P_max(d1, d2) represent the best position the player can achieve on a dice throw of d1, d2. Then the evaluation of P should equal to the expected score of all those positions on all possible dice throws.
+
 # Diary
 
 ## Oct 7, 2025: Basic NN beats random player 1276-468 in 1000 games (73% win rate)
@@ -51,3 +69,13 @@
 - Large batch sizes (128, 256)
 - Heavy L2 regularization (0.02)
 - Smaller model capacity (128→64→32)
+
+
+
+
+
+
+
+
+
+

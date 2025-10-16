@@ -97,6 +97,7 @@ cc_library(
     srcs = ["model.cc"],
     deps = [
         ":configs",
+        "//proto:game_cc_proto",
         "//third_party:onnxruntime",
     ],
 )
@@ -109,6 +110,17 @@ cc_library(
         ":model",
         ":moves",
         "//third_party:onnxruntime",
+    ],
+)
+
+cc_library(
+    name = "training_data",
+    srcs = ["training_data.cc"],
+    hdrs = ["training_data.h"],
+    deps = [
+        ":configs",
+        ":model",
+        "//proto:game_cc_proto",
     ],
 )
 
