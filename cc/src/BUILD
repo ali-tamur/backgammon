@@ -136,6 +136,7 @@ cc_library(
     srcs = ["logger.cc"],
     hdrs = ["logger.h"],
     deps = [
+        ":assertion",
         ":configs",
         ":dice",
         "//proto:game_cc_proto",
@@ -208,6 +209,7 @@ cc_library(
     srcs = ["game_manager.cc"],
     hdrs = ["game_manager.h"],
     deps = [
+        ":assertion",
         ":configs",
         ":dice",
         ":logger",
@@ -263,10 +265,10 @@ cc_test(
 cc_binary(
     name = "play_games_main",
     srcs = ["play_games_main.cc"],
-    local_defines = [ "PROJECT_GAMES_DIR=\\\"../../\\\"", ],
     copts = ["-pg"],
     linkopts = ["-pg"],
     deps = [
+        ":assertion",
         ":configs",
         ":dice",
         ":game_manager",
@@ -282,7 +284,6 @@ cc_binary(
 cc_binary(
     name = "training_data_main",
     srcs = ["training_data_main.cc"],
-    local_defines = [ "PROJECT_GAMES_DIR=\\\"../../\\\"", ],
     copts = ["-pg"],
     linkopts = ["-pg"],
     deps = [

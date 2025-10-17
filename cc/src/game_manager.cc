@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 
+#include "assertion.h"
 #include "configs.h"
 #include "model.h"
 #include "player.h"
@@ -19,6 +20,7 @@ auto GameManager::run_once(LogWriter *logger) -> int32_t {
   int32_t this_score;
   int32_t on_turn = 0;
   Board board = GAME_START;
+
   while (true) {
     Dice dice = dice_throw_.throw_dice();
     if (is_interactive_) {
@@ -60,6 +62,7 @@ auto GameManager::run() -> std::tuple<int32_t, int32_t> {
 }
 
 auto game_manager_factory(const GameOptions &options) -> GameManager {
+  static constexpr size_t BUFFER_SIZE = 50000;
   std::mt19937 gen{std::random_device{}()};
   MOVE white_move;
   if (options.white_model == "random") {
@@ -78,17 +81,14 @@ auto game_manager_factory(const GameOptions &options) -> GameManager {
     black_move = construct_nn_player_move<BlackConfig>(gen, black_path, options.temperature);
   }
   LogWriter logger;
-
-  if (options.outstream != nullptr) {
-    logger = LogWriter(options.outstream, false);
-  } else if (options.log_path == "") {
-    logger = LogWriter("", true);
-  } else {
+  if (options.log_path != "" && !options.is_unittest) {
     auto logger_path = (std::filesystem::path(PROJECT_ROOT) / "games" / options.log_path).string();
-    logger = LogWriter(logger_path, true);
+    logger = LogWriter(logger_path, BUFFER_SIZE);
+  } else if (options.is_unittest) {
+    logger = LogWriter(options.log_path, BUFFER_SIZE);
   }
-  return GameManager(white_move, black_move, std::move(logger), options.n_games,
-                     options.is_interactive, options.print_score);
+  return GameManager(white_move, black_move, logger, options.n_games, options.is_interactive,
+                     options.print_score);
 }
 
 }  // namespace bg

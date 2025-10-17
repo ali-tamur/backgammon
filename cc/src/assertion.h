@@ -12,6 +12,8 @@
   std::abort();
 }
 
+#define PING() std::cout << "# " << __FILE__ << " : " << __LINE__ << "\n";
+
 #define FAIL(expr, msg) assert_fail(__FILE__, __LINE__, #expr, msg);
 
 #define ASSERT(expr, msg) \

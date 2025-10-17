@@ -26,6 +26,6 @@ static void BM_GameManager(benchmark::State &state) {
   }
 }
 
-BENCHMARK(BM_GameManager)->Arg(10000);
+BENCHMARK(BM_GameManager)->Arg(20000);
 
 BENCHMARK_MAIN();  // missing type specifier

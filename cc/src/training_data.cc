@@ -47,7 +47,7 @@ void generate_training_data(const std::string& white_model, const std::string& l
   auto log_reader = LogReader(log_file);
   auto games = log_reader.read_all();
   auto data_writer = ProtoWriter<TrainingData>(output_path, 1000);
-  for (auto&& game : log_reader.read_all()) {
+  for (auto& game : games) {
     for (TrainingData& training_data : game_to_training_data(game, "")) {
       data_writer.add(std::move(training_data));
     }

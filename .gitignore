@@ -234,6 +234,7 @@ py/src/*.so
 # NN models and games
 models
 games
+training
 
 # Personal
 project-structure.md
