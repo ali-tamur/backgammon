@@ -7,11 +7,10 @@
 #include <string_view>
 #include <vector>
 
-#ifdef PROJECT_GAMES_DIR
-static constexpr const char *PROJECT_ROOT = PROJECT_GAMES_DIR;
-#else
-static constexpr const char *PROJECT_ROOT = "";
-#endif
+static const std::string PROJECT_ROOT = []() {
+  const char *env = std::getenv("BUILD_WORKSPACE_DIRECTORY");
+  return env ? std::string(env) : std::string(".");
+}();
 
 static constexpr size_t BOARD_SIZE = 28;
 using Board = std::array<int8_t, BOARD_SIZE>;

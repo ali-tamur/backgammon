@@ -52,8 +52,7 @@ struct GameOptions {
 
   int32_t n_games;
 
-  // for unit testing
-  std::ostream *outstream = nullptr;
+  bool is_unittest = false;
 };
 
 auto game_manager_factory(const GameOptions &options) -> GameManager;

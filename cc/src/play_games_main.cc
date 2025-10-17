@@ -4,6 +4,7 @@
 #include <random>
 
 #include "CLI/CLI.hpp"
+#include "assertion.h"
 #include "configs.h"
 #include "dice.h"
 #include "game_manager.h"
@@ -27,25 +28,20 @@ auto main(int argc, char **argv) -> int {
   app.add_option("--w_model", opt.white_model, "Path of the white model if white is of type NN)");
   app.add_option("--b_model", opt.black_model, "Path of the black model if black is of type NN)");
   app.add_option("--temperature", opt.temperature, "Exploration/explotation ratio for nn players");
-  app.add_option("--is_interactive", opt.is_interactive, "Print the board after every move");
-  app.add_option("--is_print_score", opt.print_score, "Print the after every game");
+  app.add_option("--interactive", opt.is_interactive, "Print the board after every move");
+  app.add_option("--print_score", opt.print_score, "Print the after every game");
   app.add_option("--log_path", opt.log_path, "Path to game logs");
   app.add_option("--n_games", opt.n_games, "Number of games to play");
 
-  if (opt.white_model != "random") {
-    opt.white_model = PROJECT_ROOT + opt.white_model;
-  }
-  if (opt.black_model != "random") {
-    opt.black_model = PROJECT_ROOT + opt.black_model;
-  }
-  if (opt.log_path != "") {
-    opt.log_path = PROJECT_ROOT + opt.log_path;
-  }
-
   CLI11_PARSE(app, argc, argv);
-  GameManager game_manager = game_manager_factory(opt);
-  auto [white_score, black_score] = game_manager.run();
-  std::cout << opt.n_games << " games played. White: " << white_score << " Black: " << black_score
-            << "\n";
+
+  {
+    GameManager game_manager = game_manager_factory(opt);
+
+    auto [white_score, black_score] = game_manager.run();
+
+    std::cout << opt.n_games << " games played. White: " << white_score << " Black: " << black_score
+              << "\n";
+  }
   return 0;
 }
