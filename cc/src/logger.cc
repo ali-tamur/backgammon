@@ -7,6 +7,18 @@
 #include "proto/game.pb.h"
 
 namespace bg {
+LogWriter::LogWriter(const std::filesystem::path &path, size_t buffer_size, bool is_dummy)
+    : is_dummy_(is_dummy) {
+  if (!is_dummy_) {
+    writer_ = ProtoWriter<Game>(path, buffer_size);
+  }
+}
+
+LogWriter::LogWriter(std::ostream *out, size_t buffer_size, bool is_dummy) : is_dummy_{is_dummy} {
+  if (!is_dummy_) {
+    writer_ = ProtoWriter<Game>(out, buffer_size);
+  }
+}
 
 LogWriter::~LogWriter() { flush(); }
 
@@ -15,9 +27,8 @@ void LogWriter::start_game(uint64_t game_id) {
   if (is_dummy_) {
     return;
   }
-  Game game;
-  game.set_game_id(game_id);
-  buffer_.emplace_back(game);
+  game_in_construction_.Clear();
+  game_in_construction_.set_game_id(game_id);
 }
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
@@ -25,40 +36,27 @@ void LogWriter::add_move(Dice dice, const Board &board) {
   if (is_dummy_) {
     return;
   }
-  assert(buffer_.size() > 0 && "call start_game before add_move");
-  auto &game = buffer_[buffer_.size() - 1];
-  auto *cells = game.add_positions()->mutable_cell();
+  assert(game_in_construction_.game_id() > 0 && "call start_game before add_move");
+  auto *cells = game_in_construction_.add_positions()->mutable_cell();
   cells->Reserve(BOARD_SIZE);
   for (int8_t val : board) {
     cells->Add(val);
   }
-  game.add_dice(dice.dice_);
+  game_in_construction_.add_dice(dice.dice_);
 }
 
 void LogWriter::end_game(int32_t score) {
   if (is_dummy_) {
     return;
   }
-  auto &game = buffer_[buffer_.size() - 1];
-  game.set_final_score(score);
-  if (buffer_.size() >= 1000) [[unlikely]] {
-    flush();
-  }
+  game_in_construction_.set_final_score(score);
 }
 
 void LogWriter::flush() {
   if (is_dummy_) {
     return;
   }
-
-  for (const auto &game : buffer_) {
-    std::string serialized = game.SerializeAsString();
-    uint32_t size = serialized.size();
-    out_->write(reinterpret_cast<const char *>(&size), sizeof(size));
-    out_->write(serialized.data(), size);
-  }
-  out_->flush();
-  buffer_.clear();
+  writer_.flush();
 }
 
 auto LogReader::read_all() -> std::vector<Game> {

@@ -7,6 +7,17 @@
 #include <string>
 
 namespace bg {
+
+static constexpr int32_t CELL_LIMIT = 4;
+static constexpr int32_t BAG_LIMIT = 10;
+
+static constexpr size_t NN_INPUT_SIZE =
+    (COLLECT_END * ((2 * CELL_LIMIT) + 1)) +  // Each board cell: [-4, 4]
+    (CELL_LIMIT + 1) +                        // WHITE_BAR: [0, 4]
+    (CELL_LIMIT + 1) +                        // BLACK_BAR: [0, 4]
+    (BAG_LIMIT + 1) +                         // WHITE_BAG: [0, 10]
+    (BAG_LIMIT + 1);                          // BLACK_BAG: [0, 10]
+
 Model::Model(const std::string &model_path)
     : env_{ORT_LOGGING_LEVEL_WARNING, "backgammon"},
       session_{env_, model_path.c_str(), Ort::SessionOptions{}} {
@@ -31,14 +42,14 @@ auto Model::GetOutputName() const -> std::string { return output_name_; }
 auto Model::GetInputShape() const -> std::vector<int64_t> { return input_shape_; }
 
 auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float> {
-  assert(boards.size() == 250);
+  assert(boards.size() == NN_INPUT_SIZE);
 
   auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
-  std::vector<int64_t> input_shape{static_cast<long>(boards.size()), 250};
+  std::vector<int64_t> input_shape{static_cast<int64_t>(boards.size()), NN_INPUT_SIZE};
 
   std::vector<float> flattened;
-  flattened.reserve(boards.size() * 250);
+  flattened.reserve(boards.size() * NN_INPUT_SIZE);
   for (const auto &board : boards) {
     flattened.insert(flattened.end(), board.begin(), board.end());
   }
@@ -62,16 +73,6 @@ auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float> {
   assert(output_size == boards.size());
   return std::vector<float>(output_data, output_data + output_size);
 }
-
-static constexpr int32_t CELL_LIMIT = 4;
-static constexpr int32_t BAG_LIMIT = 10;
-
-static constexpr size_t NN_INPUT_SIZE =
-    (COLLECT_END * ((2 * CELL_LIMIT) + 1)) +  // Each board cell: [-4, 4]
-    (CELL_LIMIT + 1) +                        // WHITE_BAR: [0, 4]
-    (CELL_LIMIT + 1) +                        // BLACK_BAR: [0, 4]
-    (BAG_LIMIT + 1) +                         // WHITE_BAG: [0, 10]
-    (BAG_LIMIT + 1);                          // BLACK_BAG: [0, 10]
 
 class OneHotEncoding {
  public:
@@ -113,7 +114,7 @@ auto board_to_nn_input(const Board &board) -> NN_INPUT {
   return board_to_nn_input_impl([&](int i) { return board[i]; });
 }
 
-auto position_to_nn_input(const Position &position) -> NN_INPUT {
+auto position_to_model_input(const Position &position) -> NN_INPUT {
   return board_to_nn_input_impl([&](int i) { return position.cell(i); });
 }
 

@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <optional>
-#include <utility>
 
 #include "configs.h"
 #include "dice.h"
@@ -12,20 +11,57 @@
 
 namespace bg {
 
-class LogWriter {
+template <typename P>
+class ProtoWriter {
  public:
-  LogWriter(LogWriter &&) = default;
-  auto operator=(LogWriter &&) -> LogWriter & = default;
-  LogWriter() = default;
+  ProtoWriter(ProtoWriter &&) = default;
+  auto operator=(ProtoWriter &&) noexcept -> ProtoWriter & = default;
+  ProtoWriter() = default;
+  ProtoWriter(const std::filesystem::path &path, size_t buffer_size) : buffer_size_(buffer_size) {
+    file_stream_.emplace(path, std::ios::binary | std::ios::app);
+    out_ = &file_stream_.value();
+    buffer_.reserve(buffer_size_);
+  }
 
-  LogWriter(const std::filesystem::path &path, bool is_dummy = false) : is_dummy_(is_dummy) {
-    if (!is_dummy_) {
-      file_stream_.emplace(path, std::ios::binary | std::ios::app);
-      out_ = &file_stream_.value();
+  ProtoWriter(std::ostream *out, size_t buffer_size) : out_(out), buffer_size_(buffer_size) {
+    buffer_.reserve(buffer_size_);
+  }
+
+  ~ProtoWriter() { flush(); }
+
+  void flush() {
+    for (const auto &item : buffer_) {
+      std::string serialized = item.SerializeAsString();
+      uint32_t size = serialized.size();
+      out_->write(reinterpret_cast<const char *>(&size), sizeof(size));
+      out_->write(serialized.data(), size);
+    }
+    out_->flush();
+    buffer_.clear();
+  }
+
+  void add(P &&item) {
+    buffer_.emplace_back(item);
+    if (buffer_.size() >= buffer_size_) [[unlikely]] {
+      flush();
     }
   }
 
-  LogWriter(std::ostream *out, bool is_dummy = false) : out_(out), is_dummy_{is_dummy} {}
+ private:
+  std::optional<std::ofstream> file_stream_;
+  std::ostream *out_;
+  size_t buffer_size_;
+  std::vector<P> buffer_;
+};
+
+class LogWriter {
+ public:
+  LogWriter(LogWriter &&) = default;
+  auto operator=(LogWriter &&) noexcept -> LogWriter & = default;
+  LogWriter() = default;
+
+  LogWriter(const std::filesystem::path &path, size_t buffer_size, bool is_dummy = false);
+  LogWriter(std::ostream *out, size_t buffer_size, bool is_dummy = false);
   ~LogWriter();
 
   void start_game(uint64_t game_id);
@@ -34,10 +70,9 @@ class LogWriter {
   void flush();
 
  private:
-  std::optional<std::ofstream> file_stream_;
-  std::ostream *out_;
+  ProtoWriter<Game> writer_;
   bool is_dummy_;
-  std::vector<Game> buffer_;
+  Game game_in_construction_;
 };
 
 class LogReader {
