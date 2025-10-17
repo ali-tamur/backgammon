@@ -50,6 +50,11 @@ cc_library(
 )
 
 cc_library(
+    name = "assertion",
+    hdrs = ["assertion.h"],
+)
+
+cc_library(
     name = "bits",
     hdrs = ["bits.h"],
     deps = [
@@ -118,7 +123,9 @@ cc_library(
     srcs = ["training_data.cc"],
     hdrs = ["training_data.h"],
     deps = [
+        ":assertion",
         ":configs",
+        ":logger",
         ":model",
         "//proto:game_cc_proto",
     ],
@@ -279,14 +286,10 @@ cc_binary(
     copts = ["-pg"],
     linkopts = ["-pg"],
     deps = [
+        ":assertion",
         ":configs",
-        ":dice",
-        ":game_manager",
-        ":logger",
-        ":model",
-        ":moves",
-        ":player",
-        "//third_party:onnxruntime",
+        ":training_data",
+        "//proto:game_cc_proto",
         "@cli11//:cli11",
     ],
 )
