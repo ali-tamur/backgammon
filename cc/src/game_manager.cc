@@ -19,6 +19,11 @@ auto GameManager::run_once(LogWriter *logger) -> int32_t {
   std::array<MOVE, 2> players{white_, black_};
   int32_t this_score;
   int32_t on_turn = 0;
+  if (first_move_ == FirstMove::Always_Black ||
+      (first_move_ == FirstMove::Random && ((game_id & 1) == 1))) {
+    on_turn = 1;
+  }
+
   Board board = GAME_START;
 
   while (true) {
@@ -87,8 +92,8 @@ auto game_manager_factory(const GameOptions &options) -> GameManager {
   } else if (options.is_unittest) {
     logger = LogWriter(options.log_path, BUFFER_SIZE);
   }
-  return GameManager(white_move, black_move, logger, options.n_games, options.is_interactive,
-                     options.print_score);
+  return GameManager(white_move, black_move, logger, options.n_games, options.first_move,
+                     options.is_interactive, options.print_score);
 }
 
 }  // namespace bg

@@ -10,14 +10,17 @@
 
 namespace bg {
 
+enum class FirstMove : uint8_t { Always_White, Always_Black, Random };
+
 class GameManager {
  public:
-  GameManager(MOVE white, MOVE black, LogWriter logger, int32_t n_games, bool is_interactive,
-              bool print_score)
+  GameManager(MOVE white, MOVE black, LogWriter logger, int32_t n_games, FirstMove first_move,
+              bool is_interactive, bool print_score)
       : white_{std::move(white)},
         black_(std::move(black)),
         logger_(std::move(logger)),
         n_games_(n_games),
+        first_move_(first_move),
         is_interactive_(is_interactive),
         print_score_(print_score),
         dice_throw_(DiceThrow()) {}
@@ -26,12 +29,13 @@ class GameManager {
   auto run() -> std::tuple<int32_t, int32_t>;
 
  private:
-  MOVE white_;
-  MOVE black_;
+  const MOVE white_;
+  const MOVE black_;
   LogWriter logger_;
-  int32_t n_games_;
-  bool is_interactive_;
-  bool print_score_;
+  const int32_t n_games_;
+  const FirstMove first_move_;
+  const bool is_interactive_;
+  const bool print_score_;
   DiceThrow dice_throw_;
 };
 
@@ -51,6 +55,8 @@ struct GameOptions {
   std::string log_path;
 
   int32_t n_games;
+
+  FirstMove first_move;
 
   bool is_unittest = false;
 };

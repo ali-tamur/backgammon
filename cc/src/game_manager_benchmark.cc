@@ -16,7 +16,8 @@ static void BM_GameManager(benchmark::State &state) {
                   .is_interactive = false,
                   .print_score = false,
                   .log_path = "",
-                  .n_games = num_games};
+                  .n_games = num_games,
+                  .first_move = FirstMove::Random};
 
   auto game_manager = game_manager_factory(opt);
   for (auto _ : state) {

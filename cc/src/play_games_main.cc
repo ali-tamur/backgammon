@@ -10,7 +10,7 @@
 #include "game_manager.h"
 #include "player.h"
 
-auto main(int argc, char **argv) -> int {
+auto main(int argc, char** argv) -> int {
   using namespace bg;
   static constexpr int32_t DEFAULT_N_GAMES = 10000;
   static constexpr float DEFAULT_TEMPERATURE = 0.1;
@@ -23,7 +23,8 @@ auto main(int argc, char **argv) -> int {
                   .is_interactive = false,
                   .print_score = true,
                   .log_path = "",
-                  .n_games = DEFAULT_N_GAMES};
+                  .n_games = DEFAULT_N_GAMES,
+                  .first_move = FirstMove::Random};
 
   app.add_option("--w_model", opt.white_model, "Path of the white model if white is of type NN)");
   app.add_option("--b_model", opt.black_model, "Path of the black model if black is of type NN)");
@@ -32,6 +33,18 @@ auto main(int argc, char **argv) -> int {
   app.add_option("--print_score", opt.print_score, "Print the after every game");
   app.add_option("--log_path", opt.log_path, "Path to game logs");
   app.add_option("--n_games", opt.n_games, "Number of games to play");
+
+  auto* first_player_group = app.add_option_group("who_plays_first");
+  first_player_group->require_option(0, 1);
+  first_player_group->add_flag_callback(
+      "--white_first", [&opt]() { opt.first_move = FirstMove::Always_White; },
+      "It is always white to make the first move.");
+  first_player_group->add_flag_callback(
+      "--black_first", [&opt]() { opt.first_move = FirstMove::Always_Black; },
+      "It is always black to make the first move.");
+  first_player_group->add_flag_callback(
+      "--take_turns", [&opt]() { opt.first_move = FirstMove::Random; },
+      "white and black take turns to make the first move.");
 
   CLI11_PARSE(app, argc, argv);
 
