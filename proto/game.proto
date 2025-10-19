@@ -37,7 +37,7 @@ message Game {
 // white players point of view and always with black 
 // to move. (or game has ended)
 message ModelInput {
-  repeated float cell = 1;  // exactly 250 floats. See board_to_nn_input function.
+  repeated float cell = 1;  // exactly 248 floats. See board_to_nn_input function.
 }
 
 message TrainingData {
