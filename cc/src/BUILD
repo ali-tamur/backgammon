@@ -62,6 +62,28 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "pretty_print",
+    hdrs = ["pretty_print.h"],
+    srcs = ["pretty_print.cc"],
+    deps = [
+        ":assertion",
+        ":configs",
+    ],
+)
+
+cc_test(
+    name = "pretty_print_test",
+    srcs = ["pretty_print_test.cc"],
+    deps = [
+        ":assertion",
+        ":configs",
+        ":pretty_print",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_test(
     name = "bits_test",
     size = "small",
@@ -213,6 +235,7 @@ cc_library(
         ":configs",
         ":dice",
         ":logger",
+        ":pretty_print",
         ":model",
         ":moves",
         ":player",
