@@ -12,6 +12,7 @@
 #include "dice.h"
 #include "model.h"
 #include "moves.h"
+#include "proto/game.pb.h"
 
 namespace bg {
 
@@ -55,13 +56,19 @@ class Player<NN, C> {
     }
     std::vector<NN_INPUT> nn_input;
     std::ranges::transform(boards, std::back_inserter(nn_input), &board_to_nn_input);
-    auto values = model_.Predict(nn_input);
+    std::vector<Model::Score> values = model_.Predict(nn_input);
     std::vector<float> weights;
-    std::ranges::transform(values, std::back_inserter(weights),
-                           [this](float val) { return std::exp(val / temperature_); });
+    std::ranges::transform(values, std::back_inserter(weights), [this](Model::Score score) {
+      return std::exp(expected_value(score) / temperature_);
+    });
     std::discrete_distribution<> dist{weights.begin(), weights.end()};
     int32_t index = dist(r_);
     return boards[index];
+  }
+
+  [[nodiscard]] auto expected_value(Model::Score score) const -> float {
+    auto value =  score.white_win - score.black_win + (2 * (score.white_gammon - score.black_gammon));
+    return value * C::SIGN;
   }
 
  private:

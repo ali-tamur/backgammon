@@ -7,6 +7,7 @@
 #include "configs.h"
 #include "model.h"
 #include "player.h"
+#include "pretty_print.h"
 #include "state.h"
 
 namespace bg {
@@ -29,7 +30,12 @@ auto GameManager::run_once(LogWriter *logger) -> int32_t {
   while (true) {
     Dice dice = dice_throw_.throw_dice();
     if (is_interactive_) {
-      std::cout << "placeholder";
+      std::cout << print_board(board);
+      auto dice_values = dice.values(false);
+      for (auto d = dice_values.begin(); d != bg::DiceRolls::end(); ++d) {
+        std::cout << std::format("{}", *d) << " ";
+      }
+      std::cin.ignore(1000, '\n');
     }
 
     board = (on_turn == 0) ? white_(board, dice) : black_(board, dice);

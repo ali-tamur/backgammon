@@ -41,9 +41,7 @@ auto Model::GetOutputName() const -> std::string { return output_name_; }
 
 auto Model::GetInputShape() const -> std::vector<int64_t> { return input_shape_; }
 
-auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float> {
-  assert(boards.size() == NN_INPUT_SIZE);
-
+auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<Score> {
   auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
   std::vector<int64_t> input_shape{static_cast<int64_t>(boards.size()), NN_INPUT_SIZE};
@@ -70,8 +68,16 @@ auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float> {
 
   float *output_data = output_tensors[0].GetTensorMutableData<float>();
   size_t output_size = output_tensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
-  assert(output_size == boards.size());
-  return std::vector<float>(output_data, output_data + output_size);
+  assert(output_size == boards.size() * 4);
+  std::vector<Score> results;
+  results.reserve(boards.size());
+  for (size_t i = 0; i < output_size; i += 4) {
+    results.emplace_back(Score{.white_win = output_data[i],
+                               .white_gammon = output_data[i + 1],
+                               .black_win = output_data[i + 2],
+                               .black_gammon = output_data[i + 3]});
+  }
+  return results;
 }
 
 class OneHotEncoding {

@@ -13,6 +13,7 @@ cc_library(
         "zobrist_hash.cc",
     ],
     hdrs = [
+        "assertion.h",
         "bits.h",
         "configs.h",
         "dice.h",
@@ -169,7 +170,9 @@ cc_library(
     name = "results",
     hdrs = ["results.h"],
     deps = [
+        ":assertion",
         ":configs",
+        ":state",
         ":state_hash",
     ],
 )
@@ -180,6 +183,7 @@ cc_library(
     hdrs = ["moves.h"],
     deps =
         [
+        ":assertion",
             ":bits",
             ":configs",
             ":dice",
@@ -193,6 +197,7 @@ cc_library(
     hdrs = ["state.h"],
     deps =
         [
+            ":assertion",
             ":bits",
             ":configs",
             ":dice",
