@@ -8,4 +8,3 @@ line_profiler
 click
 protobuf>=5.28.0
 onnx>=1.17.0
-tf2onnx>=1.16.1

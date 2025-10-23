@@ -4,6 +4,11 @@
 # Always run every script from the project top directory.
 # (where .gitignore, MODULE.bazel etc. reside)
 
+if [ -n "$VIRTUAL_ENV" ]; then
+      echo "Error: Deactivate your Python virtual environment first!"
+      exit 1
+fi
+
 if [ $# -lt 2 ]; then
       echo "Usage: ./convert_to_onnx.sh <input.keras> <output.onnx>"
       exit 1

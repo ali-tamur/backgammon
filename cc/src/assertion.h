@@ -1,9 +1,7 @@
 #pragma once
 
 #include <cstdlib>
-#include <format>
 #include <iostream>
-#include <string_view>
 
 [[noreturn]] inline void assert_fail(const char* file, int line, const char* expr,
                                      const char* msg) {

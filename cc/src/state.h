@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "assertion.h"
 #include "bits.h"
 #include "configs.h"
 #include "dice.h"

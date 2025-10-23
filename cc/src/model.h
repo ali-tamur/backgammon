@@ -14,12 +14,19 @@ using NN_INPUT = std::vector<float>;
 
 class Model {
  public:
-  Model(const std::string &model_path);
+  struct Score {
+    float white_win;
+    float white_gammon;
+    float black_win;
+    float black_gammon;
+  };
+
+  explicit Model(const std::string &model_path);
 
   [[nodiscard]] auto GetInputName() const -> std::string;
   [[nodiscard]] auto GetOutputName() const -> std::string;
   [[nodiscard]] auto GetInputShape() const -> std::vector<int64_t>;
-  auto Predict(const std::vector<NN_INPUT> &boards) -> std::vector<float>;
+  auto Predict(const std::vector<NN_INPUT> &boards) -> std::vector<Score>;
 
  private:
   Ort::Env env_;

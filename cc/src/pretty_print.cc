@@ -56,11 +56,6 @@ class BoardPrinter {
       cells_.push_back(split_utf8(mid_row));
     }
     cells_.push_back(split_utf8(bot_row));
-
-    for (int i = 0; i < HEIGHT; ++i) {
-      std::cout << cells_[i].size() << " ";
-    }
-    std::cout << "\n";
   }
 
   void update2_(size_t cell, size_t start_row,
