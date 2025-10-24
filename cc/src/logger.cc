@@ -13,12 +13,17 @@ LogWriter::LogWriter(const std::filesystem::path &path, size_t buffer_size) {
   writer_.emplace(path, buffer_size);
 }
 
-void LogWriter::start_game(uint64_t game_id) {
+void LogWriter::start_game(uint64_t game_id, bool is_white_the_first_player) {
   if (!writer_) {
     return;
   }
   game_in_construction_.Clear();
   game_in_construction_.set_game_id(game_id);
+  if (is_white_the_first_player) {
+    game_in_construction_.set_player(::bg::FirstPlayer::WHITE);
+  } else {
+    game_in_construction_.set_player(::bg::FirstPlayer::BLACK);
+  }
 }
 
 void LogWriter::add_move(Dice dice, const Board &board) {
