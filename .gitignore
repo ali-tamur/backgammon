@@ -224,6 +224,7 @@ gmon.out
 
 # bazel
 */MODULE.bazel.lock
+proto/*pb.h
 
 # C++ library
 py/src/*.so
@@ -238,3 +239,4 @@ training
 
 # Personal
 project-structure.md
+

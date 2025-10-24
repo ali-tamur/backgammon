@@ -51,7 +51,7 @@ class LogWriter {
   LogWriter() = default;
   LogWriter(const std::filesystem::path &path, size_t buffer_size);
 
-  void start_game(uint64_t game_id);
+  void start_game(uint64_t game_id, bool is_white_the_first_player);
   void add_move(Dice dice, const Board &b);
   void end_game(int32_t score);
   void flush();

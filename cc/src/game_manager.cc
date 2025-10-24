@@ -16,7 +16,6 @@ auto GameManager::run_once(LogWriter *logger) -> int32_t {
   auto now = std::chrono::system_clock::now();
   uint64_t game_id =
       std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-  logger->start_game(game_id);
   std::array<MOVE, 2> players{white_, black_};
   int32_t this_score;
   int32_t on_turn = 0;
@@ -24,6 +23,7 @@ auto GameManager::run_once(LogWriter *logger) -> int32_t {
       (first_move_ == FirstMove::Random && ((game_id & 1) == 1))) {
     on_turn = 1;
   }
+  logger->start_game(game_id, on_turn == 0);
 
   Board board = GAME_START;
 
