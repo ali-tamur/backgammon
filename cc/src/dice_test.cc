@@ -4,12 +4,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using namespace ::testing;
+using ::testing::ElementsAreArray;
 
 // NOLINTBEGIN(readability-magic-numbers)
 namespace bg {
 
-std::vector<int32_t> to_collection(Dice d, bool will_use_max) {
+auto to_collection(Dice d, bool will_use_max) -> std::vector<int32_t> {
   auto rolls = std::vector<int32_t>{};
   for (auto d : d.values(will_use_max)) {
     rolls.push_back(d);

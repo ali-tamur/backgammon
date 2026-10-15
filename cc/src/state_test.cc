@@ -8,8 +8,7 @@
 #include "gtest/gtest.h"
 #include "moves.h"
 
-using namespace ::testing;
-
+// NOLINTBEGIN(readability-magic-numbers)
 namespace bg {
 
 struct Change {
@@ -47,9 +46,9 @@ class Expectation {
     Board e = b;
     for (const auto& change : changes) {
       if (change.is_absolute) {
-        e[change.index] = change.value;
+        e[change.index] = static_cast<int8_t>(change.value);
       } else {
-        e[change.index] += change.delta;
+        e[change.index] = static_cast<int8_t>(e[change.index] + change.delta);
       }
     }
     expectations.push_back(e);
@@ -79,12 +78,12 @@ class Expectation {
   auto opponent_perspective(const Board& b) -> Board {
     Board r = {};
     for (int32_t i = 0; i < COLLECT_END; ++i) {
-      r[i] = -b[COLLECT_END - 1 - i];
+      r[i] = static_cast<int8_t>(-b[COLLECT_END - 1 - i]);
     }
-    r[WHITE_BAR] = -b[BLACK_BAR];
-    r[BLACK_BAR] = -b[WHITE_BAR];
-    r[WHITE_BAG] = -b[BLACK_BAG];
-    r[BLACK_BAG] = -b[WHITE_BAG];
+    r[WHITE_BAR] = static_cast<int8_t>(-b[BLACK_BAR]);
+    r[BLACK_BAR] = static_cast<int8_t>(-b[WHITE_BAR]);
+    r[WHITE_BAG] = static_cast<int8_t>(-b[BLACK_BAG]);
+    r[BLACK_BAG] = static_cast<int8_t>(-b[WHITE_BAG]);
     return r;
   }
   Board b;
@@ -110,12 +109,20 @@ class StateTest : public ::testing::Test {
 using PlayerConfigTypes = ::testing::Types<WhiteConfig, BlackConfig>;
 TYPED_TEST_SUITE(StateTest, PlayerConfigTypes);
 
-TYPED_TEST(StateTest, anything) {
+// Expects exactly one resulting board, equal to the expectation.
+template <typename Config>
+void expect_single_result(Expectation<Config>& e) {
+  auto r = e.get_test_result();
+  EXPECT_EQ(r.size, 1);
+  EXPECT_EQ(r.result, r.expectation);
+}
+
+TYPED_TEST(StateTest, Anything) {
   const std::string_view color = TypeParam::COLOR;
   EXPECT_TRUE(color == "white" || color == "black");
 }
 
-TYPED_TEST(StateTest, stone_on_bar_cannot_land) {
+TYPED_TEST(StateTest, StoneOnBarCannotLand) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .  *3   .   .   .   . ││ *2  *2  *2  *2  *2  *2 │
   //  │                        ││                        │
@@ -133,7 +140,7 @@ TYPED_TEST(StateTest, stone_on_bar_cannot_land) {
   }
 }
 
-TYPED_TEST(StateTest, stone_on_bar_cannot_land_2) {
+TYPED_TEST(StateTest, StoneOnBarCannotLand2) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  . *11   .   .   .   . ││  .   .  *2   .  *2   . │
   //  │                        ││                        │
@@ -153,7 +160,7 @@ TYPED_TEST(StateTest, stone_on_bar_cannot_land_2) {
   }
 }
 
-TYPED_TEST(StateTest, stone_cannot_move) {
+TYPED_TEST(StateTest, StoneCannotMove) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .  *3   .   .   .  *2 ││ *2  *2  *2  *2  *2   2 │
   //  │                        ││                        │
@@ -174,7 +181,7 @@ TYPED_TEST(StateTest, stone_cannot_move) {
   }
 }
 
-TYPED_TEST(StateTest, stone_cannot_move_2) {
+TYPED_TEST(StateTest, StoneCannotMove2) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   . *15 ││  .   .   .   .   .   3 │
   //  │                        ││                        │
@@ -192,7 +199,7 @@ TYPED_TEST(StateTest, stone_cannot_move_2) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, remaining_stone_can_neither_move_nor__get_collected) {
+TYPED_TEST(StateTest, RemainingStoneCanNeitherMoveNorGetCollected) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │       : *13
@@ -210,7 +217,7 @@ TYPED_TEST(StateTest, remaining_stone_can_neither_move_nor__get_collected) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, no_stone_can_move) {
+TYPED_TEST(StateTest, NoStoneCanMove) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   2   .  *2  *2   . ││  2   .   .   .   .   . │
   //  │                        ││                        │       :  *7
@@ -228,7 +235,7 @@ TYPED_TEST(StateTest, no_stone_can_move) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, no_stone_can_move_2) {
+TYPED_TEST(StateTest, NoStoneCanMove2) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │      : *11
@@ -246,7 +253,7 @@ TYPED_TEST(StateTest, no_stone_can_move_2) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, land_one_stone) {
+TYPED_TEST(StateTest, LandOneStone) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││ *2  *2  *2   .  *2  *2 │
   //  │                        ││                        │     :  *5
@@ -262,7 +269,7 @@ TYPED_TEST(StateTest, land_one_stone) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, land_two_stones) {
+TYPED_TEST(StateTest, LandTwoStones) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││ *2  *2  *2   .  *2  *2 │
   //  │                        ││                        │       :  *5
@@ -278,7 +285,7 @@ TYPED_TEST(StateTest, land_two_stones) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, escape_1) {
+TYPED_TEST(StateTest, Escape1) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .  *2  *2  *2  *2  *2 │
   //  │                        ││                        │       :  *5
@@ -294,7 +301,7 @@ TYPED_TEST(StateTest, escape_1) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, escape_2_have_to_use_smaller_dice_first) {
+TYPED_TEST(StateTest, Escape2HaveToUseSmallerDiceFirst) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││ *2   .   .   .   .   1 │
   //  │                        ││                        │ *13 :
@@ -310,7 +317,7 @@ TYPED_TEST(StateTest, escape_2_have_to_use_smaller_dice_first) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, single_stone_movement) {
+TYPED_TEST(StateTest, SingleStoneMovement) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   1 │
   //  │                        ││                        │ *15 :
@@ -323,28 +330,22 @@ TYPED_TEST(StateTest, single_stone_movement) {
     for (int32_t j = i + 1; j <= 6; ++j) {
       Expectation<TypeParam> e(b, Dice(i, j));
       e.add_expectation({{0, 0, VALUE}, {i + j, 1, DELTA}});
-      auto r = e.get_test_result();
-      EXPECT_EQ(r.size, 1);
-      EXPECT_EQ(r.result, r.expectation);
+      expect_single_result(e);
     }
   }
 
   for (int32_t i = 1; i <= 5; ++i) {
     Expectation<TypeParam> e(b, Dice(i, i));
     e.add_expectation({{0, 0, VALUE}, {4 * i, 1, DELTA}});
-    auto r = e.get_test_result();
-    EXPECT_EQ(r.size, 1);
-    EXPECT_EQ(r.result, r.expectation);
+    expect_single_result(e);
   }
 
   Expectation<TypeParam> e(b, Dice(6, 6));
   e.add_expectation({{0, 0, VALUE}, {WHITE_BAG, 1, VALUE}});
-  auto r = e.get_test_result();
-  EXPECT_EQ(r.size, 1);
-  EXPECT_EQ(r.result, r.expectation);
+  expect_single_result(e);
 }
 
-TYPED_TEST(StateTest, single_stone_move_and_bolt) {
+TYPED_TEST(StateTest, SingleStoneMoveAndBolt) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .  *1   . ││  .   .   .   .   .   1 │
   //  │                        ││                        │ *14 :
@@ -363,7 +364,7 @@ TYPED_TEST(StateTest, single_stone_move_and_bolt) {
   }
 }
 
-TYPED_TEST(StateTest, double_stone_movement) {
+TYPED_TEST(StateTest, DoubleStoneMovement) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   1   .   .   .   . ││  .   .   .   .   .   1 │
   //  │                        ││                        │ *15 :
@@ -390,7 +391,7 @@ TYPED_TEST(StateTest, double_stone_movement) {
   }
 }
 
-TYPED_TEST(StateTest, double_stone_movement_with_blocks) {
+TYPED_TEST(StateTest, DoubleStoneMovementWithBlocks) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .  *2  *2  *2 ││  .   .   .  *2   1   1 │
   //  │                        ││                        │  *7 :
@@ -406,7 +407,7 @@ TYPED_TEST(StateTest, double_stone_movement_with_blocks) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, double_stone_movement_with_blocks_2) {
+TYPED_TEST(StateTest, DoubleStoneMovementWithBlocks2) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .  *2   .  *2 ││ *2   .   .   .   1   1 │
   //  │                        ││                        │  *9 :
@@ -423,7 +424,7 @@ TYPED_TEST(StateTest, double_stone_movement_with_blocks_2) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, only_one_dice_can_move_multiple_results) {
+TYPED_TEST(StateTest, OnlyOneDiceCanMoveMultipleResults) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │ *2  *2   .   .   .  *2 ││  .   1   .   .   .   1 │
   //  │                        ││                        │  *5 :
@@ -440,7 +441,7 @@ TYPED_TEST(StateTest, only_one_dice_can_move_multiple_results) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, double_stone_double_dice) {
+TYPED_TEST(StateTest, DoubleStoneDoubleDice) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   1   1 │
   //  │                        ││                        │ *15 :
@@ -455,14 +456,14 @@ TYPED_TEST(StateTest, double_stone_double_dice) {
     e.add_expectation({{0, 0, VALUE},
                        {move_first * 3, 1, VALUE},
                        {1, 0, VALUE},
-                       {1 + move_second * 3, 1, VALUE}});
+                       {1 + (move_second * 3), 1, VALUE}});
   }
   auto r = e.get_test_result();
   EXPECT_EQ(r.size, 5);
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, double_stone_double_dice_2) {
+TYPED_TEST(StateTest, DoubleStoneDoubleDice2) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   1   .   .   .   1 │
   //  │                        ││                        │ *15 :
@@ -476,7 +477,7 @@ TYPED_TEST(StateTest, double_stone_double_dice_2) {
   for (int32_t move_first = 0; move_first < 5; ++move_first) {
     auto move_second = 4 - move_first;
     e.add_expectation({{4, 0, VALUE},
-                       {4 + move_second * 4, 1, DELTA},
+                       {4 + (move_second * 4), 1, DELTA},
                        {0, 0, VALUE},
                        {move_first * 4, 1, DELTA}});
   }
@@ -485,7 +486,7 @@ TYPED_TEST(StateTest, double_stone_double_dice_2) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, four_stones_double_dice) {
+TYPED_TEST(StateTest, FourStonesDoubleDice) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   1   1   1   1 │
   //  │                        ││                        │ *15 :
@@ -505,9 +506,9 @@ TYPED_TEST(StateTest, four_stones_double_dice) {
                            {2, 0, VALUE},
                            {3, 0, VALUE},
                            {move_a * 4, 1, DELTA},
-                           {1 + move_b * 4, 1, DELTA},
-                           {2 + move_c * 4, 1, DELTA},
-                           {3 + move_d * 4, 1, DELTA}});
+                           {1 + (move_b * 4), 1, DELTA},
+                           {2 + (move_c * 4), 1, DELTA},
+                           {3 + (move_d * 4), 1, DELTA}});
       }
     }
   }
@@ -516,7 +517,7 @@ TYPED_TEST(StateTest, four_stones_double_dice) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, collect_with_waste) {
+TYPED_TEST(StateTest, CollectWithWaste) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *15 :
@@ -533,7 +534,7 @@ TYPED_TEST(StateTest, collect_with_waste) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, collect_double) {
+TYPED_TEST(StateTest, CollectDouble) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *15 :
@@ -549,7 +550,7 @@ TYPED_TEST(StateTest, collect_double) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, move_in_collect_phase) {
+TYPED_TEST(StateTest, MoveInCollectPhase) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *15 :
@@ -565,7 +566,7 @@ TYPED_TEST(StateTest, move_in_collect_phase) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, partial_collect) {
+TYPED_TEST(StateTest, PartialCollect) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *13 :
@@ -581,7 +582,7 @@ TYPED_TEST(StateTest, partial_collect) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, move_and_collect) {
+TYPED_TEST(StateTest, MoveAndCollect) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *15 :
@@ -600,7 +601,7 @@ TYPED_TEST(StateTest, move_and_collect) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, move_all_no_collect) {
+TYPED_TEST(StateTest, MoveAllNoCollect) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *13 :
@@ -616,7 +617,7 @@ TYPED_TEST(StateTest, move_all_no_collect) {
   EXPECT_EQ(r.result, r.expectation);
 }
 
-TYPED_TEST(StateTest, game_end) {
+TYPED_TEST(StateTest, GameEnd) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  .   .   .   .   .   . ││  .   .   .   .   .   . │
   //  │                        ││                        │ *15 :
@@ -638,7 +639,7 @@ TYPED_TEST(StateTest, game_end) {
   }
 }
 
-TYPED_TEST(StateTest, count_moves_at_start) {
+TYPED_TEST(StateTest, CountMovesAtStart) {
   //  ┌────────────────────────┬┬────────────────────────┐
   //  │  5   .   .   .  *3   . ││ *5   .   .   .   .   2 │
   //  │                        ││                        │
@@ -668,3 +669,4 @@ TYPED_TEST(StateTest, count_moves_at_start) {
 }
 
 }  // namespace bg
+// NOLINTEND(readability-magic-numbers)

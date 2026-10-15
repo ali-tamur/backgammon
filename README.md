@@ -4,8 +4,8 @@ High-performance backgammon game engine in C++ with neural network training in P
 
 ## Prerequisites
 
-- Bazel (for C++ build)
-- Python 3.11+
+- Bazelisk or Bazel 9.3 (for the C++ build; it downloads the LLVM 23.1.3 toolchain itself)
+- Python 3.12 (the C++ module is built for the version set in `MODULE.bazel`)
 - Docker (for model conversion)
 - Protocol Buffers compiler (`protoc`)
 

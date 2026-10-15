@@ -3,6 +3,7 @@
 #include <format>
 #include <sstream>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "assertion.h"
@@ -12,17 +13,18 @@ namespace bg {
 
 namespace {
 
-inline auto utf8_char_len(char c) -> size_t {
-  if ((c & 0x80) == 0) {  // 0xxxxxxx
+inline auto utf8_char_len(char ch) -> size_t {
+  const auto c = static_cast<unsigned char>(ch);
+  if ((c & 0x80U) == 0) {  // 0xxxxxxx
     return 1;
   }
-  if ((c & 0xE0) == 0xC0) {  // 110xxxxx
+  if ((c & 0xE0U) == 0xC0) {  // 110xxxxx
     return 2;
   }
-  if ((c & 0xF0) == 0xE0) {  // 1110xxxx
+  if ((c & 0xF0U) == 0xE0) {  // 1110xxxx
     return 3;
   }
-  if ((c & 0xF8) == 0xF0) {  // 11110xxx
+  if ((c & 0xF8U) == 0xF0) {  // 11110xxx
     return 4;
   }
   return 1;
@@ -68,8 +70,8 @@ class BoardPrinter {
     }
     std::string ch = (val > 0) ? "●" : "○";
     val = static_cast<int8_t>(std::abs(val));
-    for (size_t v = 0; v < val; ++v) {
-      if (v >= val) {
+    for (size_t v = 0; std::cmp_less(v, val); ++v) {
+      if (std::cmp_greater_equal(v, val)) {
         break;
       }
       if (v == 5) {
@@ -81,10 +83,10 @@ class BoardPrinter {
 
   void update_() {
     for (size_t cell = 0; cell < 12; ++cell) {
-      update2_(cell, TOP_ROW, [](auto a, auto b) { return a + b; });
+      update2_(cell, TOP_ROW, [](auto a, auto b) -> auto { return a + b; });
     }
     for (size_t cell = 12; cell < 24; ++cell) {
-      update2_(cell, BOT_ROW, [](auto a, auto b) { return a - b; });
+      update2_(cell, BOT_ROW, [](auto a, auto b) -> auto { return a - b; });
     }
   }
 

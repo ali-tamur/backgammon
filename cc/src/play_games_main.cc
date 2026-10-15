@@ -1,3 +1,4 @@
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -10,8 +11,12 @@
 #include "game_manager.h"
 #include "player.h"
 
-auto main(int argc, char** argv) -> int {
-  using namespace bg;
+namespace {
+
+auto run(int argc, char** argv) -> int {
+  using bg::FirstMove;
+  using bg::GameManager;
+  using bg::GameOptions;
   static constexpr int32_t DEFAULT_N_GAMES = 10000;
   static constexpr float DEFAULT_TEMPERATURE = 0.1;
 
@@ -37,19 +42,19 @@ auto main(int argc, char** argv) -> int {
   auto* first_player_group = app.add_option_group("who_plays_first");
   first_player_group->require_option(0, 1);
   first_player_group->add_flag_callback(
-      "--white_first", [&opt]() { opt.first_move = FirstMove::Always_White; },
+      "--white_first", [&opt] -> void { opt.first_move = FirstMove::Always_White; },
       "It is always white to make the first move.");
   first_player_group->add_flag_callback(
-      "--black_first", [&opt]() { opt.first_move = FirstMove::Always_Black; },
+      "--black_first", [&opt] -> void { opt.first_move = FirstMove::Always_Black; },
       "It is always black to make the first move.");
   first_player_group->add_flag_callback(
-      "--take_turns", [&opt]() { opt.first_move = FirstMove::Random; },
+      "--take_turns", [&opt] -> void { opt.first_move = FirstMove::Random; },
       "white and black take turns to make the first move.");
 
   CLI11_PARSE(app, argc, argv);
 
   {
-    GameManager game_manager = game_manager_factory(opt);
+    GameManager game_manager = bg::game_manager_factory(opt);
 
     auto [white_score, black_score] = game_manager.run();
 
@@ -57,4 +62,17 @@ auto main(int argc, char** argv) -> int {
               << "\n";
   }
   return 0;
+}
+
+}  // namespace
+
+auto main(int argc, char** argv) -> int {
+  try {
+    return run(argc, argv);
+  } catch (const std::exception& e) {
+    std::cerr << "error: " << e.what() << "\n";
+  } catch (...) {
+    std::cerr << "error: unknown exception\n";
+  }
+  return 1;
 }
