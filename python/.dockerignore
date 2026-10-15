@@ -1,9 +1,0 @@
-.git
-.gitignore
-.dockerignore
-__pycache__/
-*.log
-logs/
-.venv/
-.idea/
-tests/
