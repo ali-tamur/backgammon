@@ -3,7 +3,9 @@
 #include <array>
 #include <concepts>
 #include <cstdint>
+#include <cstdlib>
 #include <functional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -14,10 +16,11 @@ static const std::string PROJECT_ROOT = []() {
 
 static constexpr size_t BOARD_SIZE = 28;
 using Board = std::array<int8_t, BOARD_SIZE>;
-auto white_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board>;
-auto black_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board>;
 
 namespace bg {
+
+auto white_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board>;
+auto black_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board>;
 
 static constexpr int32_t COLLECT_START = 18;
 static constexpr int32_t COLLECT_END = 24;
