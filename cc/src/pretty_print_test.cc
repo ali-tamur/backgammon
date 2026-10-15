@@ -5,8 +5,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using namespace ::testing;
-
 namespace bg {
 
 TEST(PrettyPrintTest, Basic) {

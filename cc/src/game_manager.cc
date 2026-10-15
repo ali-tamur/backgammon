@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <limits>
 
 #include "assertion.h"
 #include "configs.h"
@@ -20,7 +21,7 @@ auto GameManager::run_once(LogWriter* logger) -> int32_t {
   int32_t this_score;
   int32_t on_turn = 0;
   if (first_move_ == FirstMove::Always_Black ||
-      (first_move_ == FirstMove::Random && ((game_id & 1) == 1))) {
+      (first_move_ == FirstMove::Random && (game_id % 2 == 1))) {
     on_turn = 1;
   }
   logger->start_game(game_id, on_turn == 0);
@@ -35,7 +36,7 @@ auto GameManager::run_once(LogWriter* logger) -> int32_t {
       for (auto d = dice_values.begin(); d != bg::DiceRolls::end(); ++d) {
         std::cout << std::format("{}", *d) << " ";
       }
-      std::cin.ignore(1000, '\n');
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
     board = (on_turn == 0) ? white_(board, dice) : black_(board, dice);
@@ -92,14 +93,15 @@ auto game_manager_factory(const GameOptions& options) -> GameManager {
     black_move = construct_nn_player_move<BlackConfig>(gen, black_path, options.temperature);
   }
   LogWriter logger;
-  if (options.log_path != "" && !options.is_unittest) {
+  if (!options.log_path.empty() && !options.is_unittest) {
     auto logger_path = (std::filesystem::path(PROJECT_ROOT) / "games" / options.log_path).string();
     logger = LogWriter(logger_path, BUFFER_SIZE);
   } else if (options.is_unittest) {
     logger = LogWriter(options.log_path, BUFFER_SIZE);
   }
-  return GameManager(white_move, black_move, logger, options.n_games, options.first_move,
-                     options.is_interactive, options.print_score);
+  return {white_move,         black_move,         logger,
+          options.n_games,    options.first_move, options.is_interactive,
+          options.print_score};
 }
 
 }  // namespace bg

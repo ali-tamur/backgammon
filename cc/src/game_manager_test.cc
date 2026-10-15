@@ -10,8 +10,6 @@
 #include "model.h"
 #include "player.h"
 
-using namespace ::testing;
-
 namespace bg {
 
 TEST(GameManagerTest, Basic) {

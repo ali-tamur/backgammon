@@ -2,6 +2,7 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include <array>
 #include <cassert>
 #include <ranges>
 #include <string>
@@ -55,18 +56,13 @@ auto Model::Predict(const std::vector<NN_INPUT>& boards) -> std::vector<Score> {
   Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
       memory_info, flattened.data(), flattened.size(), input_shape.data(), input_shape.size());
 
-  const char* input_names[] = {input_name_.c_str()};
-  const char* output_names[] = {output_name_.c_str()};
+  const std::array<const char*, 1> input_names = {input_name_.c_str()};
+  const std::array<const char*, 1> output_names = {output_name_.c_str()};
 
-  auto output_tensors = session_.Run(Ort::RunOptions{nullptr},  // Options (nullptr = default)
-                                     input_names,               // Input names
-                                     &input_tensor,             // Input tensors
-                                     1,                         // Number of inputs
-                                     output_names,              // Output names
-                                     1                          // Number of outputs
-  );
+  auto output_tensors = session_.Run(Ort::RunOptions{nullptr}, input_names.data(), &input_tensor,
+                                     input_names.size(), output_names.data(), output_names.size());
 
-  float* output_data = output_tensors[0].GetTensorMutableData<float>();
+  auto* output_data = output_tensors[0].GetTensorMutableData<float>();
   size_t output_size = output_tensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
   assert(output_size == boards.size() * 4);
   std::vector<Score> results;
@@ -117,11 +113,11 @@ auto board_to_nn_input_impl(Accessor get_cell) -> NN_INPUT {
 
 // Public overloads
 auto board_to_nn_input(const Board& board) -> NN_INPUT {
-  return board_to_nn_input_impl([&](int i) { return board[i]; });
+  return board_to_nn_input_impl([&](int i) -> int8_t { return board[i]; });
 }
 
 auto position_to_model_input(const Position& position) -> NN_INPUT {
-  return board_to_nn_input_impl([&](int i) { return position.cell(i); });
+  return board_to_nn_input_impl([&](int i) -> int32_t { return position.cell(i); });
 }
 
 }  // namespace bg

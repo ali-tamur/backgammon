@@ -8,8 +8,9 @@
 #include "player.h"
 
 static void BM_GameManager(benchmark::State& state) {
-  using namespace bg;
-  int32_t num_games = state.range(0);
+  using bg::FirstMove;
+  using bg::GameOptions;
+  const auto num_games = static_cast<int32_t>(state.range(0));
   GameOptions opt{.white_model = "random",
                   .black_model = "random",
                   .temperature = 0.0,
@@ -19,8 +20,8 @@ static void BM_GameManager(benchmark::State& state) {
                   .n_games = num_games,
                   .first_move = FirstMove::Random};
 
-  auto game_manager = game_manager_factory(opt);
-  for (auto _ : state) {
+  auto game_manager = bg::game_manager_factory(opt);
+  for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores): benchmark idiom
     auto [white_score, black_score] = game_manager.run();
     benchmark::DoNotOptimize(white_score);
     benchmark::DoNotOptimize(black_score);

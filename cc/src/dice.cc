@@ -10,19 +10,17 @@ static constexpr uint32_t BIT_MASK = 0b1111;
 static constexpr size_t DICE_N = 6;
 static constexpr size_t DICE_N2 = DICE_N * DICE_N;
 
-auto init_dice_lookup() -> std::array<uint32_t, DICE_N2> {
-  std::array<uint32_t, DICE_N2> result;
-  for (int32_t d1_d2 = 0; d1_d2 < DICE_N2; ++d1_d2) {
-    int32_t d1 = (d1_d2 / DICE_N);
-    int32_t d2 = (d1_d2 % DICE_N);
-    uint32_t value =
-        (d1 == d2) ? BIT_MASK << (4 * d1) : (0b0001 << (4 * d1)) | (0b0001 << (4 * d2));
-    result[d1_d2] = value;
+constexpr auto init_dice_lookup() -> std::array<uint32_t, DICE_N2> {
+  std::array<uint32_t, DICE_N2> result{};
+  for (size_t d1_d2 = 0; d1_d2 < DICE_N2; ++d1_d2) {
+    const size_t d1 = d1_d2 / DICE_N;
+    const size_t d2 = d1_d2 % DICE_N;
+    result[d1_d2] = (d1 == d2) ? BIT_MASK << (4 * d1) : (1U << (4 * d1)) | (1U << (4 * d2));
   }
   return result;
 }
 
-static const std::array<uint32_t, DICE_N2> DICE_LOOKUP = init_dice_lookup();
+static constexpr std::array<uint32_t, DICE_N2> DICE_LOOKUP = init_dice_lookup();
 
 static const std::array<int32_t, 4 * DICE_N> MAX_DICE_LOOKUP = {6, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4,
                                                                 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1};
@@ -30,15 +28,15 @@ static const std::array<int32_t, 4 * DICE_N> MAX_DICE_LOOKUP = {6, 6, 6, 6, 5, 5
 static const std::array<int32_t, 4 * DICE_N> MIN_DICE_LOOKUP = {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,
                                                                 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6};
 
-auto init_dice_mask() -> std::array<uint32_t, DICE_N + 1> {
-  std::array<uint32_t, DICE_N + 1> result;
-  for (size_t d = 0; d < 6; ++d) {
+constexpr auto init_dice_mask() -> std::array<uint32_t, DICE_N + 1> {
+  std::array<uint32_t, DICE_N + 1> result{};
+  for (size_t d = 0; d < DICE_N; ++d) {
     result[d + 1] = BIT_MASK << (4 * d);
   }
   return result;
 }
 
-static const std::array<uint32_t, DICE_N + 1> DICE_MASK = init_dice_mask();
+static constexpr std::array<uint32_t, DICE_N + 1> DICE_MASK = init_dice_mask();
 
 [[nodiscard]] auto DiceThrow::throw_dice() -> Dice {
   std::uniform_int_distribution<int> dist(0, DICE_N2 - 1);
@@ -71,7 +69,7 @@ auto Dice::values(bool use_only_max) const -> DiceRolls {
   if (dice_ == 0) {
     return DiceRolls(0);
   }
-  auto d1 = MAX_DICE_LOOKUP[__builtin_clz(dice_ << 8)];
+  auto d1 = MAX_DICE_LOOKUP[__builtin_clz(dice_ << 8U)];
   auto d2 = MIN_DICE_LOOKUP[__builtin_ctz(dice_)];
   return (use_only_max || (d1 == d2) ? DiceRolls(d1) : DiceRolls(d1, d2));
 }

@@ -40,13 +40,15 @@ auto game_to_training_data(const Game& game, const std::string& model_path /*cur
   return result;
 }
 
+static constexpr size_t WRITE_BUFFER_SIZE = 1000;  // records buffered per flush
+
 void generate_training_data(const std::string& white_model, const std::string& log_path,
                             const std::string& output_path) {
   std::ifstream log_file(log_path);
   ASSERT(log_file.is_open(), "cannot open the log_file");
   auto log_reader = LogReader(log_file);
   auto games = log_reader.read_all();
-  auto data_writer = ProtoWriter<TrainingData>(output_path, 1000);
+  auto data_writer = ProtoWriter<TrainingData>(output_path, WRITE_BUFFER_SIZE);
   for (auto& game : games) {
     for (TrainingData& training_data : game_to_training_data(game, "")) {
       data_writer.add(std::move(training_data));

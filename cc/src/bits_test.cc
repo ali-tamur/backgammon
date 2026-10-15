@@ -5,12 +5,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using namespace ::testing;
+using ::testing::ElementsAreArray;
 
+// NOLINTBEGIN(readability-magic-numbers)
 namespace bg {
 
 template <typename Config>
-std::vector<int32_t> to_collection(Bits<Config> b) {
+auto to_collection(Bits<Config> b) -> std::vector<int32_t> {
   auto indices = std::vector<int32_t>{};
   for (auto i : b) {
     indices.push_back(i);
@@ -25,7 +26,6 @@ TEST(BitsTest, SetUnset) {
   w.set(7);
   EXPECT_THAT(to_collection<WhiteConfig>(w), ElementsAreArray({7}));
 
-#if 0
   w.set(9);
   EXPECT_THAT(to_collection<WhiteConfig>(w), ElementsAreArray({7, 9}));
 
@@ -45,23 +45,23 @@ TEST(BitsTest, SetUnset) {
   EXPECT_TRUE(to_collection<BlackConfig>(b).empty());
 
   b.set(7);
-  EXPECT_THAT(to_collection<WhiteConfig>(b), ElementsAreArray({7}));
+  EXPECT_THAT(to_collection<BlackConfig>(b), ElementsAreArray({7}));
 
   b.set(9);
-  EXPECT_THAT(to_collection<WhiteConfig>(b), ElementsAreArray({9, 7}));
+  EXPECT_THAT(to_collection<BlackConfig>(b), ElementsAreArray({9, 7}));
 
   b.set(5);
-  EXPECT_THAT(to_collection<WhiteConfig>(b), ElementsAreArray({9, 7, 5}));
+  EXPECT_THAT(to_collection<BlackConfig>(b), ElementsAreArray({9, 7, 5}));
 
   b.unset(7);
-  EXPECT_THAT(to_collection<WhiteConfig>(b), ElementsAreArray({9, 5}));
+  EXPECT_THAT(to_collection<BlackConfig>(b), ElementsAreArray({9, 5}));
 
   b.unset(9);
-  EXPECT_THAT(to_collection<WhiteConfig>(b), ElementsAreArray({5}));
+  EXPECT_THAT(to_collection<BlackConfig>(b), ElementsAreArray({5}));
 
   b.unset(5);
   EXPECT_TRUE(to_collection<BlackConfig>(b).empty());
-#endif
 }
 
 }  // namespace bg
+// NOLINTEND(readability-magic-numbers)

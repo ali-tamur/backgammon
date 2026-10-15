@@ -36,7 +36,7 @@ void LogWriter::add_move(Dice dice, const Board& board) {
   for (int8_t val : board) {
     cells->Add(val);
   }
-  game_in_construction_.add_dice(dice.dice_);
+  game_in_construction_.add_dice(static_cast<int32_t>(dice.dice_));  // 24 bits used
 }
 
 void LogWriter::end_game(int32_t score) {
