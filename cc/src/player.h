@@ -20,7 +20,7 @@ enum PlayerTypes : int8_t { RANDOM, NN };
 
 template <enum PlayerTypes, Config C>
 class Player {
-  auto move(const Board &board, Dice dice) -> Board;
+  auto move(const Board& board, Dice dice) -> Board;
 };
 
 template <Config C>
@@ -28,11 +28,11 @@ class Player<RANDOM, C> {
  public:
   Player(std::mt19937 r) : r_{r} {}
 
-  auto move(const Board &board, Dice dice) -> Board {
-    const std::vector<State<C>> &states = generate<C>(board, dice);
+  auto move(const Board& board, Dice dice) -> Board {
+    const std::vector<State<C>>& states = generate<C>(board, dice);
     std::uniform_int_distribution<int> dist_(0, states.size() - 1);
     auto index = dist_(r_);
-    const State<C> &choosen_state = states[index];
+    const State<C>& choosen_state = states[index];
     return choosen_state.b;
   }
 
@@ -43,14 +43,14 @@ class Player<RANDOM, C> {
 template <Config C>
 class Player<NN, C> {
  public:
-  Player(std::mt19937 r, const std::string &model_path, float temperature = DEFAULT_TEMPERATURE)
+  Player(std::mt19937 r, const std::string& model_path, float temperature = DEFAULT_TEMPERATURE)
       : r_{r}, model_{Model(model_path)}, temperature_(temperature) {}
 
-  auto move(const Board &board, Dice dice) -> Board {
-    const std::vector<State<C>> &states = generate<C>(board, dice);
+  auto move(const Board& board, Dice dice) -> Board {
+    const std::vector<State<C>>& states = generate<C>(board, dice);
     std::vector<Board> boards;
     std::ranges::transform(states, std::back_inserter(boards),
-                           [](const State<C> &state) { return state.b; });
+                           [](const State<C>& state) { return state.b; });
     if (boards.size() == 1) {
       return boards[0];
     }
@@ -67,7 +67,8 @@ class Player<NN, C> {
   }
 
   [[nodiscard]] auto expected_value(Model::Score score) const -> float {
-    auto value =  score.white_win - score.black_win + (2 * (score.white_gammon - score.black_gammon));
+    auto value =
+        score.white_win - score.black_win + (2 * (score.white_gammon - score.black_gammon));
     return value * C::SIGN;
   }
 
@@ -80,7 +81,7 @@ class Player<NN, C> {
 template <Config C>
 auto construct_random_player_move(std::mt19937 r) -> MOVE {
   auto alice = Player<RANDOM, C>(r);
-  auto move = [alice](const Board &board, Dice dice) mutable -> auto {
+  auto move = [alice](const Board& board, Dice dice) mutable -> auto {
     return alice.move(board, dice);
   };
   return move;
@@ -89,7 +90,7 @@ auto construct_random_player_move(std::mt19937 r) -> MOVE {
 template <Config C>
 auto construct_nn_player_move(std::mt19937 r, std::string model_path, float temperature) -> MOVE {
   auto alice = std::make_shared<Player<NN, C>>(r, model_path, temperature);
-  auto move = [alice](const Board &board, Dice dice) mutable -> auto {
+  auto move = [alice](const Board& board, Dice dice) mutable -> auto {
     return alice->move(board, dice);
   };
   return move;

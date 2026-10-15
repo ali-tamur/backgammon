@@ -26,7 +26,7 @@ class Bits {
       }
     }
 
-    auto operator++() -> BitIterator & {
+    auto operator++() -> BitIterator& {
       if constexpr (std::is_same_v<C, WhiteConfig>) {
         n_ = n_ & (n_ - 1);
         return *this;
@@ -35,8 +35,8 @@ class Bits {
         return *this;
       }
     }
-    auto operator==(const BitIterator &other) const -> bool { return n_ == other.n_; }
-    auto operator!=(const BitIterator &other) const -> bool { return n_ != other.n_; }
+    auto operator==(const BitIterator& other) const -> bool { return n_ == other.n_; }
+    auto operator!=(const BitIterator& other) const -> bool { return n_ != other.n_; }
 
    private:
     uint32_t n_;
@@ -51,8 +51,8 @@ class Bits {
 
  private:
   uint32_t n_ = 0;
-  friend auto begin(const Bits &b) -> iterator { return b.begin(); }
-  friend auto end(const Bits &b) -> iterator { return b.end(); }
+  friend auto begin(const Bits& b) -> iterator { return b.begin(); }
+  friend auto end(const Bits& b) -> iterator { return b.end(); }
 };
 
 };  // namespace bg

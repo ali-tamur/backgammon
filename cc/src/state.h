@@ -11,7 +11,7 @@
 namespace bg {
 
 template <Config C>
-static constexpr int32_t score(const Board &b) {
+static constexpr int32_t score(const Board& b) {
   if (b[C::PLAYER_BAG] * C::SIGN < NUM_STONES) {
     return 0;
   }
@@ -83,7 +83,7 @@ struct State {
     return ::bg::score<WhiteConfig>(b) + ::bg::score<BlackConfig>(b);
   }
 
-  auto pretty_print(std::ostream &os) const -> std::ostream & {
+  auto pretty_print(std::ostream& os) const -> std::ostream& {
     os << "[";
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       os << b[i];
@@ -102,7 +102,7 @@ struct State {
   State(Board board, Dice dice, Bits<C> bits, int8_t homestones, uint64_t hash_)
       : b{board}, dice{dice}, bits{bits}, homestones{homestones}, hash_{hash_} {}
 
-  [[nodiscard]] auto get_homestones(const Board &b) const -> int8_t {
+  [[nodiscard]] auto get_homestones(const Board& b) const -> int8_t {
     int32_t total = 0;
     for (int32_t i = C::HOME_START; i < C::HOME_END; ++i) {
       if (b[i] * C::SIGN > 0) {
@@ -112,7 +112,7 @@ struct State {
     return static_cast<int8_t>(total);
   }
 
-  [[nodiscard]] auto get_bits(const Board &b) const -> Bits<C> {
+  [[nodiscard]] auto get_bits(const Board& b) const -> Bits<C> {
     Bits<C> bits = Bits<C>();
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       if (b[i] * C::SIGN > 0) {
@@ -122,16 +122,16 @@ struct State {
     return bits;
   };
 
-  void update_(Board &b, uint64_t &h, int32_t index, int8_t delta) const {
+  void update_(Board& b, uint64_t& h, int32_t index, int8_t delta) const {
     update_hash(h, index);
     b[index] += delta;
   }
 
-  void update_hash(uint64_t &hash, int32_t index) const { hash ^= ZOBRIST_TABLE[index]; }
+  void update_hash(uint64_t& hash, int32_t index) const { hash ^= ZOBRIST_TABLE[index]; }
 };
 
 template <Config C>
-auto operator<<(std::ostream &os, const State<C> &state) -> std::ostream & {
+auto operator<<(std::ostream& os, const State<C>& state) -> std::ostream& {
   return state.pretty_print(os);
 }
 

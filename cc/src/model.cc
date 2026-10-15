@@ -18,7 +18,7 @@ static constexpr size_t NN_INPUT_SIZE =
     (BAG_LIMIT + 1) +                         // WHITE_BAG: [0, 10]
     (BAG_LIMIT + 1);                          // BLACK_BAG: [0, 10]
 
-Model::Model(const std::string &model_path)
+Model::Model(const std::string& model_path)
     : env_{ORT_LOGGING_LEVEL_WARNING, "backgammon"},
       session_{env_, model_path.c_str(), Ort::SessionOptions{}} {
   Ort::SessionOptions session_options;
@@ -41,22 +41,22 @@ auto Model::GetOutputName() const -> std::string { return output_name_; }
 
 auto Model::GetInputShape() const -> std::vector<int64_t> { return input_shape_; }
 
-auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<Score> {
+auto Model::Predict(const std::vector<NN_INPUT>& boards) -> std::vector<Score> {
   auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
   std::vector<int64_t> input_shape{static_cast<int64_t>(boards.size()), NN_INPUT_SIZE};
 
   std::vector<float> flattened;
   flattened.reserve(boards.size() * NN_INPUT_SIZE);
-  for (const auto &board : boards) {
+  for (const auto& board : boards) {
     flattened.insert(flattened.end(), board.begin(), board.end());
   }
 
   Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
       memory_info, flattened.data(), flattened.size(), input_shape.data(), input_shape.size());
 
-  const char *input_names[] = {input_name_.c_str()};
-  const char *output_names[] = {output_name_.c_str()};
+  const char* input_names[] = {input_name_.c_str()};
+  const char* output_names[] = {output_name_.c_str()};
 
   auto output_tensors = session_.Run(Ort::RunOptions{nullptr},  // Options (nullptr = default)
                                      input_names,               // Input names
@@ -66,7 +66,7 @@ auto Model::Predict(const std::vector<NN_INPUT> &boards) -> std::vector<Score> {
                                      1                          // Number of outputs
   );
 
-  float *output_data = output_tensors[0].GetTensorMutableData<float>();
+  float* output_data = output_tensors[0].GetTensorMutableData<float>();
   size_t output_size = output_tensors[0].GetTensorTypeAndShapeInfo().GetElementCount();
   assert(output_size == boards.size() * 4);
   std::vector<Score> results;
@@ -95,7 +95,7 @@ class OneHotEncoding {
     index_ += advance;
   }
 
-  auto get() -> std::vector<float> && { return std::move(a_); }
+  auto get() -> std::vector<float>&& { return std::move(a_); }
 
  private:
   std::vector<float> a_;
@@ -116,11 +116,11 @@ auto board_to_nn_input_impl(Accessor get_cell) -> NN_INPUT {
 }
 
 // Public overloads
-auto board_to_nn_input(const Board &board) -> NN_INPUT {
+auto board_to_nn_input(const Board& board) -> NN_INPUT {
   return board_to_nn_input_impl([&](int i) { return board[i]; });
 }
 
-auto position_to_model_input(const Position &position) -> NN_INPUT {
+auto position_to_model_input(const Position& position) -> NN_INPUT {
   return board_to_nn_input_impl([&](int i) { return position.cell(i); });
 }
 

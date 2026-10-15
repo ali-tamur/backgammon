@@ -47,17 +47,17 @@ static const std::array<uint32_t, DICE_N + 1> DICE_MASK = init_dice_mask();
 
 auto DiceIterator::operator*() const -> int32_t { return d1_; }
 
-auto DiceIterator::operator++() -> DiceIterator & {
+auto DiceIterator::operator++() -> DiceIterator& {
   d1_ = d2_;
   d2_ = 0;
   return *this;
 }
 
-auto DiceIterator::operator==(const DiceIterator &other) const -> bool {
+auto DiceIterator::operator==(const DiceIterator& other) const -> bool {
   return d1_ == other.d1_ && d2_ == other.d2_;
 }
 
-auto DiceIterator::operator!=(const DiceIterator &other) const -> bool {
+auto DiceIterator::operator!=(const DiceIterator& other) const -> bool {
   return d1_ != other.d1_ || d2_ != other.d2_;
 }
 

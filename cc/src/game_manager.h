@@ -25,7 +25,7 @@ class GameManager {
         print_score_(print_score),
         dice_throw_(DiceThrow()) {}
 
-  auto run_once(LogWriter *logger) -> int32_t;
+  auto run_once(LogWriter* logger) -> int32_t;
   auto run() -> std::tuple<int32_t, int32_t>;
 
  private:
@@ -61,6 +61,6 @@ struct GameOptions {
   bool is_unittest = false;
 };
 
-auto game_manager_factory(const GameOptions &options) -> GameManager;
+auto game_manager_factory(const GameOptions& options) -> GameManager;
 
 }  // namespace bg

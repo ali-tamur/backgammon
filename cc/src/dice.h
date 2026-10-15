@@ -11,15 +11,15 @@ class DiceIterator {
   using iterator_category = std::forward_iterator_tag;
   using value_type = int32_t;
   using difference_type = std::ptrdiff_t;
-  using pointer = value_type *;
+  using pointer = value_type*;
   using reference = value_type;
 
   explicit DiceIterator(int32_t d1, int32_t d2 = 0) : d1_{d1}, d2_{d2} {};
 
   auto operator*() const -> int32_t;
-  auto operator++() -> iterator &;
-  auto operator==(const DiceIterator &other) const -> bool;
-  auto operator!=(const DiceIterator &other) const -> bool;
+  auto operator++() -> iterator&;
+  auto operator==(const DiceIterator& other) const -> bool;
+  auto operator!=(const DiceIterator& other) const -> bool;
 
  private:
   int32_t d1_;
@@ -51,10 +51,10 @@ class Dice {
 
   uint32_t dice_;
 
-  friend auto operator<<(std::ostream &os, const Dice &dice) -> std::ostream &;
+  friend auto operator<<(std::ostream& os, const Dice& dice) -> std::ostream&;
 };
 
-inline auto operator<<(std::ostream &os, const Dice &dice) -> std::ostream & {
+inline auto operator<<(std::ostream& os, const Dice& dice) -> std::ostream& {
   os << dice.dice_;
   return os;
 }
