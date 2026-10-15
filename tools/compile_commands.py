@@ -20,10 +20,14 @@ aquery = json.loads(bazel("aquery", "--output=jsonproto", f'mnemonic("CppCompile
 
 # Compile commands are relative to the execroot; these symlinks make them resolve from here.
 for name, target in [("external", f"{output_base}/external"), ("bazel-out", bazel("info", "output_path").strip())]:
+    if os.path.islink(name) and os.readlink(name) != target:
+        os.remove(name)  # stale: left over from another output base (e.g. after moving the project)
     if not os.path.lexists(name):
         os.symlink(target, name)
 
-clang = os.path.expanduser("~/.local/opt/llvm/bin/clang++")
+# clangd needs a real compiler as argv[0] (Bazel runs a wrapper script); use the
+# compiler Bazel downloaded, so clangd and the build always agree.
+clang = os.path.abspath("external/toolchains_llvm++llvm+llvm_toolchain_llvm/bin/clang++")
 entries = []
 for action in aquery.get("actions", []):
     args = action["arguments"]
