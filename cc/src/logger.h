@@ -23,17 +23,17 @@ class ProtoWriter {
 
   void flush() {
     std::ofstream out{path_, std::ios::binary | std::ios::app};
-    for (const auto &item : buffer_) {
+    for (const auto& item : buffer_) {
       std::string serialized = item.SerializeAsString();
       uint32_t size = serialized.size();
-      out.write(reinterpret_cast<const char *>(&size), sizeof(size));
+      out.write(reinterpret_cast<const char*>(&size), sizeof(size));
       out.write(serialized.data(), size);
     }
     out.flush();
     buffer_.clear();
   }
 
-  void add(P &&item) {
+  void add(P&& item) {
     buffer_.emplace_back(item);
     if (buffer_.size() >= buffer_size_) [[unlikely]] {
       flush();
@@ -49,10 +49,10 @@ class ProtoWriter {
 class LogWriter {
  public:
   LogWriter() = default;
-  LogWriter(const std::filesystem::path &path, size_t buffer_size);
+  LogWriter(const std::filesystem::path& path, size_t buffer_size);
 
   void start_game(uint64_t game_id, bool is_white_the_first_player);
-  void add_move(Dice dice, const Board &b);
+  void add_move(Dice dice, const Board& b);
   void end_game(int32_t score);
   void flush();
 
@@ -63,11 +63,11 @@ class LogWriter {
 
 class LogReader {
  public:
-  explicit LogReader(std::istream &in) : in_(in) {}
+  explicit LogReader(std::istream& in) : in_(in) {}
   auto read_all() -> std::vector<Game>;
 
  private:
-  std::istream &in_;
+  std::istream& in_;
 };
 
 }  // namespace bg

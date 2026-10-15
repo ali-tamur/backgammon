@@ -4,7 +4,7 @@
 #include "configs.h"
 #include "training_data.h"
 
-auto main(int argc, char **argv) -> int {
+auto main(int argc, char** argv) -> int {
   using namespace bg;
 
   CLI::App app{"Convert game logs to numpy for training"};

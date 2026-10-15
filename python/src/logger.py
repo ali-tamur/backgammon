@@ -165,7 +165,7 @@ class LogReader:
     def __init__(self, db_path: Path | str):
         self.db_path = Path(db_path)
 
-    def get_player_moves(self, player_name: str, opponent_name: str | None = None) -> Iterator[TrainData | None]:
+    def get_player_moves(self, player_name: str, opponent_name: str | None = None) -> Iterator[TrainData]:
         chunk_size = 500_000
         offset = 0
         while True:
@@ -189,7 +189,6 @@ class LogReader:
                     )
                 rows = cursor.fetchall()
                 if not rows:
-                    yield None
                     return
                 for row in rows:
                     record = Record(*row)

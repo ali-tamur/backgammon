@@ -12,7 +12,7 @@
 
 namespace bg {
 
-auto GameManager::run_once(LogWriter *logger) -> int32_t {
+auto GameManager::run_once(LogWriter* logger) -> int32_t {
   auto now = std::chrono::system_clock::now();
   uint64_t game_id =
       std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
@@ -72,7 +72,7 @@ auto GameManager::run() -> std::tuple<int32_t, int32_t> {
   return std::make_tuple(white_score, black_score);
 }
 
-auto game_manager_factory(const GameOptions &options) -> GameManager {
+auto game_manager_factory(const GameOptions& options) -> GameManager {
   static constexpr size_t BUFFER_SIZE = 50000;
   std::mt19937 gen{std::random_device{}()};
   MOVE white_move;

@@ -10,7 +10,7 @@
 namespace bg {
 
 template <Config C>
-auto moves_on_bar(const State<C> &p) -> std::vector<State<C>> {
+auto moves_on_bar(const State<C>& p) -> std::vector<State<C>> {
   auto result = std::vector<State<C>>{};
   for (auto d : p.dice.values(false)) {
     auto land_index = C::LAND_START + (C::SIGN * (d - 1));
@@ -22,7 +22,7 @@ auto moves_on_bar(const State<C> &p) -> std::vector<State<C>> {
 }
 
 template <Config C>
-auto generate(const Board &board, Dice dice) -> std::vector<State<C>> {
+auto generate(const Board& board, Dice dice) -> std::vector<State<C>> {
   auto result = KeepResults<C>();
   auto states = std::vector<std::tuple<State<C>, size_t>>{};
   states.reserve(64);
@@ -33,7 +33,7 @@ auto generate(const Board &board, Dice dice) -> std::vector<State<C>> {
     if (!p.dice.is_empty()) {
       auto phase = p.phase();
       if (phase == ON_BAR) {
-        for (auto &new_p : moves_on_bar(p)) {
+        for (auto& new_p : moves_on_bar(p)) {
           states.push_back(std::make_tuple(new_p, C::LAND_START));
         }
       } else {

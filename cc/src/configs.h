@@ -10,7 +10,7 @@
 #include <vector>
 
 static const std::string PROJECT_ROOT = []() {
-  const char *env = std::getenv("BUILD_WORKSPACE_DIRECTORY");
+  const char* env = std::getenv("BUILD_WORKSPACE_DIRECTORY");
   return env ? std::string(env) : std::string(".");
 }();
 
@@ -19,8 +19,8 @@ using Board = std::array<int8_t, BOARD_SIZE>;
 
 namespace bg {
 
-auto white_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board>;
-auto black_move(const Board &board, int32_t d1, int32_t d2) -> std::vector<Board>;
+auto white_move(const Board& board, int32_t d1, int32_t d2) -> std::vector<Board>;
+auto black_move(const Board& board, int32_t d1, int32_t d2) -> std::vector<Board>;
 
 static constexpr int32_t COLLECT_START = 18;
 static constexpr int32_t COLLECT_END = 24;
@@ -90,7 +90,7 @@ static constexpr Board GAME_START = {2, 0, 0, 0, 0, -5, 0, -3, 0, 0,  0, 5, -5, 
 static constexpr int32_t NUM_STONES = 15;
 
 class Dice;
-using MOVE = std::function<Board(const Board &board, Dice)>;
+using MOVE = std::function<Board(const Board& board, Dice)>;
 
 static constexpr float DEFAULT_TEMPERATURE = 0.1;
 

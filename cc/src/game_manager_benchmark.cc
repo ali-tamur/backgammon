@@ -7,7 +7,7 @@
 #include "game_manager.h"
 #include "player.h"
 
-static void BM_GameManager(benchmark::State &state) {
+static void BM_GameManager(benchmark::State& state) {
   using namespace bg;
   int32_t num_games = state.range(0);
   GameOptions opt{.white_model = "random",

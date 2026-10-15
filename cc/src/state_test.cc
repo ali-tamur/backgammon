@@ -43,9 +43,9 @@ class Expectation {
  public:
   Expectation(Board board, Dice dice) : b{board}, dice(dice) {}
 
-  void add_expectation(const std::vector<Change> &changes) {
+  void add_expectation(const std::vector<Change>& changes) {
     Board e = b;
-    for (const auto &change : changes) {
+    for (const auto& change : changes) {
       if (change.is_absolute) {
         e[change.index] = change.value;
       } else {
@@ -59,7 +59,7 @@ class Expectation {
     Board final_b;
     if (Config::COLOR == "black") {
       final_b = opponent_perspective(b);
-      for (auto &expectation : expectations) {
+      for (auto& expectation : expectations) {
         expectation = opponent_perspective(expectation);
       }
     } else {
@@ -69,14 +69,14 @@ class Expectation {
     std::vector<State<Config>> result = generate<Config>(final_b, dice);
     int32_t result_size = result.size();
     std::set<Board> result_set{};
-    for (const auto &r : result) {
+    for (const auto& r : result) {
       result_set.insert(r.b);
     }
     return {result_set, result_size, expectation_set};
   }
 
  private:
-  auto opponent_perspective(const Board &b) -> Board {
+  auto opponent_perspective(const Board& b) -> Board {
     Board r = {};
     for (int32_t i = 0; i < COLLECT_END; ++i) {
       r[i] = -b[COLLECT_END - 1 - i];
@@ -144,7 +144,7 @@ TYPED_TEST(StateTest, stone_on_bar_cannot_land_2) {
   // W numbers always positive, B numbers always negative.
   auto b = std::array<int8_t, 28>{0, -2, 0, -2, 0,  0, 0, 0, 0, 0, -11, 0, 0, 0,
                                   0, 0,  0, 0,  14, 0, 0, 0, 0, 0, 1,   0, 0, 0};
-  for (const auto &[d1, d2] : {std::make_pair(2, 2), {2, 4}, {4, 4}}) {
+  for (const auto& [d1, d2] : {std::make_pair(2, 2), {2, 4}, {4, 4}}) {
     Expectation<TypeParam> e(b, Dice(d1, d2));
     e.add_expectation({});
     auto r = e.get_test_result();
@@ -626,7 +626,7 @@ TYPED_TEST(StateTest, game_end) {
   auto b = std::array<int8_t, 28>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0,  0,
                                   0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, -15, 12, 0};
   std::vector<Dice> dices{Dice(6, 6), Dice(5, 5), Dice(4, 4), Dice(3, 3)};
-  for (const auto &dice : dices) {
+  for (const auto& dice : dices) {
     Expectation<TypeParam> e(b, dice);
     e.add_expectation({{COLLECT_END - 1, 0, VALUE},
                        {COLLECT_END - 3, 0, VALUE},

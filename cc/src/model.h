@@ -21,12 +21,12 @@ class Model {
     float black_gammon;
   };
 
-  explicit Model(const std::string &model_path);
+  explicit Model(const std::string& model_path);
 
   [[nodiscard]] auto GetInputName() const -> std::string;
   [[nodiscard]] auto GetOutputName() const -> std::string;
   [[nodiscard]] auto GetInputShape() const -> std::vector<int64_t>;
-  auto Predict(const std::vector<NN_INPUT> &boards) -> std::vector<Score>;
+  auto Predict(const std::vector<NN_INPUT>& boards) -> std::vector<Score>;
 
  private:
   Ort::Env env_;
@@ -37,7 +37,7 @@ class Model {
   std::vector<int64_t> input_shape_;
 };
 
-auto board_to_nn_input(const Board &board) -> NN_INPUT;
-auto position_to_model_input(const Position &position) -> NN_INPUT;
+auto board_to_nn_input(const Board& board) -> NN_INPUT;
+auto position_to_model_input(const Position& position) -> NN_INPUT;
 
 }  // namespace bg
