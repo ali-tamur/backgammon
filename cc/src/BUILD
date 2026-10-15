@@ -1,6 +1,7 @@
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_python//python:py_library.bzl", "py_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -252,12 +253,7 @@ cc_binary(
     name = "game_manager_benchmark",
     srcs = ["game_manager_benchmark.cc"],
     copts = ["-pg"],
-    linkopts = [
-      "-pg",
-      "-rtlib=compiler-rt", 
-      "-unwindlib=libunwind", 
-      "-static-libstdc++",
-    ],
+    linkopts = ["-pg"],
     deps = [
         ":configs",
         ":dice",

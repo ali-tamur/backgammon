@@ -1,26 +1,12 @@
-startup --output_base=/tmp/bazel
-common --action_env=PYTHON_BIN="/usr/bin/python3.10"
-build --python_path="/usr/bin/python3.10"
-build --symlink_prefix=/tmp/bazel
+common --cxxopt=-std=c++23
+common --host_cxxopt=-std=c++23
 
-build --config=clang
-build --config=lld
-build --host_cxxopt=-std=c++20
-build:clang --action_env=CC="/usr/bin/clang"
-build:clang --action_env=CXX="/usr/bin/clang++"
-build:clang --action_env=LD="/usr/bin/lld"
-build:clang --cxxopt="-Wall"
-build:clang --cxxopt="-Werror"
-build:clang --cxxopt="-std=c++20"
-build:clang --cxxopt="-stdlib=libc++"
-build:clang --linkopt="-fuse-ld=lld"
-build:clang --linkopt="-stdlib=libc++"
-build:lld --action_env=CC="/usr/bin/clang"
-build:lld --action_env=CXX="/usr/bin/clang++"
-build:lld --action_env=LD="/usr/bin/lld"
-build:lld --cxxopt="-stdlib=libc++"
-build:lld --linkopt="-fuse-ld=lld"
-build:lld --linkopt="-stdlib=libc++"
-build:lld --linkopt="-rtlib=compiler-rt"
-build:lld --linkopt="-unwindlib=libunwind"
+# Strict warnings for our code; silence third-party code and headers.
+build --per_file_copt=^cc/.*@-Wall,-Werror
+build --per_file_copt=external/.*@-w
+build --host_per_file_copt=external/.*@-w
+build --features=external_include_paths
+build --host_features=external_include_paths
+
+test --test_output=errors
 
