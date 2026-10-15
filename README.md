@@ -113,7 +113,7 @@ bazel run -c opt //cc/src:game_manager_benchmark
 
 Refresh compile_commands.json (for IDE)
 
-bazel run //cc:refresh_cc_for_backgammon
+python3 tools/compile_commands.py
 
 Performance
 

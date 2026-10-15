@@ -1,50 +1,8 @@
-load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
-load("@rules_python//python:py_library.bzl", "py_library")
 
 package(default_visibility = ["//visibility:public"])
-
-cc_library(
-    name = "backgammon_lib",
-    srcs = [
-        "dice.cc",
-        "moves.cc",
-        "zobrist_hash.cc",
-    ],
-    hdrs = [
-        "assertion.h",
-        "bits.h",
-        "configs.h",
-        "dice.h",
-        "moves.h",
-        "results.h",
-        "state.h",
-        "state_hash.h",
-        "zobrist_hash.h",
-    ],
-    deps = [
-        # "@...//pybind11"
-    ],
-    alwayslink = 1,
-)
-
-pybind_extension(
-    name = "backgammon",
-    srcs = [
-        "pybind_bridge.cc",
-    ],
-    deps = [
-        ":backgammon_lib",
-    ],
-)
-
-py_library(
-    name = "backgammon_py",
-    data = [":backgammon"],
-    imports = ["."],
-)
 
 cc_library(
     name = "configs",
@@ -180,7 +138,6 @@ cc_library(
 
 cc_library(
     name = "moves",
-    srcs = ["moves.cc"],
     hdrs = ["moves.h"],
     deps =
         [
@@ -252,8 +209,6 @@ cc_library(
 cc_binary(
     name = "game_manager_benchmark",
     srcs = ["game_manager_benchmark.cc"],
-    copts = ["-pg"],
-    linkopts = ["-pg"],
     deps = [
         ":configs",
         ":dice",
@@ -289,8 +244,6 @@ cc_test(
 cc_binary(
     name = "play_games_main",
     srcs = ["play_games_main.cc"],
-    copts = ["-pg"],
-    linkopts = ["-pg"],
     deps = [
         ":assertion",
         ":configs",
@@ -308,8 +261,6 @@ cc_binary(
 cc_binary(
     name = "training_data_main",
     srcs = ["training_data_main.cc"],
-    copts = ["-pg"],
-    linkopts = ["-pg"],
     deps = [
         ":assertion",
         ":configs",
