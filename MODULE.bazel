@@ -27,3 +27,14 @@ python.toolchain(
     is_default = True,
     python_version = "3.12",
 )
+
+# onnxruntime: Microsoft's prebuilt release, built per third_party/onnxruntime.BUILD.
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "onnxruntime",
+    build_file = "//third_party:onnxruntime.BUILD",
+    sha256 = "67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105",
+    strip_prefix = "onnxruntime-linux-x64-1.20.1",
+    urls = ["https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-linux-x64-1.20.1.tgz"],
+)
