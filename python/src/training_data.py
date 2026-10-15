@@ -48,8 +48,6 @@ def prepare_training_data(
             log_reader = LogReader(log_file)
             iterator = log_reader.get_player_moves(player_name, opponent_name)
             for d in iterator:
-                if d is None:
-                    break
                 x = state_to_numpy(d.board)
                 y = np.array([d.move_number, d.num_moves, d.score], dtype=np.float32)
                 yield x, y

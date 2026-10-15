@@ -20,7 +20,7 @@ OUTPUT_NAME="$2"
 KERAS_DIR="$(pwd)/models/keras/${MODEL_NAME}"
 OUTPUT_DIR="$(pwd)/models/onnx"
 
-mkdir -p $"OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
 
 docker build -t keras-to-onnx tools/
 
