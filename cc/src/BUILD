@@ -89,6 +89,40 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "model_test",
+    size = "small",
+    srcs = ["model_test.cc"],
+    data = ["//third_party:onnxruntime"],
+    deps = [
+        ":configs",
+        ":model",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "nn_player_test",
+    size = "small",
+    srcs = ["nn_player_test.cc"],
+    data = [
+        "testdata/test_model.onnx",
+        "//third_party:onnxruntime",
+    ],
+    deps = [
+        ":configs",
+        ":dice",
+        ":game_manager",
+        ":logger",
+        ":model",
+        ":moves",
+        ":player",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "player",
     hdrs = ["player.h"],
@@ -97,19 +131,6 @@ cc_library(
         ":model",
         ":moves",
         "//third_party:onnxruntime",
-    ],
-)
-
-cc_library(
-    name = "training_data",
-    srcs = ["training_data.cc"],
-    hdrs = ["training_data.h"],
-    deps = [
-        ":assertion",
-        ":configs",
-        ":logger",
-        ":model",
-        "//proto:game_cc_proto",
     ],
 )
 
@@ -168,6 +189,23 @@ cc_test(
     size = "small",
     srcs = ["state_test.cc"],
     deps = [
+        ":moves",
+        ":state",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "moves_reference_test",
+    size = "medium",
+    srcs = ["moves_reference_test.cc"],
+    # moves.h is header-only, so this optimizes generate() and the reference;
+    # unoptimized the test takes minutes.
+    copts = ["-O2"],
+    deps = [
+        ":configs",
+        ":dice",
         ":moves",
         ":state",
         "@googletest//:gtest",
@@ -258,14 +296,39 @@ cc_binary(
     ],
 )
 
+cc_library(
+    name = "training_data",
+    srcs = ["training_data.cc"],
+    hdrs = [
+        "npy.h",
+        "training_data.h",
+    ],
+    deps = [
+        ":assertion",
+        ":configs",
+        "//proto:game_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "training_data_test",
+    size = "small",
+    srcs = ["training_data_test.cc"],
+    deps = [
+        ":configs",
+        ":training_data",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "training_data_main",
     srcs = ["training_data_main.cc"],
     deps = [
         ":assertion",
-        ":configs",
+        ":logger",
         ":training_data",
-        "//proto:game_cc_proto",
         "@cli11//:cli11",
     ],
 )

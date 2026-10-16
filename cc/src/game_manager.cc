@@ -1,8 +1,8 @@
 #include "game_manager.h"
 
-#include <chrono>
 #include <iostream>
 #include <limits>
+#include <tuple>
 
 #include "assertion.h"
 #include "configs.h"
@@ -13,18 +13,36 @@
 
 namespace bg {
 
-auto GameManager::run_once(LogWriter* logger) -> int32_t {
-  auto now = std::chrono::system_clock::now();
-  uint64_t game_id =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+auto play_turn(const MOVE& player, const Board& board, Dice dice, bool white_moves)
+    -> std::pair<Board, int32_t> {
+  if (white_moves) {
+    Board after = player(board, dice);
+    return {after, score(after)};
+  }
+  Board after = player(flip(board), dice);
+  return {flip(after), -score(after)};
+}
+
+// Seeds the game's generator from the match seed and the game's index, so any
+// game can be replayed alone. std::seed_seq's algorithm is fixed by the standard.
+static void seed_game(std::mt19937& rng, uint64_t seed, int32_t game_index) {
+  static constexpr uint32_t LOW_32_BITS = 0xFFFF'FFFFU;
+  static constexpr uint32_t SHIFT_32 = 32;
+  std::seed_seq seq{static_cast<uint32_t>(seed & LOW_32_BITS),
+                    static_cast<uint32_t>(seed >> SHIFT_32), static_cast<uint32_t>(game_index)};
+  rng.seed(seq);
+}
+
+auto GameManager::run_once(LogWriter* logger, int32_t game_index) -> int32_t {
+  seed_game(*rng_, seed_, game_index);
   std::array<MOVE, 2> players{white_, black_};
   int32_t this_score;
   int32_t on_turn = 0;
   if (first_move_ == FirstMove::Always_Black ||
-      (first_move_ == FirstMove::Random && (game_id % 2 == 1))) {
+      (first_move_ == FirstMove::Alternate && (game_index % 2 == 1))) {
     on_turn = 1;
   }
-  logger->start_game(game_id, on_turn == 0);
+  logger->start_game(on_turn == 0);
 
   Board board = GAME_START;
 
@@ -39,14 +57,9 @@ auto GameManager::run_once(LogWriter* logger) -> int32_t {
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
-    board = (on_turn == 0) ? white_(board, dice) : black_(board, dice);
+    std::tie(board, this_score) = play_turn(players[on_turn], board, dice, on_turn == 0);
     logger->add_move(dice, board);
 
-    if (on_turn == 0) {
-      this_score = score<WhiteConfig>(board);
-    } else {
-      this_score = score<BlackConfig>(board);
-    }
     if (this_score != 0) {
       break;
     }
@@ -60,7 +73,7 @@ auto GameManager::run() -> std::tuple<int32_t, int32_t> {
   int32_t white_score = 0;
   int32_t black_score = 0;
   for (int32_t i = 0; i < n_games_; ++i) {
-    int32_t this_score = run_once(&logger_);
+    int32_t this_score = run_once(&logger_, i);
     if (print_score_) {
       std::cout << i << "th game: " << this_score << "\n";
     }
@@ -75,22 +88,24 @@ auto GameManager::run() -> std::tuple<int32_t, int32_t> {
 
 auto game_manager_factory(const GameOptions& options) -> GameManager {
   static constexpr size_t BUFFER_SIZE = 50000;
-  std::mt19937 gen{std::random_device{}()};
+  auto rng = std::make_shared<std::mt19937>();
+  uint64_t seed =
+      options.seed.value_or((uint64_t{std::random_device{}()} << 32U) | std::random_device{}());
   MOVE white_move;
   if (options.white_model == "random") {
-    white_move = construct_random_player_move<WhiteConfig>(gen);
+    white_move = construct_random_player_move(rng);
   } else {
     auto white_path =
         (std::filesystem::path(PROJECT_ROOT) / "models" / options.white_model).string();
-    white_move = construct_nn_player_move<WhiteConfig>(gen, white_path, options.temperature);
+    white_move = construct_nn_player_move(rng, white_path, options.white_temperature);
   }
   MOVE black_move;
   if (options.black_model == "random") {
-    black_move = construct_random_player_move<BlackConfig>(gen);
+    black_move = construct_random_player_move(rng);
   } else {
     auto black_path =
         (std::filesystem::path(PROJECT_ROOT) / "models" / options.black_model).string();
-    black_move = construct_nn_player_move<BlackConfig>(gen, black_path, options.temperature);
+    black_move = construct_nn_player_move(rng, black_path, options.black_temperature);
   }
   LogWriter logger;
   if (!options.log_path.empty() && !options.is_unittest) {
@@ -99,8 +114,14 @@ auto game_manager_factory(const GameOptions& options) -> GameManager {
   } else if (options.is_unittest) {
     logger = LogWriter(options.log_path, BUFFER_SIZE);
   }
-  return {white_move,         black_move,         logger,
-          options.n_games,    options.first_move, options.is_interactive,
+  return {white_move,
+          black_move,
+          rng,
+          seed,
+          logger,
+          options.n_games,
+          options.first_move,
+          options.is_interactive,
           options.print_score};
 }
 

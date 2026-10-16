@@ -13,30 +13,32 @@ LogWriter::LogWriter(const std::filesystem::path& path, size_t buffer_size) {
   writer_.emplace(path, buffer_size);
 }
 
-void LogWriter::start_game(uint64_t game_id, bool is_white_the_first_player) {
+void LogWriter::start_game(bool white_first) {
   if (!writer_) {
     return;
   }
   game_in_construction_.Clear();
-  game_in_construction_.set_game_id(game_id);
-  if (is_white_the_first_player) {
-    game_in_construction_.set_player(::bg::FirstPlayer::WHITE);
-  } else {
-    game_in_construction_.set_player(::bg::FirstPlayer::BLACK);
-  }
+  game_in_construction_.set_white_first(white_first);
+  set_position(game_in_construction_.mutable_start(), GAME_START);
+  in_game_ = true;
 }
 
 void LogWriter::add_move(Dice dice, const Board& board) {
   if (!writer_) {
     return;
   }
-  assert(game_in_construction_.game_id() > 0 && "call start_game before add_move");
-  auto* cells = game_in_construction_.add_positions()->mutable_cell();
+  assert(in_game_ && "call start_game before add_move");
+  Turn* turn = game_in_construction_.add_turns();
+  turn->set_dice(dice.encode());
+  set_position(turn->mutable_after(), board);
+}
+
+void LogWriter::set_position(Position* position, const Board& board) {
+  auto* cells = position->mutable_cell();
   cells->Reserve(BOARD_SIZE);
   for (int8_t val : board) {
     cells->Add(val);
   }
-  game_in_construction_.add_dice(static_cast<int32_t>(dice.dice_));  // 24 bits used
 }
 
 void LogWriter::end_game(int32_t score) {
@@ -45,6 +47,7 @@ void LogWriter::end_game(int32_t score) {
   }
   game_in_construction_.set_final_score(score);
   writer_->add(std::move(game_in_construction_));
+  in_game_ = false;
 }
 
 void LogWriter::flush() {
@@ -54,30 +57,27 @@ void LogWriter::flush() {
   writer_->flush();
 }
 
+auto LogReader::next(Game* game) -> bool {
+  uint32_t size = 0;
+  in_.read(reinterpret_cast<char*>(&size), sizeof(size));
+  if (in_.gcount() == 0) {
+    return false;
+  }
+  ASSERT(in_.gcount() == sizeof(size), "truncated game record header");
+  std::string data(size, '\0');
+  in_.read(data.data(), size);
+  ASSERT(in_.gcount() == size, "truncated game record");
+  bool parsed = game->ParseFromString(data);
+  ASSERT(parsed, "corrupt game record");
+  return true;
+}
+
 auto LogReader::read_all() -> std::vector<Game> {
   std::vector<Game> games;
-
-  while (in_) {
-    uint32_t size;
-    in_.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!in_ || size == 0) {
-      break;
-    }
-
-    std::string data(size, '\0');
-    in_.read(data.data(), size);
-    if (!in_) {
-      break;
-    }
-
-    Game game;
-    if (!game.ParseFromString(data)) {
-      std::cerr << "Failed to parse game\n";
-      continue;
-    }
+  Game game;
+  while (next(&game)) {
     games.push_back(game);
   }
-
   return games;
 }
 

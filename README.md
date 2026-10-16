@@ -5,18 +5,13 @@ High-performance backgammon game engine in C++ with neural network training in P
 ## Prerequisites
 
 - Bazelisk or Bazel 9.3 (for the C++ build; it downloads the LLVM 23.1.3 toolchain itself)
-- Python 3.12 (the C++ module is built for the version set in `MODULE.bazel`)
-- Docker (for model conversion)
-- Protocol Buffers compiler (`protoc`)
+- Python 3.12
+- Optional: an NVIDIA GPU for training (PyTorch's CUDA 12.6 build, which still supports Pascal cards; see `python/requirements.txt`)
 
 ### Install on Ubuntu/Debian
 
 ```bash
-# Install protoc
-sudo apt install protobuf-compiler
-
 # Install Bazel (see https://bazel.build/install)
-# Install Docker (see https://docs.docker.com/engine/install/)
 
 Setup
 
@@ -25,9 +20,10 @@ Setup
 git clone <repository-url>
 cd backgammon
 
-2. Generate Python protobuf files
+2. Generate Python protobuf files (uses the protoc Bazel builds; rerun after
+   changing a .proto file)
 
-protoc --python_out=. proto/game.proto
+python python/generate_protos.py
 
 3. Set up Python environment
 
@@ -42,8 +38,7 @@ bazel build -c opt \
   --copt='-march=native' \
   --copt='-flto' \
   --linkopt='-flto' \
-  //cc/src:play_games_main \
-  //cc/src:training_data_main
+  //cc/src:play_games_main
 
 Usage
 
@@ -60,27 +55,24 @@ bazel run -c opt //cc/src:play_games_main -- \
 
 Convert Game Logs to Training Data
 
-bazel run -c opt //cc/src:training_data_main -- \
-  --log_path=/games/random_vs_random.pb \
-  --output_path=/training/train_data.pb
+Every turn becomes one example: the position after the move from the mover's
+side, labelled with how the game ended for the mover (see
+cc/src/training_data.h). From Python, for matches stored in the database:
+
+    from bg.training_data import training_data
+    arrays = training_data(db, [match_id, ...])   # numpy arrays, cached in data/cache/
+
+The converter also runs on its own:
+
+bazel run -c opt //cc/src:training_data_main -- --games=/path/games.pb --out=/path/arrays/
 
 Train Neural Network
 
 # Activate Python environment
 source .venv/bin/activate
 
-# Run training notebook or script
-jupyter lab python/notebooks/train.ipynb
-
-Convert Keras Model to ONNX
-
-# Build Docker image (first time only)
-docker build -t keras-to-onnx tools/
-
-# Convert model
-./tools/convert_to_onnx.sh \
-  models/my_model.keras \
-  models/my_model.onnx
+# Training (PyTorch, exported to ONNX for the C++ engine) is being rewritten;
+# see python/bg/.
 
 Play Games with Trained Model
 
@@ -96,10 +88,8 @@ Project Structure
 ├── cc/src/           # C++ game engine and tools
 ├── proto/            # Protocol buffer definitions
 ├── python/           # Python training code
-├── tools/            # Utility scripts (model conversion)
-├── games/            # Game log storage (gitignored)
-├── models/           # Trained models (gitignored)
-└── training/         # Training data (gitignored)
+├── tools/            # Developer scripts and git hooks
+└── data/             # Database and caches (gitignored)
 
 Development
 
@@ -119,7 +109,6 @@ Performance
 
 - Game generation: ~4000 games/second (single-threaded)
 - Training data conversion: ~100k games in 10 seconds
-- Training: ~4.7M examples in ~10 minutes (GPU)
 
 
 

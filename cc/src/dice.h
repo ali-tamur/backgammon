@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <random>
+#include <utility>
 
 namespace bg {
 
@@ -48,6 +50,9 @@ class Dice {
   [[nodiscard]] auto use_dice(int32_t d) const -> Dice;
   [[nodiscard]] auto is_empty() const -> bool { return dice_ == 0; }
   [[nodiscard]] auto size() const -> size_t { return __builtin_popcount(dice_); }
+  // The roll as 10 * high die + low die, e.g. 63 or 55. Only meaningful for an
+  // unused roll, straight from DiceThrow.
+  [[nodiscard]] auto encode() const -> int32_t;
 
   uint32_t dice_;
 
@@ -59,12 +64,17 @@ inline auto operator<<(std::ostream& os, const Dice& dice) -> std::ostream& {
   return os;
 }
 
+// One generator per game, shared by the dice and both players (see
+// GameManager::run_once), so a game is reproducible from its seed.
+using SharedRng = std::shared_ptr<std::mt19937>;
+
 class DiceThrow {
  public:
+  explicit DiceThrow(SharedRng gen) : gen_{std::move(gen)} {}
   [[nodiscard]] auto throw_dice() -> Dice;
 
  private:
-  std::mt19937 gen_{std::random_device{}()};
+  SharedRng gen_;
 };
 
 }  // namespace bg

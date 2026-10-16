@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 #include "configs.h"
@@ -9,24 +10,37 @@
 
 namespace bg {
 
-template <Config C>
-auto moves_on_bar(const State<C>& p) -> std::vector<State<C>> {
-  auto result = std::vector<State<C>>{};
+inline auto moves_on_bar(const State& p) -> std::vector<State> {
+  auto result = std::vector<State>{};
   for (auto d : p.dice.values(false)) {
-    auto land_index = C::LAND_START + (C::SIGN * (d - 1));
-    if (C::is_valid_dst(p.b[land_index])) {
-      result.emplace_back(p.update_board(C::PLAYER_BAR, land_index, d));
+    auto land_index = Config::LAND_START + (d - 1);
+    if (Config::is_valid_dst(p.b[land_index])) {
+      result.emplace_back(p.update_board(Config::PLAYER_BAR, land_index, d));
     }
   }
   return result;
 }
 
-template <Config C>
-auto generate(const Board& board, Dice dice) -> std::vector<State<C>> {
-  auto result = KeepResults<C>();
-  auto states = std::vector<std::tuple<State<C>, size_t>>{};
+// If only one die of a non-double can be played, the larger one must be
+// played when possible. `results` all use the same number of dice.
+inline auto larger_die_rule(Dice dice, std::vector<State> results) -> std::vector<State> {
+  if (dice.size() != 2 || results.empty() || results[0].dice.size() != 1) {
+    return results;
+  }
+  // The die left over tells which one was played.
+  const int32_t larger = *dice.values(true).begin();
+  auto played_smaller = [&](const State& s) { return *s.dice.values(false).begin() == larger; };
+  if (!std::ranges::all_of(results, played_smaller)) {
+    std::erase_if(results, played_smaller);
+  }
+  return results;
+}
+
+inline auto generate(const Board& board, Dice dice) -> std::vector<State> {
+  auto result = KeepResults();
+  auto states = std::vector<std::tuple<State, size_t>>{};
   states.reserve(64);
-  states.emplace_back(std::make_tuple(State<C>(board, dice), C::LAND_START));
+  states.emplace_back(std::make_tuple(State(board, dice), Config::LAND_START));
   uint32_t i = 0;
   while (i < states.size()) {
     auto [p, last_cell] = states[i++];
@@ -34,25 +48,26 @@ auto generate(const Board& board, Dice dice) -> std::vector<State<C>> {
       auto phase = p.phase();
       if (phase == ON_BAR) {
         for (auto& new_p : moves_on_bar(p)) {
-          states.push_back(std::make_tuple(new_p, C::LAND_START));
+          states.push_back(std::make_tuple(new_p, Config::LAND_START));
         }
       } else {
-        // In the collecting phase we should consider the largest dice first.
-        for (auto d : p.dice.values(phase == COLLECTING)) {
+        // Both dice orders, in every phase: only considering stones at or past
+        // `last_cell` (below) relies on the other order to cover the rest.
+        for (auto d : p.dice.values(false)) {
           bool first_move_in_collect = phase == COLLECTING;
           auto bits_copy = p.bits;
           for (auto src_index = bits_copy.begin(); src_index != bits_copy.end(); ++src_index) {
-            if (C::is_already_analyzed(last_cell, *src_index)) {
+            if (Config::is_already_analyzed(last_cell, *src_index)) {
               first_move_in_collect = false;
               continue;
             }
             bool can_collect_wastefully = phase == COLLECTING && first_move_in_collect &&
-                                          !C::is_inboard(C::apply_dice((*src_index), d));
+                                          !Config::is_inboard(Config::apply_dice((*src_index), d));
             bool can_collect_exactly =
-                phase == COLLECTING && C::apply_dice((*src_index), d) == C::EXACT_COLLECT;
+                phase == COLLECTING && Config::apply_dice((*src_index), d) == Config::EXACT_COLLECT;
             first_move_in_collect = false;
             if (can_collect_wastefully || can_collect_exactly) {
-              auto new_p = p.update_board(*src_index, C::PLAYER_BAG, d);
+              auto new_p = p.update_board(*src_index, Config::PLAYER_BAG, d);
               if (new_p.score() != 0) {
                 // All winning moves gets the same score, so no need to look
                 // further.
@@ -61,8 +76,8 @@ auto generate(const Board& board, Dice dice) -> std::vector<State<C>> {
               states.push_back(std::make_tuple(new_p, *src_index));
               break;
             }
-            auto dst_index = C::apply_dice(*src_index, d);
-            if (C::is_inboard(dst_index) && C::is_valid_dst(p.b[dst_index])) {
+            auto dst_index = Config::apply_dice(*src_index, d);
+            if (Config::is_inboard(dst_index) && Config::is_valid_dst(p.b[dst_index])) {
               auto new_p = p.update_board(*src_index, dst_index, d);
               states.push_back(std::make_tuple(new_p, *src_index));
             }
@@ -72,7 +87,7 @@ auto generate(const Board& board, Dice dice) -> std::vector<State<C>> {
     }
     result.add(p);
   }
-  return result.get_results();
-};
+  return larger_die_rule(dice, result.get_results());
+}
 
 }  // namespace bg

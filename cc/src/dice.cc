@@ -40,7 +40,7 @@ static constexpr std::array<uint32_t, DICE_N + 1> DICE_MASK = init_dice_mask();
 
 [[nodiscard]] auto DiceThrow::throw_dice() -> Dice {
   std::uniform_int_distribution<int> dist(0, DICE_N2 - 1);
-  return Dice(DICE_LOOKUP[dist(gen_)]);
+  return Dice(DICE_LOOKUP[dist(*gen_)]);
 }
 
 auto DiceIterator::operator*() const -> int32_t { return d1_; }
@@ -72,6 +72,16 @@ auto Dice::values(bool use_only_max) const -> DiceRolls {
   auto d1 = MAX_DICE_LOOKUP[__builtin_clz(dice_ << 8U)];
   auto d2 = MIN_DICE_LOOKUP[__builtin_ctz(dice_)];
   return (use_only_max || (d1 == d2) ? DiceRolls(d1) : DiceRolls(d1, d2));
+}
+
+auto Dice::encode() const -> int32_t {
+  static constexpr int32_t TENS = 10;
+  auto rolls = values(false);
+  auto it = rolls.begin();
+  int32_t high = *it;
+  ++it;
+  int32_t low = (it == DiceRolls::end()) ? high : *it;
+  return (TENS * high) + low;
 }
 
 auto Dice::use_dice(int32_t d) const -> Dice {

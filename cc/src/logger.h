@@ -51,7 +51,8 @@ class LogWriter {
   LogWriter() = default;
   LogWriter(const std::filesystem::path& path, size_t buffer_size);
 
-  void start_game(uint64_t game_id, bool is_white_the_first_player);
+  // Records GAME_START as the game's start position.
+  void start_game(bool white_first);
   void add_move(Dice dice, const Board& b);
   void end_game(int32_t score);
   void flush();
@@ -59,11 +60,17 @@ class LogWriter {
  private:
   std::optional<ProtoWriter<Game>> writer_;
   Game game_in_construction_;
+  bool in_game_ = false;
+
+  static void set_position(Position* position, const Board& board);
 };
 
 class LogReader {
  public:
   explicit LogReader(std::istream& in) : in_(in) {}
+  // Reads the next game; false at the end of the input. Aborts on a truncated
+  // or corrupt record.
+  auto next(Game* game) -> bool;
   auto read_all() -> std::vector<Game>;
 
  private:

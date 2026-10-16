@@ -1,60 +1,54 @@
 #include "training_data.h"
 
-#include <fstream>
+#include <span>
 
 #include "assertion.h"
-#include "logger.h"
-#include "model.h"
+#include "configs.h"
+#include "npy.h"
 
 namespace bg {
-auto game_to_training_data(const Game& game, const std::string& model_path /*currently ignored*/)
-    -> std::vector<TrainingData> {
-  int32_t number_of_moves = game.positions_size();
-  std::vector<TrainingData> result;
-  for (int32_t i = game.player() == FirstPlayer::WHITE ? 1 : 2; i < number_of_moves; i += 2) {
-    TrainingData data{};
-    auto input_vector = position_to_model_input(game.positions(i));
-    data.mutable_input()->mutable_cell()->Assign(input_vector.begin(), input_vector.end());
-    data.set_number_of_moves(number_of_moves);
-    data.set_move_number(i);
-    switch (game.final_score()) {
-      case 1:
-        data.mutable_score()->set_white_win(1.0);
-        break;
-      case 2:
-      case 3:
-        data.mutable_score()->set_white_gammon(1.0);
-        break;
-      case -1:
-        data.mutable_score()->set_black_win(1.0);
-        break;
-      case -2:
-      case -3:
-        data.mutable_score()->set_black_gammon(1.0);
-        break;
-      default:
-        FAIL(false, "bad final score");
-    }
-    result.emplace_back(std::move(data));
+
+auto outcome_for_mover(int32_t mover_points) -> Outcome {
+  ASSERT(mover_points != 0 && mover_points >= -3 && mover_points <= 3,
+         "a finished game scores 1..3 points");
+  if (mover_points > 0) {
+    return mover_points == 1 ? MOVER_SINGLE : MOVER_GAMMON;
   }
-  return result;
+  return mover_points == -1 ? OPPONENT_SINGLE : OPPONENT_GAMMON;
 }
 
-static constexpr size_t WRITE_BUFFER_SIZE = 1000;  // records buffered per flush
-
-void generate_training_data(const std::string& white_model, const std::string& log_path,
-                            const std::string& output_path) {
-  std::ifstream log_file(log_path);
-  ASSERT(log_file.is_open(), "cannot open the log_file");
-  auto log_reader = LogReader(log_file);
-  auto games = log_reader.read_all();
-  auto data_writer = ProtoWriter<TrainingData>(output_path, WRITE_BUFFER_SIZE);
-  for (auto& game : games) {
-    for (TrainingData& training_data : game_to_training_data(game, "")) {
-      data_writer.add(std::move(training_data));
+void add_game(const Game& game, int32_t game_index, TrainingExamples* examples) {
+  auto n_turns = static_cast<int16_t>(game.turns_size());
+  for (int16_t turn = 0; turn < n_turns; ++turn) {
+    // Colours alternate, starting with the colour that moved first.
+    bool white_moved = (turn % 2 == 0) == game.white_first();
+    const auto& cells = game.turns(turn).after().cell();
+    ASSERT(cells.size() == BOARD_SIZE, "a position has 28 cells");
+    Board board{};
+    for (size_t i = 0; i < BOARD_SIZE; ++i) {
+      board[i] = static_cast<int8_t>(cells[static_cast<int32_t>(i)]);
     }
+    if (!white_moved) {
+      board = flip(board);
+    }
+    int32_t mover_points = white_moved ? game.final_score() : -game.final_score();
+    examples->boards.insert(examples->boards.end(), board.begin(), board.end());
+    examples->labels.push_back(outcome_for_mover(mover_points));
+    examples->points.push_back(static_cast<int8_t>(mover_points));
+    examples->turn.push_back(turn);
+    examples->n_turns.push_back(n_turns);
+    examples->game.push_back(game_index);
   }
-  data_writer.flush();
+}
+
+void write_examples(const TrainingExamples& examples, const std::filesystem::path& dir) {
+  size_t n = examples.size();
+  write_npy<int8_t>(dir / "boards.npy", std::span(examples.boards), {n, BOARD_SIZE});
+  write_npy<uint8_t>(dir / "labels.npy", std::span(examples.labels), {n});
+  write_npy<int8_t>(dir / "points.npy", std::span(examples.points), {n});
+  write_npy<int16_t>(dir / "turn.npy", std::span(examples.turn), {n});
+  write_npy<int16_t>(dir / "n_turns.npy", std::span(examples.n_turns), {n});
+  write_npy<int32_t>(dir / "game.npy", std::span(examples.game), {n});
 }
 
 }  // namespace bg

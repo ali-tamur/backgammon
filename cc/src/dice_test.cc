@@ -64,6 +64,14 @@ TEST(DiceTest, DoubleRoll) {
   EXPECT_TRUE(to_collection(d5, false).empty());
 }
 
+TEST(DiceTest, Encode) {
+  EXPECT_EQ(Dice(6, 3).encode(), 63);
+  EXPECT_EQ(Dice(3, 6).encode(), 63);
+  EXPECT_EQ(Dice(5, 5).encode(), 55);
+  EXPECT_EQ(Dice(1, 2).encode(), 21);
+  EXPECT_EQ(Dice(1, 1).encode(), 11);
+}
+
 }  // namespace bg
 
 // NOLINTEND(readability-magic-numbers)

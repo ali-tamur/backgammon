@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package bg;
+
+// Stored as text format in the `config` columns of the database (see
+// python/bg/db.py). Fields grow as the code that writes them does.
+
+// How a player chooses among its candidate moves. Must be empty for random
+// players.
+message PlayerConfig {
+  // Exploration of nn players: moves are sampled with weights
+  // exp(expected value / temperature); 0 always picks the best move.
+  float temperature = 1;
+}
+
+message MatchConfig {
+  // The exact play_games_main command line that played the match.
+  string command = 1;
+}
+
+// How a network was trained. Written by the training script; architecture and
+// training stages get their own fields once that script exists.
+message NetworkConfig {
+  map<string, string> extra = 100;
+}
