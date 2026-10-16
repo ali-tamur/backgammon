@@ -4,70 +4,71 @@ import subprocess
 
 import pytest
 
-from bg.db import Db
+from bg.db import Game, Match, Network, Player, to_text
 from bg.match import git_commit, repo_root, run_match
 from proto import config_pb2
 
 TEST_MODEL = repo_root() / "cc" / "src" / "testdata" / "test_model.onnx"
 
 
-@pytest.fixture
-def db(tmp_path):
-    db = Db.open(tmp_path / "test.db")
-    yield db
-    db.close()
-
-
-def add_network(db: Db, onnx: bytes) -> int:
-    return db.add_network(
-        onnx, config_pb2.NetworkConfig(), input_encoding="TEST", output_layout="TEST", git_commit="abc123"
+def nn_player(onnx: bytes) -> Player:
+    network = Network.create(
+        onnx=onnx,
+        config=to_text(config_pb2.NetworkConfig()),
+        input_encoding="TEST",
+        output_layout="TEST",
+        git_commit="abc123",
     )
-
-
-def status(db: Db, match_id: int) -> str:
-    return db.conn.execute("SELECT status FROM match WHERE id = ?", (match_id,)).fetchone()[0]
+    return Player.find_or_create("NN", network, config_pb2.PlayerConfig(temperature=0))
 
 
 def test_random_match_is_stored_and_reproducible(db):
-    random = db.player("RANDOM")
-    first = run_match(db, random, random, 4, purpose="TRAINING", seed=7, allow_dirty=True)
-    again = run_match(db, random, random, 4, purpose="TRAINING", seed=7, allow_dirty=True)
-    other = run_match(db, random, random, 4, purpose="TRAINING", seed=8, allow_dirty=True)
+    random = Player.find_or_create("RANDOM")
+    first = run_match(random, random, 4, purpose="TRAINING", seed=7, allow_dirty=True)
+    again = run_match(random, random, 4, purpose="TRAINING", seed=7, allow_dirty=True)
+    other = run_match(random, random, 4, purpose="TRAINING", seed=8, allow_dirty=True)
 
-    assert status(db, first) == "COMPLETE"
-    assert db.summary(first).games == 4
-    games = list(db.game_records(first))
-    assert games == list(db.game_records(again))
-    assert games != list(db.game_records(other))
+    first = Match.get_by_id(first.id)
+    assert first.status == "COMPLETE"
+    assert first.summary().games == 4
+    games = list(first.game_records())
+    assert games == list(again.game_records())
+    assert games != list(other.game_records())
     # ALTERNATE: game i's first player alternates with i.
-    assert [game.white_first for game in db.games(first)] == [True, False, True, False]
-
-    seed, commit, config = db.conn.execute(
-        "SELECT seed, git_commit, config FROM match WHERE id = ?", (first,)
-    ).fetchone()
-    assert seed == 7
-    assert commit
-    assert "--seed=7" in config and "--n_games=4" in config
+    assert [game.white_first for game in first.game_protos()] == [True, False, True, False]
+    assert first.seed == 7
+    assert first.git_commit
+    assert "--seed=7" in first.config and "--n_games=4" in first.config
 
 
 def test_nn_player_plays(db):
-    nn = db.player("NN", add_network(db, TEST_MODEL.read_bytes()), config_pb2.PlayerConfig(temperature=0))
-    random = db.player("RANDOM")
-    match = run_match(db, nn, random, 2, purpose="EVALUATION", seed=1, allow_dirty=True)
-    assert status(db, match) == "COMPLETE"
-    assert db.summary(match).games == 2
-    config = db.conn.execute("SELECT config FROM match WHERE id = ?", (match,)).fetchone()[0]
-    assert "--w_temperature=0.0" in config
+    match = run_match(
+        nn_player(TEST_MODEL.read_bytes()),
+        Player.find_or_create("RANDOM"),
+        2,
+        purpose="EVALUATION",
+        seed=1,
+        allow_dirty=True,
+    )
+    match = Match.get_by_id(match.id)
+    assert match.status == "COMPLETE"
+    assert match.summary().games == 2
+    assert "--w_temperature=0.0" in match.config
 
 
 def test_engine_failure_marks_the_match_failed(db):
-    broken = db.player("NN", add_network(db, b"not an onnx model"), config_pb2.PlayerConfig(temperature=0))
-    random = db.player("RANDOM")
     with pytest.raises(RuntimeError, match="engine failed"):
-        run_match(db, broken, random, 1, purpose="EVALUATION", seed=1, allow_dirty=True)
-    (match,) = db.conn.execute("SELECT id FROM match").fetchone()
-    assert status(db, match) == "FAILED"
-    assert db.conn.execute("SELECT COUNT(*) FROM game").fetchone()[0] == 0
+        run_match(
+            nn_player(b"not an onnx model"),
+            Player.find_or_create("RANDOM"),
+            1,
+            purpose="EVALUATION",
+            seed=1,
+            allow_dirty=True,
+        )
+    (match,) = Match.select()
+    assert match.status == "FAILED"
+    assert Game.select().count() == 0
 
 
 def git(repo, *args: str) -> str:

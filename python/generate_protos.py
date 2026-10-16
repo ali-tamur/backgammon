@@ -1,5 +1,6 @@
 """Generates the Python code for proto/*.proto into python/proto/ (*_pb2.py and
-.pyi stubs), importable as `from proto import game_pb2` with python/ on the path.
+.pyi stubs), importable as `from proto import game_pb2`: the editable install
+of the project puts python/ on the path.
 
 Uses the protoc that Bazel builds for the C++ side, so Python and C++ always
 agree on the schema. Run from anywhere inside the repository, after any change
@@ -8,7 +9,7 @@ to a .proto file:
     python python/generate_protos.py
 
 The Python protobuf package must be at least as new as this protoc (see
-python/requirements.txt); the generated code refuses to load otherwise.
+pyproject.toml); the generated code refuses to load otherwise.
 """
 
 import subprocess

@@ -1,8 +1,11 @@
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
 import bg.training_data
-from bg.db import Db, read_games
+from bg.db import Match, Player, to_text
+from bg.game_log import read_games
 from bg.training_data import ARRAYS, build, export_games, load, training_data
 from proto import config_pb2, game_pb2
 
@@ -23,53 +26,39 @@ def make_game(white_first: bool, final_score: int, boards: list[list[int]]) -> b
     return game.SerializeToString()
 
 
-@pytest.fixture
-def db(tmp_path):
-    db = Db.open(tmp_path / "test.db")
-    yield db
-    db.close()
-
-
-def add_match(db: Db, games: list[bytes]) -> int:
-    random = db.player("RANDOM")
-    match_id = db.create_match(
-        random,
-        random,
+def new_match(n_games: int) -> Match:
+    random = Player.find_or_create("RANDOM")
+    return Match.create(
+        white=random,
+        black=random,
         purpose="TRAINING",
         first_move="ALTERNATE",
         seed=1,
-        n_games=len(games),
+        n_games=n_games,
         git_commit="abc123",
-        config=config_pb2.MatchConfig(),
+        config=to_text(config_pb2.MatchConfig()),
     )
-    db.complete_match(match_id, games)
-    return match_id
+
+
+def add_match(games: list[bytes]) -> Match:
+    match = new_match(len(games))
+    match.complete(games)
+    return match
 
 
 def test_export_games_keeps_match_order(db, tmp_path):
     first = [make_game(True, 1, [START])]
     second = [make_game(False, -1, [START]), make_game(True, 2, [START])]
-    m1 = add_match(db, first)
-    m2 = add_match(db, second)
+    m1 = add_match(first)
+    m2 = add_match(second)
     path = tmp_path / "games.pb"
-    assert export_games(db, [m2, m1], path) == 3
+    assert export_games([m2, m1], path) == 3
     assert list(read_games(path)) == second + first
 
 
 def test_incomplete_match_cannot_be_exported(db, tmp_path):
-    random = db.player("RANDOM")
-    match_id = db.create_match(
-        random,
-        random,
-        purpose="TRAINING",
-        first_move="ALTERNATE",
-        seed=1,
-        n_games=1,
-        git_commit="abc123",
-        config=config_pb2.MatchConfig(),
-    )
     with pytest.raises(ValueError, match="not complete"):
-        export_games(db, [match_id], tmp_path / "games.pb")
+        export_games([new_match(1)], tmp_path / "games.pb")
 
 
 def test_converter_flips_black_and_labels_for_the_mover(db, tmp_path):
@@ -79,9 +68,9 @@ def test_converter_flips_black_and_labels_for_the_mover(db, tmp_path):
     after_white = list(after_black)
     after_white[0], after_white[4] = 1, 1
     # Black moves first, white wins a gammon.
-    match_id = add_match(db, [make_game(False, 2, [after_black, after_white])])
+    match = add_match([make_game(False, 2, [after_black, after_white])])
 
-    build(db, [match_id], tmp_path / "arrays")
+    build([match], tmp_path / "arrays")
     arrays = load(tmp_path / "arrays")
 
     assert arrays["boards"].dtype == np.int8
@@ -100,12 +89,17 @@ class FakeBuild:
         self.calls = 0
         self.fail = fail
 
-    def __call__(self, db, match_ids, out_dir):
+    def __call__(self, matches, out_dir):
         self.calls += 1
         for name in ARRAYS:
-            np.save(out_dir / f"{name}.npy", np.array([len(match_ids)]))
+            np.save(out_dir / f"{name}.npy", np.array([len(matches)]))
         if self.fail:
             raise KeyboardInterrupt
+
+
+def matches(*ids: int) -> list:
+    """Stand-ins for Match rows: the cache only looks at their ids."""
+    return [SimpleNamespace(id=i) for i in ids]
 
 
 @pytest.fixture
@@ -121,8 +115,8 @@ def fake(monkeypatch, tmp_path):
 
 def test_cache_is_reused(fake):
     build, _, cache = fake
-    first = training_data(None, [1, 2], cache)
-    second = training_data(None, [1, 2], cache)
+    first = training_data(matches(1, 2), cache)
+    second = training_data(matches(1, 2), cache)
     assert build.calls == 1
     assert first["labels"].tolist() == second["labels"].tolist() == [2]
     (entry,) = cache.iterdir()
@@ -131,10 +125,10 @@ def test_cache_is_reused(fake):
 
 def test_cache_key_covers_matches_and_commit(fake):
     build, state, cache = fake
-    training_data(None, [1, 2], cache)
-    training_data(None, [2, 1], cache)  # order matters: it is the order of the examples
+    training_data(matches(1, 2), cache)
+    training_data(matches(2, 1), cache)  # order matters: it is the order of the examples
     state["commit"] = "beef"
-    training_data(None, [1, 2], cache)
+    training_data(matches(1, 2), cache)
     assert build.calls == 3
     assert len(list(cache.iterdir())) == 3
 
@@ -142,8 +136,8 @@ def test_cache_key_covers_matches_and_commit(fake):
 def test_uncommitted_changes_are_never_cached(fake):
     build, state, cache = fake
     state["commit"] = "c0ffee-dirty"
-    training_data(None, [1], cache)
-    training_data(None, [1], cache)
+    training_data(matches(1), cache)
+    training_data(matches(1), cache)
     assert build.calls == 2
     assert not cache.exists()
 
@@ -152,7 +146,7 @@ def test_interrupted_build_leaves_no_cache_entry(fake):
     build, _, cache = fake
     build.fail = True
     with pytest.raises(KeyboardInterrupt):
-        training_data(None, [1], cache)
+        training_data(matches(1), cache)
     assert list(cache.iterdir()) == []
     build.fail = False
-    assert training_data(None, [1], cache)["labels"].tolist() == [1]
+    assert training_data(matches(1), cache)["labels"].tolist() == [1]

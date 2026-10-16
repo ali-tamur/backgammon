@@ -11,7 +11,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from bg.db import Db, read_games
+from bg.db import Match, Player, to_text
+from bg.game_log import read_games
 from proto import config_pb2
 
 ENGINE = "//cc/src:play_games_main"
@@ -38,20 +39,18 @@ def git_commit(root: Path, allow_dirty: bool) -> str:
     return commit + "-dirty"
 
 
-def player_flags(db: Db, player_id: int, color: str, workdir: Path) -> list[str]:
+def player_flags(player: Player, color: str, workdir: Path) -> list[str]:
     """Engine flags for one side; `color` is 'w' or 'b'."""
-    type, network_id, config = db.player_settings(player_id)
-    if type == "RANDOM":
+    if player.type == "RANDOM":
         return [f"--{color}_model=random"]
-    onnx_path = workdir / f"{color}_network_{network_id}.onnx"
-    onnx_path.write_bytes(db.network_onnx(network_id))
-    return [f"--{color}_model={onnx_path}", f"--{color}_temperature={config.temperature}"]
+    onnx_path = workdir / f"{color}_network_{player.network.id}.onnx"
+    onnx_path.write_bytes(player.network.onnx)
+    return [f"--{color}_model={onnx_path}", f"--{color}_temperature={player.config_proto.temperature}"]
 
 
 def run_match(
-    db: Db,
-    white_id: int,
-    black_id: int,
+    white: Player,
+    black: Player,
     n_games: int,
     *,
     purpose: str,
@@ -59,8 +58,8 @@ def run_match(
     seed: int | None = None,
     allow_dirty: bool = False,
     note: str = "",
-) -> int:
-    """Plays `n_games` games between two players and returns the new match's id."""
+) -> Match:
+    """Plays `n_games` games between two players and returns the new match."""
     root = repo_root()
     commit = git_commit(root, allow_dirty)
     # SQLite integers are signed 64-bit.
@@ -75,33 +74,32 @@ def run_match(
             "opt",
             ENGINE,
             "--",
-            *player_flags(db, white_id, "w", workdir),
-            *player_flags(db, black_id, "b", workdir),
+            *player_flags(white, "w", workdir),
+            *player_flags(black, "b", workdir),
             f"--n_games={n_games}",
             f"--seed={seed}",
             FIRST_MOVE_FLAGS[first_move],
             "--print_score=false",
             f"--log_path={games_path}",
         ]
-        config = config_pb2.MatchConfig(command=shlex.join(command))
-        match_id = db.create_match(
-            white_id,
-            black_id,
+        match = Match.create(
+            white=white,
+            black=black,
             purpose=purpose,
             first_move=first_move,
             seed=seed,
             n_games=n_games,
             git_commit=commit,
-            config=config,
+            config=to_text(config_pb2.MatchConfig(command=shlex.join(command))),
             note=note,
         )
         try:
             # Bazel's progress output goes to stderr; show it only if something fails.
             result = subprocess.run(command, cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
             if result.returncode != 0:
-                raise RuntimeError(f"match {match_id}: engine failed\n{result.stderr}")
-            db.complete_match(match_id, read_games(games_path))
+                raise RuntimeError(f"match {match.id}: engine failed\n{result.stderr}")
+            match.complete(read_games(games_path))
         except BaseException:
-            db.fail_match(match_id)
+            match.fail()
             raise
-    return match_id
+    return match

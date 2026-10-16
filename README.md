@@ -5,8 +5,8 @@ High-performance backgammon game engine in C++ with neural network training in P
 ## Prerequisites
 
 - Bazelisk or Bazel 9.3 (for the C++ build; it downloads the LLVM 23.1.3 toolchain itself)
-- Python 3.12
-- Optional: an NVIDIA GPU for training (PyTorch's CUDA 12.6 build, which still supports Pascal cards; see `python/requirements.txt`)
+- Python 3.12 and [uv](https://docs.astral.sh/uv/)
+- Optional: an NVIDIA GPU for training (PyTorch's CUDA 12.6 build, which still supports Pascal cards; see `pyproject.toml`)
 
 ### Install on Ubuntu/Debian
 
@@ -27,9 +27,11 @@ python python/generate_protos.py
 
 3. Set up Python environment
 
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r python/requirements.txt
+uv sync                    # creates .venv exactly as uv.lock says (PyTorch's CUDA 12.6 build included)
+source .venv/bin/activate  # bg and proto are importable from anywhere
+
+To change dependencies, edit pyproject.toml, then run `uv lock` and `uv sync`,
+and commit uv.lock with the change.
 
 4. Build C++ binaries
 
@@ -59,8 +61,10 @@ Every turn becomes one example: the position after the move from the mover's
 side, labelled with how the game ended for the mover (see
 cc/src/training_data.h). From Python, for matches stored in the database:
 
+    from bg.db import Match, open_db
     from bg.training_data import training_data
-    arrays = training_data(db, [match_id, ...])   # numpy arrays, cached in data/cache/
+    open_db("data/backgammon.db")
+    arrays = training_data([Match.get_by_id(i) for i in match_ids])  # cached in data/cache/
 
 The converter also runs on its own:
 
