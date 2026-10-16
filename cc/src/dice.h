@@ -50,6 +50,9 @@ class Dice {
   [[nodiscard]] auto use_dice(int32_t d) const -> Dice;
   [[nodiscard]] auto is_empty() const -> bool { return dice_ == 0; }
   [[nodiscard]] auto size() const -> size_t { return __builtin_popcount(dice_); }
+  // The roll as 10 * high die + low die, e.g. 63 or 55. Only meaningful for an
+  // unused roll, straight from DiceThrow.
+  [[nodiscard]] auto encode() const -> int32_t;
 
   uint32_t dice_;
 

@@ -1,6 +1,5 @@
 #include "game_manager.h"
 
-#include <chrono>
 #include <iostream>
 #include <limits>
 #include <tuple>
@@ -36,9 +35,6 @@ static void seed_game(std::mt19937& rng, uint64_t seed, int32_t game_index) {
 
 auto GameManager::run_once(LogWriter* logger, int32_t game_index) -> int32_t {
   seed_game(*rng_, seed_, game_index);
-  auto now = std::chrono::system_clock::now();
-  uint64_t game_id =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
   std::array<MOVE, 2> players{white_, black_};
   int32_t this_score;
   int32_t on_turn = 0;
@@ -46,7 +42,7 @@ auto GameManager::run_once(LogWriter* logger, int32_t game_index) -> int32_t {
       (first_move_ == FirstMove::Alternate && (game_index % 2 == 1))) {
     on_turn = 1;
   }
-  logger->start_game(game_id, on_turn == 0);
+  logger->start_game(on_turn == 0);
 
   Board board = GAME_START;
 

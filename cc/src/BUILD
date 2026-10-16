@@ -101,19 +101,6 @@ cc_library(
 )
 
 cc_library(
-    name = "training_data",
-    srcs = ["training_data.cc"],
-    hdrs = ["training_data.h"],
-    deps = [
-        ":assertion",
-        ":configs",
-        ":logger",
-        ":model",
-        "//proto:game_cc_proto",
-    ],
-)
-
-cc_library(
     name = "logger",
     srcs = ["logger.cc"],
     hdrs = ["logger.h"],
@@ -254,18 +241,6 @@ cc_binary(
         ":moves",
         ":player",
         "//third_party:onnxruntime",
-        "@cli11//:cli11",
-    ],
-)
-
-cc_binary(
-    name = "training_data_main",
-    srcs = ["training_data_main.cc"],
-    deps = [
-        ":assertion",
-        ":configs",
-        ":training_data",
-        "//proto:game_cc_proto",
         "@cli11//:cli11",
     ],
 )

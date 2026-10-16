@@ -107,23 +107,8 @@ auto play_logged_match(uint64_t seed, int32_t n_games) -> std::vector<Game> {
   return LogReader(file).read_all();
 }
 
-// Game ids are timestamps; everything else must match.
 auto same_game(const Game& a, const Game& b) -> bool {
-  if (a.final_score() != b.final_score() || a.player() != b.player() ||
-      a.positions_size() != b.positions_size() || a.dice_size() != b.dice_size()) {
-    return false;
-  }
-  for (int32_t i = 0; i < a.positions_size(); ++i) {
-    if (a.positions(i).SerializeAsString() != b.positions(i).SerializeAsString()) {
-      return false;
-    }
-  }
-  for (int32_t i = 0; i < a.dice_size(); ++i) {
-    if (a.dice(i) != b.dice(i)) {
-      return false;
-    }
-  }
-  return true;
+  return a.SerializeAsString() == b.SerializeAsString();
 }
 
 TEST(SeedTest, SameSeedSameGames) {
@@ -149,10 +134,40 @@ TEST(SeedTest, GamesDifferWithinAMatch) {
 
 TEST(SeedTest, FirstPlayerAlternates) {
   auto games = play_logged_match(42, 4);
-  EXPECT_EQ(games[0].player(), FirstPlayer::WHITE);
-  EXPECT_EQ(games[1].player(), FirstPlayer::BLACK);
-  EXPECT_EQ(games[2].player(), FirstPlayer::WHITE);
-  EXPECT_EQ(games[3].player(), FirstPlayer::BLACK);
+  EXPECT_TRUE(games[0].white_first());
+  EXPECT_FALSE(games[1].white_first());
+  EXPECT_TRUE(games[2].white_first());
+  EXPECT_FALSE(games[3].white_first());
+}
+
+// Checks the record against game.proto's description of it.
+TEST(LogTest, GameRecordShape) {
+  auto cells = [](const Position& p) {
+    return std::vector<int32_t>(p.cell().begin(), p.cell().end());
+  };
+  for (const Game& game : play_logged_match(7, 20)) {
+    EXPECT_EQ(cells(game.start()), std::vector<int32_t>(GAME_START.begin(), GAME_START.end()));
+    ASSERT_GT(game.turns_size(), 0);
+    for (const Turn& turn : game.turns()) {
+      int32_t high = turn.dice() / 10;
+      int32_t low = turn.dice() % 10;
+      EXPECT_TRUE(1 <= low && low <= high && high <= 6) << turn.dice();
+      EXPECT_EQ(turn.after().cell_size(), BOARD_SIZE);
+      EXPECT_FALSE(turn.has_prediction());  // random players
+    }
+    // The first move is made by the colour the record says moved first.
+    auto after_first = cells(game.turns(0).after());
+    bool white_moved = false;
+    for (int32_t i = 0; i < COLLECT_END; ++i) {
+      if (GAME_START[i] > 0 && after_first[i] < GAME_START[i]) {
+        white_moved = true;
+      }
+    }
+    EXPECT_EQ(white_moved, game.white_first());
+    // The final position shows the winner with all 15 stones borne off.
+    auto last = cells(game.turns(game.turns_size() - 1).after());
+    EXPECT_EQ(game.final_score() > 0 ? last[WHITE_BAG] : -last[BLACK_BAG], NUM_STONES);
+  }
 }
 
 // NOLINTEND(readability-magic-numbers)

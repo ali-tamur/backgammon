@@ -74,6 +74,16 @@ auto Dice::values(bool use_only_max) const -> DiceRolls {
   return (use_only_max || (d1 == d2) ? DiceRolls(d1) : DiceRolls(d1, d2));
 }
 
+auto Dice::encode() const -> int32_t {
+  static constexpr int32_t TENS = 10;
+  auto rolls = values(false);
+  auto it = rolls.begin();
+  int32_t high = *it;
+  ++it;
+  int32_t low = (it == DiceRolls::end()) ? high : *it;
+  return (TENS * high) + low;
+}
+
 auto Dice::use_dice(int32_t d) const -> Dice {
   uint32_t masked = dice_ & DICE_MASK[d];
   auto reduced = masked & (masked - 1);

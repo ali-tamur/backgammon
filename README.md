@@ -7,14 +7,10 @@ High-performance backgammon game engine in C++ with neural network training in P
 - Bazelisk or Bazel 9.3 (for the C++ build; it downloads the LLVM 23.1.3 toolchain itself)
 - Python 3.12 (the C++ module is built for the version set in `MODULE.bazel`)
 - Docker (for model conversion)
-- Protocol Buffers compiler (`protoc`)
 
 ### Install on Ubuntu/Debian
 
 ```bash
-# Install protoc
-sudo apt install protobuf-compiler
-
 # Install Bazel (see https://bazel.build/install)
 # Install Docker (see https://docs.docker.com/engine/install/)
 
@@ -25,9 +21,10 @@ Setup
 git clone <repository-url>
 cd backgammon
 
-2. Generate Python protobuf files
+2. Generate Python protobuf files (uses the protoc Bazel builds; rerun after
+   changing a .proto file)
 
-protoc --python_out=. proto/game.proto
+python python/generate_protos.py
 
 3. Set up Python environment
 
@@ -42,8 +39,7 @@ bazel build -c opt \
   --copt='-march=native' \
   --copt='-flto' \
   --linkopt='-flto' \
-  //cc/src:play_games_main \
-  //cc/src:training_data_main
+  //cc/src:play_games_main
 
 Usage
 
@@ -60,9 +56,8 @@ bazel run -c opt //cc/src:play_games_main -- \
 
 Convert Game Logs to Training Data
 
-bazel run -c opt //cc/src:training_data_main -- \
-  --log_path=/games/random_vs_random.pb \
-  --output_path=/training/train_data.pb
+Being rewritten: the converter will produce numpy arrays from the new game
+records (see proto/game.proto).
 
 Train Neural Network
 
