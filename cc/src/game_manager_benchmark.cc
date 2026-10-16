@@ -18,7 +18,7 @@ static void BM_GameManager(benchmark::State& state) {
                   .print_score = false,
                   .log_path = "",
                   .n_games = num_games,
-                  .first_move = FirstMove::Random};
+                  .first_move = FirstMove::Alternate};
 
   auto game_manager = bg::game_manager_factory(opt);
   for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores): benchmark idiom

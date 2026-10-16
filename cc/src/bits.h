@@ -1,12 +1,9 @@
 #pragma once
 
-#include <type_traits>
-
 #include "configs.h"
 
 namespace bg {
 
-template <Config C>
 class Bits {
  private:
   class BitIterator {
@@ -18,22 +15,11 @@ class Bits {
     using difference_type = std::ptrdiff_t;
 
     explicit BitIterator(uint32_t n) { n_ = n; };
-    auto operator*() const -> value_type {
-      if constexpr (std::is_same_v<C, WhiteConfig>) {
-        return __builtin_ctz(n_);
-      } else if constexpr (std::is_same_v<C, BlackConfig>) {
-        return N_BITS - 1 - __builtin_clz(n_);
-      }
-    }
+    auto operator*() const -> value_type { return __builtin_ctz(n_); }
 
     auto operator++() -> BitIterator& {
-      if constexpr (std::is_same_v<C, WhiteConfig>) {
-        n_ = n_ & (n_ - 1);
-        return *this;
-      } else if constexpr (std::is_same_v<C, BlackConfig>) {
-        n_ = n_ ^ (1U << (N_BITS - 1 - __builtin_clz(n_)));
-        return *this;
-      }
+      n_ = n_ & (n_ - 1);
+      return *this;
     }
     auto operator==(const BitIterator& other) const -> bool { return n_ == other.n_; }
     auto operator!=(const BitIterator& other) const -> bool { return n_ != other.n_; }

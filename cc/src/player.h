@@ -18,39 +18,41 @@ namespace bg {
 
 enum PlayerTypes : int8_t { RANDOM, NN };
 
-template <enum PlayerTypes, Config C>
+// Players always see the board from the mover's side (the mover's stones are
+// positive and move towards index 23); the game manager flips it for black.
+template <enum PlayerTypes>
 class Player {
   auto move(const Board& board, Dice dice) -> Board;
 };
 
-template <Config C>
-class Player<RANDOM, C> {
+template <>
+class Player<RANDOM> {
  public:
-  Player(std::mt19937 r) : r_{r} {}
+  explicit Player(SharedRng r) : r_{std::move(r)} {}
 
   auto move(const Board& board, Dice dice) -> Board {
-    const std::vector<State<C>>& states = generate<C>(board, dice);
+    const std::vector<State>& states = generate(board, dice);
     std::uniform_int_distribution<int> dist_(0, states.size() - 1);
-    auto index = dist_(r_);
-    const State<C>& choosen_state = states[index];
+    auto index = dist_(*r_);
+    const State& choosen_state = states[index];
     return choosen_state.b;
   }
 
  private:
-  std::mt19937 r_;
+  SharedRng r_;
 };
 
-template <Config C>
-class Player<NN, C> {
+template <>
+class Player<NN> {
  public:
-  Player(std::mt19937 r, const std::string& model_path, float temperature = DEFAULT_TEMPERATURE)
-      : r_{r}, model_{Model(model_path)}, temperature_(temperature) {}
+  Player(SharedRng r, const std::string& model_path, float temperature = DEFAULT_TEMPERATURE)
+      : r_{std::move(r)}, model_{Model(model_path)}, temperature_(temperature) {}
 
   auto move(const Board& board, Dice dice) -> Board {
-    const std::vector<State<C>>& states = generate<C>(board, dice);
+    const std::vector<State>& states = generate(board, dice);
     std::vector<Board> boards;
     std::ranges::transform(states, std::back_inserter(boards),
-                           [](const State<C>& state) { return state.b; });
+                           [](const State& state) { return state.b; });
     if (boards.size() == 1) {
       return boards[0];
     }
@@ -62,34 +64,32 @@ class Player<NN, C> {
       return std::exp(expected_value(score) / temperature_);
     });
     std::discrete_distribution<> dist{weights.begin(), weights.end()};
-    int32_t index = dist(r_);
+    int32_t index = dist(*r_);
     return boards[index];
   }
 
-  [[nodiscard]] auto expected_value(Model::Score score) const -> float {
-    auto value =
-        score.white_win - score.black_win + (2 * (score.white_gammon - score.black_gammon));
-    return value * C::SIGN;
+  // From the mover's side: "white" in the model's output is the mover.
+  [[nodiscard]] static auto expected_value(Model::Score score) -> float {
+    return score.white_win - score.black_win + (2 * (score.white_gammon - score.black_gammon));
   }
 
  private:
-  std::mt19937 r_;
+  SharedRng r_;
   Model model_;
   float temperature_;
 };
 
-template <Config C>
-auto construct_random_player_move(std::mt19937 r) -> MOVE {
-  auto alice = Player<RANDOM, C>(r);
+inline auto construct_random_player_move(SharedRng r) -> MOVE {
+  auto alice = Player<RANDOM>(std::move(r));
   auto move = [alice](const Board& board, Dice dice) mutable -> auto {
     return alice.move(board, dice);
   };
   return move;
 }
 
-template <Config C>
-auto construct_nn_player_move(std::mt19937 r, std::string model_path, float temperature) -> MOVE {
-  auto alice = std::make_shared<Player<NN, C>>(r, model_path, temperature);
+inline auto construct_nn_player_move(SharedRng r, const std::string& model_path, float temperature)
+    -> MOVE {
+  auto alice = std::make_shared<Player<NN>>(r, model_path, temperature);
   auto move = [alice](const Board& board, Dice dice) mutable -> auto {
     return alice->move(board, dice);
   };

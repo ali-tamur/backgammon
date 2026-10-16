@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <random>
+#include <utility>
 
 namespace bg {
 
@@ -59,12 +61,17 @@ inline auto operator<<(std::ostream& os, const Dice& dice) -> std::ostream& {
   return os;
 }
 
+// One generator per game, shared by the dice and both players (see
+// GameManager::run_once), so a game is reproducible from its seed.
+using SharedRng = std::shared_ptr<std::mt19937>;
+
 class DiceThrow {
  public:
+  explicit DiceThrow(SharedRng gen) : gen_{std::move(gen)} {}
   [[nodiscard]] auto throw_dice() -> Dice;
 
  private:
-  std::mt19937 gen_{std::random_device{}()};
+  SharedRng gen_;
 };
 
 }  // namespace bg

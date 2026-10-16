@@ -40,7 +40,7 @@ static constexpr std::array<uint32_t, DICE_N + 1> DICE_MASK = init_dice_mask();
 
 [[nodiscard]] auto DiceThrow::throw_dice() -> Dice {
   std::uniform_int_distribution<int> dist(0, DICE_N2 - 1);
-  return Dice(DICE_LOOKUP[dist(gen_)]);
+  return Dice(DICE_LOOKUP[dist(*gen_)]);
 }
 
 auto DiceIterator::operator*() const -> int32_t { return d1_; }
