@@ -16,8 +16,18 @@ namespace bg {
 template <typename P>
 class ProtoWriter {
  public:
+  // Refuses an existing file: a log has no record of the runs that wrote it,
+  // so appending a second run (same seed: the same games again) would go
+  // unnoticed. Creates the file; each flush appends to it.
   ProtoWriter(std::filesystem::path path, size_t buffer_size)
-      : path_(std::move(path)), buffer_size_(buffer_size) {}
+      : path_(std::move(path)), buffer_size_(buffer_size) {
+    if (std::filesystem::exists(path_)) {
+      std::cerr << "log file already exists: " << path_ << "\n";
+      FAIL(std::filesystem::exists(path_), "choose a new log path");
+    }
+    std::ofstream create{path_, std::ios::binary};
+    ASSERT(create.good(), "cannot create the log file");
+  }
 
   ~ProtoWriter() { flush(); }
 

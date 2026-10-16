@@ -63,8 +63,8 @@ cc/src/training_data.h). From Python, for matches stored in the database:
 
     from bg.db import Match, open_db
     from bg.training_data import training_data
-    open_db("data/backgammon.db")
-    arrays = training_data([Match.get_by_id(i) for i in match_ids])  # cached in data/cache/
+    with open_db("data/backgammon.db"):
+        arrays = training_data([Match.get_by_id(i) for i in match_ids])  # cached in data/cache/
 
 The converter also runs on its own:
 

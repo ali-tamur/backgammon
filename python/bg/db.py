@@ -11,12 +11,13 @@ training, a player when a match needs it, a match and its games by playing.
 While the schema is settling, changing it means bumping SCHEMA_VERSION and
 regenerating the database from scratch.
 
-    open_db("data/backgammon.db")
-    random = Player.find_or_create("RANDOM")
-    Match.select().where(Match.purpose == "TRAINING")
+    with open_db("data/backgammon.db"):
+        random = Player.find_or_create("RANDOM")
+        Match.select().where(Match.purpose == "TRAINING")
 """
 
 from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from itertools import batched
@@ -44,7 +45,9 @@ from proto import config_pb2, game_pb2
 
 SCHEMA_VERSION = 1
 
-# Bound to a file by open_db().
+# Peewee binds models to a database object when the classes are defined, long
+# before the file is known: open_db() points this placeholder at a file for the
+# duration of a `with` block. One database per process at a time.
 database = SqliteDatabase(None, pragmas={"foreign_keys": 1})
 
 
@@ -104,7 +107,7 @@ class Player(BaseModel):
     @classmethod
     def find_or_create(
         cls, type: str, network: Network | None = None, config: config_pb2.PlayerConfig | None = None
-    ) -> "Player":
+    ) -> Player:
         text = to_text(config or config_pb2.PlayerConfig())
         if type == "RANDOM" and text:
             raise ValueError("random players take no config")
@@ -226,28 +229,34 @@ class Game(BaseModel):
 MODELS = [Network, Player, Match, Game]
 
 
-def open_db(path: Path | str) -> SqliteDatabase:
-    """Opens the database, creating the schema in a new or empty file."""
-    if not database.is_closed():
-        database.close()
+@contextmanager
+def open_db(path: Path | str) -> Iterator[SqliteDatabase]:
+    """Binds all models to the database at `path` for the `with` block, creating
+    the schema in a new or empty file. Closed on leaving the block, even on an
+    error; after it, queries fail instead of quietly reconnecting."""
+    if database.database is not None:
+        raise RuntimeError(f"a database is already open: {database.database}")
     database.init(str(path), pragmas={"foreign_keys": 1})
-    database.connect()
-    version = database.pragma("user_version")
-    if version == 0:
-        with database.atomic():
-            database.create_tables(MODELS)
-            # Unique settings per player. Not a plain UNIQUE constraint: NULLs
-            # are distinct there, so it would allow duplicate random players.
-            database.execute_sql("CREATE UNIQUE INDEX player_settings ON player (type, IFNULL(network_id, 0), config)")
-            database.pragma("user_version", SCHEMA_VERSION)
-    elif version != SCHEMA_VERSION:
-        database.close()
-        raise RuntimeError(
-            f"{path}: schema version {version}, this code expects {SCHEMA_VERSION}; regenerate the database"
-        )
-    return database
-
-
-def close_db() -> None:
-    if not database.is_closed():
-        database.close()
+    try:
+        database.connect()
+        version = database.pragma("user_version")
+        if version == 0:
+            with database.atomic():
+                database.create_tables(MODELS)
+                # Unique settings per player. Not a plain UNIQUE constraint: NULLs
+                # are distinct there, so it would allow duplicate random players.
+                database.execute_sql(
+                    "CREATE UNIQUE INDEX player_settings ON player (type, IFNULL(network_id, 0), config)"
+                )
+                database.pragma("user_version", SCHEMA_VERSION)
+        elif version != SCHEMA_VERSION:
+            raise RuntimeError(
+                f"{path}: schema version {version}, this code expects {SCHEMA_VERSION}; regenerate the database"
+            )
+        yield database
+    finally:
+        if not database.is_closed():
+            database.close()
+        # Peewee reconnects on the next query after close(); with no file
+        # bound, it raises instead.
+        database.init(None)

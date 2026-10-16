@@ -19,12 +19,18 @@ static constexpr size_t NN_INPUT_SIZE =
     (BAG_LIMIT + 1) +                         // WHITE_BAG: [0, 10]
     (BAG_LIMIT + 1);                          // BLACK_BAG: [0, 10]
 
+// One thread: a move evaluates a few dozen positions, too little work to share
+// (measured: 4 threads or ONNX Runtime's default are 10-20% slower). Matches
+// can still use all cores by running games in parallel processes.
+static auto session_options() -> Ort::SessionOptions {
+  Ort::SessionOptions options;
+  options.SetIntraOpNumThreads(1);
+  return options;
+}
+
 Model::Model(const std::string& model_path)
     : env_{ORT_LOGGING_LEVEL_WARNING, "backgammon"},
-      session_{env_, model_path.c_str(), Ort::SessionOptions{}} {
-  Ort::SessionOptions session_options;
-  session_options.SetIntraOpNumThreads(4);
-
+      session_{env_, model_path.c_str(), session_options()} {
   auto input_name_ptr = session_.GetInputNameAllocated(0, allocator_);
   input_name_ = input_name_ptr.get();
 

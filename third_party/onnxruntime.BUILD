@@ -6,9 +6,10 @@ cc_library(
     srcs = [
         "lib/libonnxruntime.so",
         "lib/libonnxruntime.so.1",
-        "lib/libonnxruntime.so.1.20.1",
+        "lib/libonnxruntime.so.1.31.0",
     ],
     hdrs = glob(["include/**/*.h"]),
+    textual_hdrs = glob(["include/**/*.inc"]),
     data = glob(["lib/libonnxruntime.so*"]),
     includes = ["include"],
     visibility = ["//visibility:public"],

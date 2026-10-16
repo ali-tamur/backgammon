@@ -180,6 +180,7 @@ TEST(NnPlayerTest, SingleCandidateIsReturned) {
 
 TEST(NnPlayerTest, GameManagerPlaysNnAgainstRandom) {
   std::string log_path = std::filesystem::temp_directory_path() / "bg_nn_player_test.pb";
+  std::filesystem::remove(log_path);  // left over by an interrupted run
   GameOptions options{};
   options.white_model = std::filesystem::absolute(TEST_MODEL);
   options.black_model = "random";

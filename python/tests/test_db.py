@@ -4,7 +4,7 @@ import peewee
 import pytest
 from peewee import fn
 
-from bg.db import SCHEMA_VERSION, Game, Match, Network, Player, Summary, close_db, open_db, to_text
+from bg.db import SCHEMA_VERSION, Game, Match, Network, Player, Summary, open_db, to_text
 from bg.game_log import read_games, write_games
 from proto import config_pb2, game_pb2
 
@@ -43,8 +43,8 @@ def add_match(n_games: int) -> Match:
 
 def test_open_sets_schema_version(tmp_path):
     path = tmp_path / "test.db"
-    open_db(path)
-    close_db()
+    with open_db(path):
+        pass
     assert sqlite3.connect(path).execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
 
 
@@ -54,17 +54,40 @@ def test_open_rejects_other_schema_version(tmp_path):
     conn.execute("PRAGMA user_version = 999")
     conn.close()
     with pytest.raises(RuntimeError, match="regenerate"):
-        open_db(path)
+        with open_db(path):
+            pass
+    with open_db(tmp_path / "other.db"):  # the failed open left nothing bound
+        pass
 
 
 def test_reopening_keeps_the_data(tmp_path):
     path = tmp_path / "test.db"
-    open_db(path)
-    network = add_network()
-    close_db()
-    open_db(path)
-    assert Network.get_by_id(network.id).onnx == b"onnx bytes"
-    close_db()
+    with open_db(path):
+        network = add_network()
+    with open_db(path):
+        assert Network.get_by_id(network.id).onnx == b"onnx bytes"
+
+
+def test_closed_database_is_not_reopened_silently(tmp_path):
+    with open_db(tmp_path / "test.db"):
+        add_network()
+    with pytest.raises(peewee.InterfaceError, match="must be initialized"):
+        Network.select().count()
+
+
+def test_closed_even_after_an_error(tmp_path):
+    with pytest.raises(ZeroDivisionError):
+        with open_db(tmp_path / "test.db"):
+            1 / 0
+    with pytest.raises(peewee.InterfaceError):
+        Network.select().count()
+
+
+def test_only_one_database_at_a_time(db, tmp_path):
+    with pytest.raises(RuntimeError, match="already open"):
+        with open_db(tmp_path / "other.db"):
+            pass
+    assert Network.select().count() == 0  # the open one is untouched
 
 
 def test_network_round_trip(db):

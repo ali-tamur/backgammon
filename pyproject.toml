@@ -2,12 +2,11 @@
 name = "backgammon"
 version = "0.1.0"
 description = "Backgammon engine (C++) with neural networks trained by self-play (Python)"
-# onnxruntime 1.20.1 has no wheels for 3.14; the venv uses the system 3.12.
-requires-python = "==3.12.*"
+requires-python = "==3.14.*"
 dependencies = [
     "numpy",
     "onnx>=1.17.0",
-    "onnxruntime==1.20.1",  # the version the C++ engine links (MODULE.bazel), to check exports
+    "onnxruntime==1.31.0",  # the version the C++ engine links (MODULE.bazel), to check exports
     "onnxscript",           # used by torch.onnx.export
     "peewee==4.5.3",        # pinned: minor versions have had breaking changes
     "protobuf>=6.33.4,<7",  # at least the protoc version in MODULE.bazel (33.4)
