@@ -57,30 +57,27 @@ void LogWriter::flush() {
   writer_->flush();
 }
 
+auto LogReader::next(Game* game) -> bool {
+  uint32_t size = 0;
+  in_.read(reinterpret_cast<char*>(&size), sizeof(size));
+  if (in_.gcount() == 0) {
+    return false;
+  }
+  ASSERT(in_.gcount() == sizeof(size), "truncated game record header");
+  std::string data(size, '\0');
+  in_.read(data.data(), size);
+  ASSERT(in_.gcount() == size, "truncated game record");
+  bool parsed = game->ParseFromString(data);
+  ASSERT(parsed, "corrupt game record");
+  return true;
+}
+
 auto LogReader::read_all() -> std::vector<Game> {
   std::vector<Game> games;
-
-  while (in_) {
-    uint32_t size;
-    in_.read(reinterpret_cast<char*>(&size), sizeof(size));
-    if (!in_ || size == 0) {
-      break;
-    }
-
-    std::string data(size, '\0');
-    in_.read(data.data(), size);
-    if (!in_) {
-      break;
-    }
-
-    Game game;
-    if (!game.ParseFromString(data)) {
-      std::cerr << "Failed to parse game\n";
-      continue;
-    }
+  Game game;
+  while (next(&game)) {
     games.push_back(game);
   }
-
   return games;
 }
 

@@ -13,7 +13,8 @@ static void BM_GameManager(benchmark::State& state) {
   const auto num_games = static_cast<int32_t>(state.range(0));
   GameOptions opt{.white_model = "random",
                   .black_model = "random",
-                  .temperature = 0.0,
+                  .white_temperature = 0.0,
+                  .black_temperature = 0.0,
                   .is_interactive = false,
                   .print_score = false,
                   .log_path = "",

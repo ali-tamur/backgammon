@@ -59,6 +59,10 @@ class Player<NN> {
     std::vector<NN_INPUT> nn_input;
     std::ranges::transform(boards, std::back_inserter(nn_input), &board_to_nn_input);
     std::vector<Model::Score> values = model_.Predict(nn_input);
+    if (temperature_ == 0) {
+      auto best = std::ranges::max_element(values, {}, &expected_value);
+      return boards[std::distance(values.begin(), best)];
+    }
     std::vector<float> weights;
     std::ranges::transform(values, std::back_inserter(weights), [this](Model::Score score) {
       return std::exp(expected_value(score) / temperature_);

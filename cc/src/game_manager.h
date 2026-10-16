@@ -49,13 +49,15 @@ class GameManager {
 };
 
 struct GameOptions {
-  // "random" or path to the saved keras model.
+  // "random" or path to an ONNX model.
   std::string white_model;
 
-  // "random" or path to the saved keras model.
+  // "random" or path to an ONNX model.
   std::string black_model;
 
-  float temperature = DEFAULT_TEMPERATURE;
+  // Exploration of nn players: 0 always picks the best move.
+  float white_temperature = DEFAULT_TEMPERATURE;
+  float black_temperature = DEFAULT_TEMPERATURE;
 
   bool is_interactive;
   bool print_score;

@@ -44,17 +44,31 @@ if [ -n "$cc_staged" ]; then
   # shellcheck disable=SC2086  # word splitting of the file list is intended
   "$LLVM_BIN/clang-format" --dry-run --Werror --style=file $cc_staged || fail "clang-format"
 
-  # A changed header can break any file that includes it, so headers mean a
-  # full run (~1.5 min); otherwise only the staged .cc files are checked.
+  # A changed header can break any file that includes it, so headers mean all
+  # of cc/; otherwise only the staged .cc files are checked. Test files skip
+  # the static analyzer (clang-analyzer-*): googletest's macros make it explore
+  # a huge number of paths (state_test.cc: 66 s with it, 2 s without) for
+  # little gain in test code.
   if grep -qE '\.h$' <<<"$cc_staged"; then
-    tidy_regex="^$PWD/cc/"
-    step "clang-tidy (all of cc/: a header changed)"
+    scope="all of cc/: a header changed"
+    prod_regex="^$PWD/cc/(?!.*_test\.cc$)"
+    test_regex="^$PWD/cc/.*_test\.cc$"
   else
-    tidy_regex="^$PWD/($(paste -sd'|' <<<"$cc_staged"))\$"
-    step "clang-tidy (staged .cc files)"
+    scope="staged .cc files"
+    prod_files=$(grep -v '_test\.cc$' <<<"$cc_staged" | paste -sd'|')
+    test_files=$(grep '_test\.cc$' <<<"$cc_staged" | paste -sd'|')
+    prod_regex=${prod_files:+"^$PWD/($prod_files)\$"}
+    test_regex=${test_files:+"^$PWD/($test_files)\$"}
   fi
+  step "clang-tidy ($scope; takes a few seconds)"
   python3 tools/compile_commands.py >/dev/null || fail "compile_commands.py"
-  tidy_out=$("$LLVM_BIN/run-clang-tidy" -quiet -p . "$tidy_regex" 2>&1)
+  tidy_out=""
+  if [ -n "$prod_regex" ]; then
+    tidy_out+=$("$LLVM_BIN/run-clang-tidy" -quiet -p . "$prod_regex" 2>&1)
+  fi
+  if [ -n "$test_regex" ]; then
+    tidy_out+=$("$LLVM_BIN/run-clang-tidy" -quiet -p . -checks='-clang-analyzer-*' "$test_regex" 2>&1)
+  fi
   # Only findings in our own files count; generated headers are not ours.
   if grep -E "^$PWD/cc/.*(warning|error):" <<<"$tidy_out"; then
     fail "clang-tidy"

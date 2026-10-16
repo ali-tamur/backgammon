@@ -1,4 +1,5 @@
-"""Generates the Python code for proto/*.proto (game_pb2.py and its .pyi stub).
+"""Generates the Python code for proto/*.proto into python/proto/ (*_pb2.py and
+.pyi stubs), importable as `from proto import game_pb2` with python/ on the path.
 
 Uses the protoc that Bazel builds for the C++ side, so Python and C++ always
 agree on the schema. Run from anywhere inside the repository, after any change
@@ -35,9 +36,9 @@ def main() -> int:
     root = repo_root()
     protoc = build_protoc(root)
     protos = sorted(str(p.relative_to(root)) for p in (root / "proto").glob("*.proto"))
-    subprocess.run([str(protoc), "--python_out=.", "--pyi_out=.", *protos], cwd=root, check=True)
+    subprocess.run([str(protoc), "--python_out=python", "--pyi_out=python", *protos], cwd=root, check=True)
     for proto in protos:
-        print(f"generated {proto.removesuffix('.proto')}_pb2.py and .pyi")
+        print(f"generated python/{proto.removesuffix('.proto')}_pb2.py and .pyi")
     return 0
 
 

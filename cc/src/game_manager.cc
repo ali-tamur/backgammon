@@ -97,7 +97,7 @@ auto game_manager_factory(const GameOptions& options) -> GameManager {
   } else {
     auto white_path =
         (std::filesystem::path(PROJECT_ROOT) / "models" / options.white_model).string();
-    white_move = construct_nn_player_move(rng, white_path, options.temperature);
+    white_move = construct_nn_player_move(rng, white_path, options.white_temperature);
   }
   MOVE black_move;
   if (options.black_model == "random") {
@@ -105,7 +105,7 @@ auto game_manager_factory(const GameOptions& options) -> GameManager {
   } else {
     auto black_path =
         (std::filesystem::path(PROJECT_ROOT) / "models" / options.black_model).string();
-    black_move = construct_nn_player_move(rng, black_path, options.temperature);
+    black_move = construct_nn_player_move(rng, black_path, options.black_temperature);
   }
   LogWriter logger;
   if (!options.log_path.empty() && !options.is_unittest) {

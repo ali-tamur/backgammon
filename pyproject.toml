@@ -16,7 +16,7 @@ select = [
 ignore = ["UP045"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["py"]
+known-first-party = ["bg", "proto"]
 split-on-trailing-comma = false  # matches format.skip-magic-trailing-comma
 
 [tool.ruff.format]
@@ -28,4 +28,5 @@ skip-magic-trailing-comma = true
 # Only our tests: without this pytest wanders into bazel-* and external/,
 # which contain third-party test suites.
 testpaths = ["python"]
+pythonpath = ["python"]
 norecursedirs = [".*", "bazel-*", "external", "data", "build", "dist"]

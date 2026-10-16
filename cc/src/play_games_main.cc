@@ -24,7 +24,8 @@ auto run(int argc, char** argv) -> int {
 
   GameOptions opt{.white_model = "random",
                   .black_model = "random",
-                  .temperature = DEFAULT_TEMPERATURE,
+                  .white_temperature = DEFAULT_TEMPERATURE,
+                  .black_temperature = DEFAULT_TEMPERATURE,
                   .is_interactive = false,
                   .print_score = true,
                   .log_path = "",
@@ -33,7 +34,10 @@ auto run(int argc, char** argv) -> int {
 
   app.add_option("--w_model", opt.white_model, "Path of the white model if white is of type NN)");
   app.add_option("--b_model", opt.black_model, "Path of the black model if black is of type NN)");
-  app.add_option("--temperature", opt.temperature, "Exploration/explotation ratio for nn players");
+  app.add_option("--w_temperature", opt.white_temperature,
+                 "Exploration of the white nn player; 0 always picks the best move");
+  app.add_option("--b_temperature", opt.black_temperature,
+                 "Exploration of the black nn player; 0 always picks the best move");
   app.add_option("--interactive", opt.is_interactive, "Print the board after every move");
   app.add_option("--print_score", opt.print_score, "Print the after every game");
   app.add_option("--log_path", opt.log_path, "Path to game logs");

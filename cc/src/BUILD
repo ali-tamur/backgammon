@@ -244,3 +244,40 @@ cc_binary(
         "@cli11//:cli11",
     ],
 )
+
+cc_library(
+    name = "training_data",
+    srcs = ["training_data.cc"],
+    hdrs = [
+        "npy.h",
+        "training_data.h",
+    ],
+    deps = [
+        ":assertion",
+        ":configs",
+        "//proto:game_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "training_data_test",
+    size = "small",
+    srcs = ["training_data_test.cc"],
+    deps = [
+        ":configs",
+        ":training_data",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_binary(
+    name = "training_data_main",
+    srcs = ["training_data_main.cc"],
+    deps = [
+        ":assertion",
+        ":logger",
+        ":training_data",
+        "@cli11//:cli11",
+    ],
+)

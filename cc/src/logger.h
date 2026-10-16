@@ -68,6 +68,9 @@ class LogWriter {
 class LogReader {
  public:
   explicit LogReader(std::istream& in) : in_(in) {}
+  // Reads the next game; false at the end of the input. Aborts on a truncated
+  // or corrupt record.
+  auto next(Game* game) -> bool;
   auto read_all() -> std::vector<Game>;
 
  private:
