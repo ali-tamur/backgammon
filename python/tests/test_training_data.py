@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
+import bg.training_data
 from bg.db import Db, read_games
-from bg.training_data import build, export_games, load
+from bg.training_data import ARRAYS, build, export_games, load, training_data
 from proto import config_pb2, game_pb2
 
 START = [2, 0, 0, 0, 0, -5, 0, -3, 0, 0, 0, 5, -5, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, -2, 0, 0, 0, 0]
@@ -90,3 +91,68 @@ def test_converter_flips_black_and_labels_for_the_mover(db, tmp_path):
     assert arrays["turn"].tolist() == [0, 1]
     assert arrays["n_turns"].tolist() == [2, 2]
     assert arrays["game"].tolist() == [0, 0]
+
+
+class FakeBuild:
+    """Stands in for the converter: writes one-element arrays and counts calls."""
+
+    def __init__(self, fail: bool = False):
+        self.calls = 0
+        self.fail = fail
+
+    def __call__(self, db, match_ids, out_dir):
+        self.calls += 1
+        for name in ARRAYS:
+            np.save(out_dir / f"{name}.npy", np.array([len(match_ids)]))
+        if self.fail:
+            raise KeyboardInterrupt
+
+
+@pytest.fixture
+def fake(monkeypatch, tmp_path):
+    """training_data() with a fake converter, a fixed commit and a cache in tmp_path."""
+    state = {"commit": "c0ffee"}
+    build = FakeBuild()
+    monkeypatch.setattr(bg.training_data, "build", build)
+    monkeypatch.setattr(bg.training_data, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(bg.training_data, "git_commit", lambda root, allow_dirty: state["commit"])
+    return build, state, tmp_path / "cache"
+
+
+def test_cache_is_reused(fake):
+    build, _, cache = fake
+    first = training_data(None, [1, 2], cache)
+    second = training_data(None, [1, 2], cache)
+    assert build.calls == 1
+    assert first["labels"].tolist() == second["labels"].tolist() == [2]
+    (entry,) = cache.iterdir()
+    assert (entry / "inputs.txt").read_text() == "matches: [1, 2]\ncommit: c0ffee\n"
+
+
+def test_cache_key_covers_matches_and_commit(fake):
+    build, state, cache = fake
+    training_data(None, [1, 2], cache)
+    training_data(None, [2, 1], cache)  # order matters: it is the order of the examples
+    state["commit"] = "beef"
+    training_data(None, [1, 2], cache)
+    assert build.calls == 3
+    assert len(list(cache.iterdir())) == 3
+
+
+def test_uncommitted_changes_are_never_cached(fake):
+    build, state, cache = fake
+    state["commit"] = "c0ffee-dirty"
+    training_data(None, [1], cache)
+    training_data(None, [1], cache)
+    assert build.calls == 2
+    assert not cache.exists()
+
+
+def test_interrupted_build_leaves_no_cache_entry(fake):
+    build, _, cache = fake
+    build.fail = True
+    with pytest.raises(KeyboardInterrupt):
+        training_data(None, [1], cache)
+    assert list(cache.iterdir()) == []
+    build.fail = False
+    assert training_data(None, [1], cache)["labels"].tolist() == [1]

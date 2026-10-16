@@ -12,4 +12,5 @@ numpy
 protobuf>=6.33.4,<7  # at least the protoc version in MODULE.bazel (33.4)
 # Used by tools/githooks/pre-commit.
 pytest
+pytest-cov
 ruff

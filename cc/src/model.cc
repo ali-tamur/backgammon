@@ -80,15 +80,14 @@ class OneHotEncoding {
  public:
   explicit OneHotEncoding() : a_(NN_INPUT_SIZE, 0.0F) {}
 
+  // Sets one of the group's slots: [-max, max] -> 0 .. 2 * max if the value
+  // can be negative, [0, max] -> 0 .. max otherwise. Values outside the range
+  // are clipped to it.
   void add(int32_t value, int32_t max_value, bool can_be_negative) {
-    int32_t advance = can_be_negative ? (2 * max_value) + 1 : max_value + 1;
-    value = std::min(value, max_value);
-    value = std::max(value, -max_value);
-    if (value < 0) {
-      value += max_value;
-    }
-    a_[index_ + value] = 1.0;
-    index_ += advance;
+    const int32_t min_value = can_be_negative ? -max_value : 0;
+    const int32_t slot = std::clamp(value, min_value, max_value) - min_value;
+    a_[index_ + slot] = 1.0;
+    index_ += max_value - min_value + 1;
   }
 
   auto get() -> std::vector<float>&& { return std::move(a_); }

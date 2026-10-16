@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 #include "configs.h"
@@ -20,6 +21,21 @@ inline auto moves_on_bar(const State& p) -> std::vector<State> {
   return result;
 }
 
+// If only one die of a non-double can be played, the larger one must be
+// played when possible. `results` all use the same number of dice.
+inline auto larger_die_rule(Dice dice, std::vector<State> results) -> std::vector<State> {
+  if (dice.size() != 2 || results.empty() || results[0].dice.size() != 1) {
+    return results;
+  }
+  // The die left over tells which one was played.
+  const int32_t larger = *dice.values(true).begin();
+  auto played_smaller = [&](const State& s) { return *s.dice.values(false).begin() == larger; };
+  if (!std::ranges::all_of(results, played_smaller)) {
+    std::erase_if(results, played_smaller);
+  }
+  return results;
+}
+
 inline auto generate(const Board& board, Dice dice) -> std::vector<State> {
   auto result = KeepResults();
   auto states = std::vector<std::tuple<State, size_t>>{};
@@ -35,8 +51,9 @@ inline auto generate(const Board& board, Dice dice) -> std::vector<State> {
           states.push_back(std::make_tuple(new_p, Config::LAND_START));
         }
       } else {
-        // In the collecting phase we should consider the largest dice first.
-        for (auto d : p.dice.values(phase == COLLECTING)) {
+        // Both dice orders, in every phase: only considering stones at or past
+        // `last_cell` (below) relies on the other order to cover the rest.
+        for (auto d : p.dice.values(false)) {
           bool first_move_in_collect = phase == COLLECTING;
           auto bits_copy = p.bits;
           for (auto src_index = bits_copy.begin(); src_index != bits_copy.end(); ++src_index) {
@@ -70,7 +87,7 @@ inline auto generate(const Board& board, Dice dice) -> std::vector<State> {
     }
     result.add(p);
   }
-  return result.get_results();
+  return larger_die_rule(dice, result.get_results());
 }
 
 }  // namespace bg

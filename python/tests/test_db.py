@@ -129,3 +129,34 @@ def test_read_games_rejects_truncated_file(tmp_path):
     path.write_bytes(struct.pack("<I", len(game)) + game[:-1])
     with pytest.raises(ValueError, match="truncated"):
         list(read_games(path))
+
+
+def test_network_round_trip(db):
+    network = db.add_network(
+        b"onnx",
+        config_pb2.NetworkConfig(extra={"k": "v"}),
+        input_encoding="ONE_HOT_248_MOVER",
+        output_layout="EXCLUSIVE_4",
+        git_commit="abc123",
+        checkpoint=b"weights",
+    )
+    assert db.network_onnx(network) == b"onnx"
+    row = db.conn.execute("SELECT checkpoint, config FROM network WHERE id = ?", (network,)).fetchone()
+    assert row == (b"weights", 'extra {\n  key: "k"\n  value: "v"\n}\n')
+
+
+def test_unknown_ids_raise_key_error(db):
+    with pytest.raises(KeyError):
+        db.network_onnx(99)
+    with pytest.raises(KeyError):
+        db.player_settings(99)
+    with pytest.raises(KeyError):
+        db.summary(add_match(db, 1))  # no games yet
+
+
+def test_failed_match_cannot_be_read(db):
+    match = add_match(db, 1)
+    db.fail_match(match)
+    assert db.conn.execute("SELECT status FROM match WHERE id = ?", (match,)).fetchone()[0] == "FAILED"
+    with pytest.raises(ValueError, match="not complete"):
+        list(db.games(match))

@@ -561,8 +561,10 @@ TEST(StateTest, MoveAndCollect) {
                      {COLLECT_END - 1, 1, VALUE},
                      {COLLECT_END - 3, 0, VALUE},
                      {WHITE_BAG, 1, DELTA}});
+  // The 3 first: 18->21, then the 5 bears off from 21, now the farthest stone.
+  e.add_expectation({{COLLECT_END - 6, 0, VALUE}, {WHITE_BAG, 1, DELTA}});
   auto r = e.get_test_result();
-  EXPECT_EQ(r.size, 1);
+  EXPECT_EQ(r.size, 2);
   EXPECT_EQ(r.result, r.expectation);
 }
 
@@ -631,6 +633,43 @@ TEST(StateTest, CountMovesAtStart) {
     auto r = e.get_test_result();
     EXPECT_EQ(r.size, 8);
   }
+}
+
+// Only one die can be played (11->14 or 11->16, then stuck): it must be the
+// larger, hitting the blot on 16.
+TEST(StateTest, OnlyOneDieCanBePlayedMustBeTheLarger) {
+  auto b = std::array<int8_t, 28>{-4, 0, 0,  -2, 0, 0,  0, -2, 0, 0, 0, 1, -1, 0,
+                                  0,  0, -1, -1, 0, -4, 0, 1,  7, 6, 0, 0, 0,  0};
+  Expectation e(b, Dice(3, 5));
+  e.add_expectation({{11, 0, VALUE}, {16, 1, VALUE}, {BLACK_BAR, -1, VALUE}});
+  auto r = e.get_test_result();
+  EXPECT_EQ(r.size, 1);
+  EXPECT_EQ(r.result, r.expectation);
+}
+
+// The opponent holds 23. Bearing off from 22 with the 2 must still leave the 1
+// for 21->22; the generator used to drop it and play a single die.
+TEST(StateTest, BearOffUsesBothDiceWhenPossible) {
+  auto b = std::array<int8_t, 28>{-5, -3, 0,  0, -1, 0, 0, -1, 0,  0,  0, -1, 0, 0,
+                                  0,  0,  -1, 0, -1, 0, 0, 3,  10, -2, 0, 0,  2, 0};
+  Expectation e(b, Dice(1, 2));
+  e.add_expectation({{21, 2, VALUE}, {WHITE_BAG, 3, VALUE}});
+  auto r = e.get_test_result();
+  EXPECT_EQ(r.size, 1);
+  EXPECT_EQ(r.result, r.expectation);
+}
+
+// Playing the smaller die first can give positions the larger-first order
+// cannot: here 20->21 then the 5 bears off from 21, leaving 22.
+TEST(StateTest, BearOffCanPlayTheSmallerDieFirst) {
+  auto b = std::array<int8_t, 28>{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0,  0,
+                                  0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, -15, 13, 0};
+  Expectation e(b, Dice(1, 5));
+  e.add_expectation({{20, 0, VALUE}, {22, 0, VALUE}, {23, 1, VALUE}, {WHITE_BAG, 14, VALUE}});
+  e.add_expectation({{20, 0, VALUE}, {WHITE_BAG, 14, VALUE}});
+  auto r = e.get_test_result();
+  EXPECT_EQ(r.size, 2);
+  EXPECT_EQ(r.result, r.expectation);
 }
 
 }  // namespace bg
