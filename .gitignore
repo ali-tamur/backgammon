@@ -236,6 +236,7 @@ py/src/*.so
 models
 games
 training
+data
 
 # Personal
 project-structure.md

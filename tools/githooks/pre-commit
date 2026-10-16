@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Pre-commit checks: ruff (lint + format), pytest, clang-format, clang-tidy and
+# bazel test. Any failure aborts the commit.
+#
+# Enable once per clone:   git config core.hooksPath tools/githooks
+# Skip in an emergency:    git commit --no-verify
+#
+# The checks run on the working tree, not on the staged snapshot: stage
+# everything you are committing (or stash the rest) for the result to mean
+# something.
+
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+LLVM_BIN="${LLVM_BIN:-$HOME/.local/opt/llvm/bin}"
+VENV_BIN=".venv/bin"
+failed=()
+
+step() { echo "--- $1"; }
+fail() { failed+=("$1"); }
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+cc_staged=$(grep -E '^cc/.*\.(cc|h)$' <<<"$staged" || true)
+
+# --- Python
+step "ruff check"
+"$VENV_BIN/ruff" check . || fail "ruff check"
+
+step "ruff format --check"
+"$VENV_BIN/ruff" format --check . || fail "ruff format"
+
+step "pytest"
+"$VENV_BIN/pytest" -q
+status=$?
+# Exit code 5 means "no tests collected", which is not an error.
+if [ "$status" -ne 0 ] && [ "$status" -ne 5 ]; then
+  fail "pytest"
+fi
+
+# --- C++
+if [ -n "$cc_staged" ]; then
+  step "clang-format (staged C++ files)"
+  # shellcheck disable=SC2086  # word splitting of the file list is intended
+  "$LLVM_BIN/clang-format" --dry-run --Werror --style=file $cc_staged || fail "clang-format"
+
+  # A changed header can break any file that includes it, so headers mean a
+  # full run (~1.5 min); otherwise only the staged .cc files are checked.
+  if grep -qE '\.h$' <<<"$cc_staged"; then
+    tidy_regex="^$PWD/cc/"
+    step "clang-tidy (all of cc/: a header changed)"
+  else
+    tidy_regex="^$PWD/($(paste -sd'|' <<<"$cc_staged"))\$"
+    step "clang-tidy (staged .cc files)"
+  fi
+  python3 tools/compile_commands.py >/dev/null || fail "compile_commands.py"
+  tidy_out=$("$LLVM_BIN/run-clang-tidy" -quiet -p . "$tidy_regex" 2>&1)
+  # Only findings in our own files count; generated headers are not ours.
+  if grep -E "^$PWD/cc/.*(warning|error):" <<<"$tidy_out"; then
+    fail "clang-tidy"
+  fi
+fi
+
+step "bazel test //..."
+bazel test //... || fail "bazel test"
+
+if [ ${#failed[@]} -ne 0 ]; then
+  echo
+  echo "COMMIT ABORTED. Failed: ${failed[*]}"
+  exit 1
+fi
+echo "All pre-commit checks passed."
