@@ -3,7 +3,7 @@
 # Pre-commit checks: ruff (lint + format), pytest, clang-format, clang-tidy and
 # bazel test. Any failure aborts the commit.
 #
-# Enable once per clone:   git config core.hooksPath tools/githooks
+# Enabled by tools/setup.sh (git config core.hooksPath tools/githooks)
 # Skip in an emergency:    git commit --no-verify
 #
 # The checks run on the working tree, not on the staged snapshot: stage
@@ -64,10 +64,10 @@ if [ -n "$cc_staged" ]; then
   python3 tools/compile_commands.py >/dev/null || fail "compile_commands.py"
   tidy_out=""
   if [ -n "$prod_regex" ]; then
-    tidy_out+=$("$LLVM_BIN/run-clang-tidy" -quiet -p . "$prod_regex" 2>&1)
+    tidy_out+=$("$LLVM_BIN/run-clang-tidy" -quiet -p .bazel "$prod_regex" 2>&1)
   fi
   if [ -n "$test_regex" ]; then
-    tidy_out+=$("$LLVM_BIN/run-clang-tidy" -quiet -p . -checks='-clang-analyzer-*' "$test_regex" 2>&1)
+    tidy_out+=$("$LLVM_BIN/run-clang-tidy" -quiet -p .bazel -checks='-clang-analyzer-*' "$test_regex" 2>&1)
   fi
   # Only findings in our own files count; generated headers are not ours.
   if grep -E "^$PWD/cc/.*(warning|error):" <<<"$tidy_out"; then

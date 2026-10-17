@@ -1,5 +1,7 @@
 #include "game_manager.h"
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <random>
 
@@ -168,6 +170,32 @@ TEST(LogTest, GameRecordShape) {
     auto last = cells(game.turns(game.turns_size() - 1).after());
     EXPECT_EQ(game.final_score() > 0 ? last[WHITE_BAG] : -last[BLACK_BAG], NUM_STONES);
   }
+}
+
+// Several flushes (a buffer of 2 games) all land in the one new file.
+TEST(LogTest, FlushesAppendToTheNewFile) {
+  auto path = std::filesystem::temp_directory_path() / "bg_log_flush_test.pb";
+  std::filesystem::remove(path);
+  {
+    LogWriter writer(path, 2);
+    for (int32_t score = 1; score <= 5; ++score) {
+      writer.start_game(true);
+      writer.add_move(Dice(6, 3), GAME_START);
+      writer.end_game(score);
+    }
+  }
+  std::ifstream file(path, std::ios::binary);
+  std::vector<Game> games = LogReader(file).read_all();
+  ASSERT_EQ(games.size(), 5);
+  EXPECT_EQ(games[4].final_score(), 5);
+  std::filesystem::remove(path);
+}
+
+TEST(LogDeathTest, RefusesAnExistingFile) {
+  auto path = std::filesystem::temp_directory_path() / "bg_log_exists_test.pb";
+  std::ofstream(path) << "earlier run";
+  EXPECT_DEATH(LogWriter(path, 10), "log file already exists");
+  std::filesystem::remove(path);
 }
 
 // NOLINTEND(readability-magic-numbers)

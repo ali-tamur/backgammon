@@ -1,89 +1,127 @@
 """The project's SQLite database: networks, players, matches and games.
 
-Python is the database's only reader and writer; the C++ binaries never see it.
-Settings that are still evolving live in `config` columns as text-format protos
-(proto/config.proto); a field gets its own column once queries need it.
+One Peewee model per table. Python is the database's only reader and writer;
+the C++ binaries never see it. Settings that are still evolving live in
+`config` columns as text-format protos (proto/config.proto); a field gets its
+own column once queries need it.
+
+Rows are created only by the operations that produce them: a network by
+training, a player when a match needs it, a match and its games by playing.
+The one exception is the random player, created with the database.
 
 While the schema is settling, changing it means bumping SCHEMA_VERSION and
-regenerating the database from scratch.
+starting a new database (`python -m bg new-db`, which archives the old one).
+
+    with open_db("data/backgammon.db"):
+        random = Player.get(Player.type == "RANDOM")
+        Match.select().where(Match.purpose == "TRAINING")
 """
 
+import os
+import shutil
 import sqlite3
-import struct
 from collections.abc import Iterable, Iterator
+from compression import zstd
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from itertools import batched
 from pathlib import Path
 
 from google.protobuf import text_format
 from google.protobuf.message import Message
+from peewee import (
+    SQL,
+    BlobField,
+    BooleanField,
+    Case,
+    Check,
+    CompositeKey,
+    ForeignKeyField,
+    IntegerField,
+    Model,
+    SqliteDatabase,
+    TextField,
+    fn,
+)
+from playhouse.sqlite_ext import AutoIncrementField
 
 from proto import config_pb2, game_pb2
 
 SCHEMA_VERSION = 1
 
-_SCHEMA = """
-CREATE TABLE network (
-  id             INTEGER PRIMARY KEY,
-  parent_id      INTEGER REFERENCES network(id),
-  created        TEXT NOT NULL,
-  git_commit     TEXT NOT NULL,
-  input_encoding TEXT NOT NULL,
-  output_layout  TEXT NOT NULL,
-  onnx           BLOB NOT NULL,
-  checkpoint     BLOB,             -- PyTorch checkpoint, for training further
-  config         TEXT NOT NULL,    -- NetworkConfig
-  note           TEXT NOT NULL DEFAULT ''
-);
+# Peewee binds models to a database object when the classes are defined, long
+# before the file is known: open_db() and create_db() point this placeholder at
+# a file for the duration of a call. One database per process at a time.
+database = SqliteDatabase(None, pragmas={"foreign_keys": 1})
 
--- Immutable: a changed setting is a new player.
-CREATE TABLE player (
-  id         INTEGER PRIMARY KEY,
-  type       TEXT NOT NULL CHECK (type IN ('RANDOM', 'NN')),
-  network_id INTEGER REFERENCES network(id),
-  config     TEXT NOT NULL,        -- PlayerConfig, canonical text format
-  CHECK ((type = 'NN') = (network_id IS NOT NULL)),
-  UNIQUE (type, network_id, config)
-);
 
-CREATE TABLE match (
-  id         INTEGER PRIMARY KEY,
-  white_id   INTEGER NOT NULL REFERENCES player(id),
-  black_id   INTEGER NOT NULL REFERENCES player(id),
-  purpose    TEXT NOT NULL CHECK (purpose IN ('TRAINING', 'EVALUATION')),
-  first_move TEXT NOT NULL CHECK (first_move IN ('ALTERNATE', 'WHITE', 'BLACK')),
-  seed       INTEGER NOT NULL,
-  n_games    INTEGER NOT NULL,
-  git_commit TEXT NOT NULL,         -- with a '-dirty' suffix if the tree had changes
-  created    TEXT NOT NULL,
-  status     TEXT NOT NULL CHECK (status IN ('RUNNING', 'COMPLETE', 'FAILED')),
-  config     TEXT NOT NULL,         -- MatchConfig
-  note       TEXT NOT NULL DEFAULT ''
-);
+def now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
-CREATE TABLE game (
-  match_id    INTEGER NOT NULL REFERENCES match(id),
-  idx         INTEGER NOT NULL,
-  white_first INTEGER NOT NULL,
-  final_score INTEGER NOT NULL,
-  n_turns     INTEGER NOT NULL,
-  data        BLOB NOT NULL,        -- the Game proto (proto/game.proto)
-  PRIMARY KEY (match_id, idx)
-);
 
-CREATE VIEW match_summary AS
-SELECT match_id,
-       COUNT(*)                                                AS games,
-       SUM(CASE WHEN final_score > 0 THEN final_score ELSE 0 END)  AS white_points,
-       SUM(CASE WHEN final_score < 0 THEN -final_score ELSE 0 END) AS black_points,
-       SUM(final_score > 0)                                    AS white_wins,
-       SUM(final_score < 0)                                    AS black_wins,
-       SUM(final_score >= 2)                                   AS white_gammons,
-       SUM(final_score <= -2)                                  AS black_gammons,
-       AVG(n_turns)                                            AS avg_turns
-FROM game
-GROUP BY match_id;
-"""
+def to_text(message: Message) -> str:
+    """Canonical text format: the same message always gives the same string."""
+    return text_format.MessageToString(message)
+
+
+def one_of(column: str, values: tuple[str, ...]) -> Check:
+    return Check(f"{column} IN ({', '.join(repr(v) for v in values)})")
+
+
+class BaseModel(Model):
+    class Meta:
+        database = database
+
+
+# AUTOINCREMENT ids are never reused, even after deleting the newest row:
+# match ids, for one, also key the training-array cache.
+
+
+class Network(BaseModel):
+    id = AutoIncrementField()
+    parent = ForeignKeyField("self", null=True, backref="children")
+    created = TextField(default=now)
+    git_commit = TextField()
+    input_encoding = TextField()
+    output_layout = TextField()
+    onnx = BlobField()
+    checkpoint = BlobField(null=True)  # PyTorch checkpoint, for training further
+    config = TextField()  # NetworkConfig
+    note = TextField(default="")
+
+    @property
+    def config_proto(self) -> config_pb2.NetworkConfig:
+        return text_format.Parse(self.config, config_pb2.NetworkConfig())
+
+
+PLAYER_TYPES = ("RANDOM", "NN")
+
+
+class Player(BaseModel):
+    """Immutable: a changed setting is a new player."""
+
+    id = AutoIncrementField()
+    type = TextField(constraints=[one_of("type", PLAYER_TYPES)])
+    network = ForeignKeyField(Network, null=True, backref="players")
+    config = TextField()  # PlayerConfig, canonical text format
+
+    class Meta:
+        constraints = [SQL("CHECK ((type = 'NN') = (network_id IS NOT NULL))")]
+
+    @classmethod
+    def find_or_create(
+        cls, type: str, network: Network | None = None, config: config_pb2.PlayerConfig | None = None
+    ) -> Player:
+        text = to_text(config or config_pb2.PlayerConfig())
+        if type == "RANDOM" and text:
+            raise ValueError("random players take no config")
+        player = cls.get_or_none(cls.type == type, cls.network == network, cls.config == text)
+        return player or cls.create(type=type, network=network, config=text)
+
+    @property
+    def config_proto(self) -> config_pb2.PlayerConfig:
+        return text_format.Parse(self.config, config_pb2.PlayerConfig())
 
 
 @dataclass(frozen=True)
@@ -98,166 +136,194 @@ class Summary:
     avg_turns: float
 
 
-def now() -> str:
-    return datetime.now(UTC).isoformat(timespec="seconds")
+PURPOSES = ("TRAINING", "EVALUATION")
+FIRST_MOVES = ("ALTERNATE", "WHITE", "BLACK")
+STATUSES = ("RUNNING", "COMPLETE", "FAILED")
 
 
-def to_text(message: Message) -> str:
-    """Canonical text format: the same message always gives the same string."""
-    return text_format.MessageToString(message)
+class Match(BaseModel):
+    id = AutoIncrementField()
+    white = ForeignKeyField(Player, backref="white_matches")
+    black = ForeignKeyField(Player, backref="black_matches")
+    purpose = TextField(constraints=[one_of("purpose", PURPOSES)])
+    first_move = TextField(constraints=[one_of("first_move", FIRST_MOVES)])
+    seed = IntegerField()
+    n_games = IntegerField()
+    git_commit = TextField()  # with a '-dirty' suffix if the tree had changes
+    created = TextField(default=now)
+    status = TextField(default="RUNNING", constraints=[one_of("status", STATUSES)])
+    config = TextField()  # MatchConfig
+    note = TextField(default="")
 
+    def complete(self, games: Iterable[bytes]) -> None:
+        """Stores the games, in index order, and marks the match COMPLETE. All or nothing."""
+        rows = (
+            (self.id, idx, game.white_first, game.final_score, len(game.turns), data)
+            for idx, data in enumerate(games)
+            for game in [game_pb2.Game.FromString(data)]
+        )
+        fields = [Game.match, Game.idx, Game.white_first, Game.final_score, Game.n_turns, Game.data]
+        with database.atomic():
+            count = 0
+            for batch in batched(rows, 1000):
+                Game.insert_many(batch, fields=fields).execute()
+                count += len(batch)
+            if count != self.n_games:
+                raise ValueError(f"match {self.id}: expected {self.n_games} games, got {count}")
+            self.status = "COMPLETE"
+            self.save()
 
-def read_games(path: Path) -> Iterator[bytes]:
-    """Yields the serialized games of a play_games_main log, in order."""
-    with path.open("rb") as f:
-        while header := f.read(4):
-            (size,) = struct.unpack("<I", header)
-            data = f.read(size)
-            if len(data) != size:
-                raise ValueError(f"{path}: truncated game record")
+    def fail(self) -> None:
+        self.status = "FAILED"
+        self.save()
+
+    def game_records(self) -> Iterator[bytes]:
+        """The serialized games, in index order."""
+        if self.status != "COMPLETE":
+            raise ValueError(f"match {self.id} is not complete")
+        for (data,) in self.games.select(Game.data).order_by(Game.idx).tuples():
             yield data
 
+    def game_protos(self) -> Iterator[game_pb2.Game]:
+        for data in self.game_records():
+            yield game_pb2.Game.FromString(data)
 
-class Db:
-    def __init__(self, conn: sqlite3.Connection):
-        self.conn = conn
+    def summary(self) -> Summary:
+        def count(condition):
+            return fn.SUM(Case(None, [(condition, 1)], 0))
 
-    @classmethod
-    def open(cls, path: Path | str) -> "Db":
-        """Opens the database, creating the schema in a new or empty file."""
-        conn = sqlite3.connect(path)
-        conn.execute("PRAGMA foreign_keys = ON")
-        version = conn.execute("PRAGMA user_version").fetchone()[0]
-        if version == 0:
-            with conn:
-                conn.executescript(_SCHEMA)
-                conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-        elif version != SCHEMA_VERSION:
-            raise RuntimeError(
-                f"{path}: schema version {version}, this code expects {SCHEMA_VERSION}; regenerate the database"
+        def points(condition, value):
+            return fn.SUM(Case(None, [(condition, value)], 0))
+
+        row = (
+            Game.select(
+                fn.COUNT(Game.idx),
+                points(Game.final_score > 0, Game.final_score),
+                points(Game.final_score < 0, 0 - Game.final_score),  # unary minus means DESC in Peewee
+                count(Game.final_score > 0),
+                count(Game.final_score < 0),
+                count(Game.final_score >= 2),
+                count(Game.final_score <= -2),
+                fn.AVG(Game.n_turns),
             )
-        return cls(conn)
-
-    def close(self) -> None:
-        self.conn.close()
-
-    # --- networks
-
-    def add_network(
-        self,
-        onnx: bytes,
-        config: config_pb2.NetworkConfig,
-        *,
-        input_encoding: str,
-        output_layout: str,
-        git_commit: str,
-        checkpoint: bytes | None = None,
-        parent_id: int | None = None,
-        note: str = "",
-    ) -> int:
-        with self.conn:
-            cur = self.conn.execute(
-                "INSERT INTO network (parent_id, created, git_commit, input_encoding, output_layout,"
-                " onnx, checkpoint, config, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (parent_id, now(), git_commit, input_encoding, output_layout, onnx, checkpoint, to_text(config), note),
-            )
-        return cur.lastrowid
-
-    def network_onnx(self, network_id: int) -> bytes:
-        row = self.conn.execute("SELECT onnx FROM network WHERE id = ?", (network_id,)).fetchone()
-        if row is None:
-            raise KeyError(f"no network {network_id}")
-        return row[0]
-
-    # --- players
-
-    def player(self, type: str, network_id: int | None = None, config: config_pb2.PlayerConfig | None = None) -> int:
-        """Returns the id of the player with these settings, creating it if needed."""
-        text = to_text(config or config_pb2.PlayerConfig())
-        if type == "RANDOM" and text:
-            raise ValueError("random players take no config")
-        row = self.conn.execute(
-            "SELECT id FROM player WHERE type = ? AND network_id IS ? AND config = ?", (type, network_id, text)
-        ).fetchone()
-        if row is not None:
-            return row[0]
-        with self.conn:
-            cur = self.conn.execute(
-                "INSERT INTO player (type, network_id, config) VALUES (?, ?, ?)", (type, network_id, text)
-            )
-        return cur.lastrowid
-
-    def player_settings(self, player_id: int) -> tuple[str, int | None, config_pb2.PlayerConfig]:
-        row = self.conn.execute("SELECT type, network_id, config FROM player WHERE id = ?", (player_id,)).fetchone()
-        if row is None:
-            raise KeyError(f"no player {player_id}")
-        type, network_id, text = row
-        return type, network_id, text_format.Parse(text, config_pb2.PlayerConfig())
-
-    # --- matches
-
-    def create_match(
-        self,
-        white_id: int,
-        black_id: int,
-        *,
-        purpose: str,
-        first_move: str,
-        seed: int,
-        n_games: int,
-        git_commit: str,
-        config: config_pb2.MatchConfig,
-        note: str = "",
-    ) -> int:
-        """Records a match about to be played, with status RUNNING."""
-        with self.conn:
-            cur = self.conn.execute(
-                "INSERT INTO match (white_id, black_id, purpose, first_move, seed, n_games, git_commit,"
-                " created, status, config, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RUNNING', ?, ?)",
-                (white_id, black_id, purpose, first_move, seed, n_games, git_commit, now(), to_text(config), note),
-            )
-        return cur.lastrowid
-
-    def complete_match(self, match_id: int, games: Iterable[bytes]) -> None:
-        """Stores the match's games, in index order, and marks it COMPLETE. All or nothing."""
-        n_games = self.conn.execute("SELECT n_games FROM match WHERE id = ?", (match_id,)).fetchone()[0]
-        with self.conn:
-            count = 0
-            for idx, data in enumerate(games):
-                game = game_pb2.Game.FromString(data)
-                self.conn.execute(
-                    "INSERT INTO game (match_id, idx, white_first, final_score, n_turns, data)"
-                    " VALUES (?, ?, ?, ?, ?, ?)",
-                    (match_id, idx, game.white_first, game.final_score, len(game.turns), data),
-                )
-                count += 1
-            if count != n_games:
-                raise ValueError(f"match {match_id}: expected {n_games} games, got {count}")
-            self.conn.execute("UPDATE match SET status = 'COMPLETE' WHERE id = ?", (match_id,))
-
-    def fail_match(self, match_id: int) -> None:
-        with self.conn:
-            self.conn.execute("UPDATE match SET status = 'FAILED' WHERE id = ?", (match_id,))
-
-    def summary(self, match_id: int) -> Summary:
-        row = self.conn.execute(
-            "SELECT games, white_points, black_points, white_wins, black_wins, white_gammons,"
-            " black_gammons, avg_turns FROM match_summary WHERE match_id = ?",
-            (match_id,),
-        ).fetchone()
-        if row is None:
-            raise KeyError(f"match {match_id} has no games")
+            .where(Game.match == self)
+            .tuples()
+            .get()
+        )
+        if row[0] == 0:
+            raise KeyError(f"match {self.id} has no games")
         return Summary(*row)
 
-    def game_records(self, match_id: int) -> Iterator[bytes]:
-        """The match's serialized games, in index order."""
-        status = self.conn.execute("SELECT status FROM match WHERE id = ?", (match_id,)).fetchone()
-        if status is None or status[0] != "COMPLETE":
-            raise ValueError(f"match {match_id} is not complete")
-        rows = self.conn.execute("SELECT data FROM game WHERE match_id = ? ORDER BY idx", (match_id,))
-        for (data,) in rows:
-            yield data
 
-    def games(self, match_id: int) -> Iterator[game_pb2.Game]:
-        for data in self.game_records(match_id):
-            yield game_pb2.Game.FromString(data)
+class Game(BaseModel):
+    match = ForeignKeyField(Match, backref="games", index=False)  # the primary key covers it
+    idx = IntegerField()
+    white_first = BooleanField()
+    final_score = IntegerField()
+    n_turns = IntegerField()
+    data = BlobField()  # the Game proto (proto/game.proto)
+
+    class Meta:
+        primary_key = CompositeKey("match", "idx")
+
+    @property
+    def proto(self) -> game_pb2.Game:
+        return game_pb2.Game.FromString(self.data)
+
+
+MODELS = [Network, Player, Match, Game]
+
+
+@contextmanager
+def _bound(path: Path) -> Iterator[SqliteDatabase]:
+    """Binds all models to the database at `path`, and unbinds them on leaving,
+    even on an error; after that, queries fail instead of quietly reconnecting."""
+    if database.database is not None:
+        raise RuntimeError(f"a database is already open: {database.database}")
+    database.init(str(path), pragmas={"foreign_keys": 1})
+    try:
+        database.connect()
+        yield database
+    finally:
+        if not database.is_closed():
+            database.close()
+        # Peewee reconnects on the next query after close(); with no file
+        # bound, it raises instead.
+        database.init(None)
+
+
+def create_db(path: Path | str) -> None:
+    """Creates a database at `path`: the schema and the random player. Refuses an
+    existing file. The file appears only once complete: it is built under a
+    temporary name and renamed."""
+    path = Path(path)
+    if path.exists():
+        raise FileExistsError(f"{path} already exists")
+    partial = path.with_name(path.name + ".partial")
+    partial.unlink(missing_ok=True)  # left by an interrupted create_db
+    try:
+        with _bound(partial), database.atomic():
+            database.create_tables(MODELS)
+            # Unique settings per player. Not a plain UNIQUE constraint: NULLs
+            # are distinct there, so it would allow duplicate random players.
+            database.execute_sql("CREATE UNIQUE INDEX player_settings ON player (type, IFNULL(network_id, 0), config)")
+            # It has no settings, so there is exactly one; it is id 1, but look
+            # it up by type.
+            Player.create(type="RANDOM", config="")
+            database.pragma("user_version", SCHEMA_VERSION)
+        partial.rename(path)
+    finally:
+        partial.unlink(missing_ok=True)
+
+
+@contextmanager
+def open_db(path: Path | str) -> Iterator[SqliteDatabase]:
+    """Binds all models to the existing database at `path` for the `with` block
+    (create_db() makes one). Refuses a missing file: a mistyped path would
+    otherwise be a new, empty database."""
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"{path}: no such database (python -m bg new-db creates one)")
+    with _bound(path):
+        version = database.pragma("user_version")
+        if version != SCHEMA_VERSION:
+            raise RuntimeError(
+                f"{path}: schema version {version}, this code expects {SCHEMA_VERSION}"
+                " (python -m bg new-db starts a new database)"
+            )
+        yield database
+
+
+def archive_db(path: Path | str, archive_dir: Path | str) -> Path:
+    """Compresses the database at `path` into `archive_dir` (zstd, named by the
+    time) and deletes it. Returns the archive's path. Refuses while another
+    process has the database open."""
+    path, archive_dir = Path(path), Path(archive_dir)
+    if not path.is_file():
+        raise FileNotFoundError(f"{path}: no such database")
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    archive = archive_dir / f"{path.stem}-{stamp}{path.suffix}.zst"
+    n = 1
+    while archive.exists():  # never overwrite: two archives in the same second
+        archive = archive_dir / f"{path.stem}-{stamp}-{n}{path.suffix}.zst"
+        n += 1
+    partial = archive.with_name(archive.name + ".partial")
+    # An exclusive lock keeps writers (and readers) out while the file is read,
+    # and makes SQLite first roll back a transaction a crash left half done.
+    conn = sqlite3.connect(path, timeout=0)
+    try:
+        conn.execute("BEGIN EXCLUSIVE")
+        conn.execute("SELECT count(*) FROM sqlite_master")  # also: is it a database at all?
+        with open(path, "rb") as src, zstd.open(partial, "wb") as dst:
+            shutil.copyfileobj(src, dst, 1 << 20)
+        os.replace(partial, archive)
+    except sqlite3.OperationalError as e:
+        if "locked" in str(e):
+            raise RuntimeError(f"{path} is in use by another process") from e
+        raise
+    finally:
+        conn.close()
+        partial.unlink(missing_ok=True)
+    path.unlink()
+    return archive

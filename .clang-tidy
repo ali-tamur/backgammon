@@ -1,0 +1,4 @@
+  Checks: 
+    'clang-diagnostic-*,clang-analyzer-*,google-*,modernize-*,performance-*,readability-*,bugprone-*,-bugprone-easily-swappable-parameters,-readability-identifier-length,-readability-trailing-comma'
+
+

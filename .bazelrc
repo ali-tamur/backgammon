@@ -10,3 +10,7 @@ build --host_features=external_include_paths
 
 test --test_output=errors
 
+
+# Bazel's convenience symlinks (bin, out, testlogs and the execroot) go in .bazel/
+# instead of four bazel-* entries at the top; tools/compile_commands.py writes there too.
+build --symlink_prefix=.bazel/
