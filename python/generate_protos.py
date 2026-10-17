@@ -6,7 +6,7 @@ Uses the protoc that Bazel builds for the C++ side, so Python and C++ always
 agree on the schema. Run from anywhere inside the repository, after any change
 to a .proto file:
 
-    python python/generate_protos.py
+    python3 python/generate_protos.py   (tools/setup.sh does this)
 
 The Python protobuf package must be at least as new as this protoc (see
 pyproject.toml); the generated code refuses to load otherwise.

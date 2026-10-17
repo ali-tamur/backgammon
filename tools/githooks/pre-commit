@@ -3,7 +3,7 @@
 # Pre-commit checks: ruff (lint + format), pytest, clang-format, clang-tidy and
 # bazel test. Any failure aborts the commit.
 #
-# Enable once per clone:   git config core.hooksPath tools/githooks
+# Enabled by tools/setup.sh (git config core.hooksPath tools/githooks)
 # Skip in an emergency:    git commit --no-verify
 #
 # The checks run on the working tree, not on the staged snapshot: stage

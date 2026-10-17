@@ -1,10 +1,11 @@
 import sqlite3
+from compression import zstd
 
 import peewee
 import pytest
 from peewee import fn
 
-from bg.db import SCHEMA_VERSION, Game, Match, Network, Player, Summary, open_db, to_text
+from bg.db import SCHEMA_VERSION, Game, Match, Network, Player, Summary, archive_db, create_db, open_db, to_text
 from bg.game_log import read_games, write_games
 from proto import config_pb2, game_pb2
 
@@ -41,11 +42,41 @@ def add_match(n_games: int) -> Match:
     )
 
 
-def test_open_sets_schema_version(tmp_path):
+def test_create_sets_schema_version_and_adds_the_random_player(tmp_path):
     path = tmp_path / "test.db"
-    with open_db(path):
-        pass
+    create_db(path)
     assert sqlite3.connect(path).execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+    with open_db(path):
+        (random,) = Player.select()
+        assert (random.id, random.type, random.network, random.config) == (1, "RANDOM", None, "")
+        assert Player.find_or_create("RANDOM") == random
+
+
+def test_create_refuses_an_existing_file(tmp_path):
+    path = tmp_path / "test.db"
+    path.write_bytes(b"precious")
+    with pytest.raises(FileExistsError):
+        create_db(path)
+    assert path.read_bytes() == b"precious"
+
+
+def test_failed_create_leaves_no_file(tmp_path, monkeypatch):
+    def fail(*args, **kwargs):
+        raise sqlite3.OperationalError("disk full")
+
+    monkeypatch.setattr(Player, "create", fail)
+    with pytest.raises(sqlite3.OperationalError):
+        create_db(tmp_path / "test.db")
+    assert list(tmp_path.iterdir()) == []
+    monkeypatch.undo()
+    create_db(tmp_path / "test.db")  # nothing left bound, nothing in the way
+
+
+def test_open_refuses_a_missing_file(tmp_path):
+    with pytest.raises(FileNotFoundError, match="new-db"):
+        with open_db(tmp_path / "typo.db"):
+            pass
+    assert list(tmp_path.iterdir()) == []  # not created by accident
 
 
 def test_open_rejects_other_schema_version(tmp_path):
@@ -53,15 +84,17 @@ def test_open_rejects_other_schema_version(tmp_path):
     conn = sqlite3.connect(path)
     conn.execute("PRAGMA user_version = 999")
     conn.close()
-    with pytest.raises(RuntimeError, match="regenerate"):
+    with pytest.raises(RuntimeError, match="expects"):
         with open_db(path):
             pass
+    create_db(tmp_path / "other.db")
     with open_db(tmp_path / "other.db"):  # the failed open left nothing bound
         pass
 
 
 def test_reopening_keeps_the_data(tmp_path):
     path = tmp_path / "test.db"
+    create_db(path)
     with open_db(path):
         network = add_network()
     with open_db(path):
@@ -69,25 +102,59 @@ def test_reopening_keeps_the_data(tmp_path):
 
 
 def test_closed_database_is_not_reopened_silently(tmp_path):
-    with open_db(tmp_path / "test.db"):
+    path = tmp_path / "test.db"
+    create_db(path)
+    with open_db(path):
         add_network()
     with pytest.raises(peewee.InterfaceError, match="must be initialized"):
         Network.select().count()
 
 
 def test_closed_even_after_an_error(tmp_path):
+    path = tmp_path / "test.db"
+    create_db(path)
     with pytest.raises(ZeroDivisionError):
-        with open_db(tmp_path / "test.db"):
+        with open_db(path):
             1 / 0
     with pytest.raises(peewee.InterfaceError):
         Network.select().count()
 
 
-def test_only_one_database_at_a_time(db, tmp_path):
-    with pytest.raises(RuntimeError, match="already open"):
-        with open_db(tmp_path / "other.db"):
-            pass
-    assert Network.select().count() == 0  # the open one is untouched
+def test_archive_compresses_and_removes_the_database(tmp_path):
+    path = tmp_path / "test.db"
+    create_db(path)
+    original = path.read_bytes()
+    archive = archive_db(path, tmp_path / "archive")
+    assert not path.exists()
+    assert archive.parent == tmp_path / "archive"
+    assert archive.name.startswith("test-") and archive.name.endswith(".db.zst")
+    assert zstd.decompress(archive.read_bytes()) == original
+    assert list(archive.parent.iterdir()) == [archive]
+
+
+def test_archive_refuses_a_database_in_use(tmp_path):
+    path = tmp_path / "test.db"
+    create_db(path)
+    other = sqlite3.connect(path)
+    other.execute("BEGIN IMMEDIATE")  # another process in the middle of writing
+    with pytest.raises(RuntimeError, match="in use"):
+        archive_db(path, tmp_path / "archive")
+    other.close()
+    assert path.exists()
+    assert list((tmp_path / "archive").iterdir()) == []
+
+
+def test_only_one_database_at_a_time(tmp_path):
+    create_db(tmp_path / "first.db")
+    create_db(tmp_path / "other.db")
+    with open_db(tmp_path / "first.db"):
+        with pytest.raises(RuntimeError, match="already open"):
+            with open_db(tmp_path / "other.db"):
+                pass
+        with pytest.raises(RuntimeError, match="already open"):
+            create_db(tmp_path / "third.db")
+        assert Player.select().count() == 1  # the open one is untouched
+    assert not (tmp_path / "third.db").exists()
 
 
 def test_network_round_trip(db):
@@ -119,7 +186,6 @@ def test_player_is_found_not_duplicated(db):
 
 
 def test_duplicate_players_are_rejected_by_the_database(db):
-    Player.create(type="RANDOM", config="")
     with pytest.raises(peewee.IntegrityError):
         Player.create(type="RANDOM", config="")  # NULL network: a plain UNIQUE would allow it
 

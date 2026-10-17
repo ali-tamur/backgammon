@@ -7,16 +7,21 @@ own column once queries need it.
 
 Rows are created only by the operations that produce them: a network by
 training, a player when a match needs it, a match and its games by playing.
+The one exception is the random player, created with the database.
 
 While the schema is settling, changing it means bumping SCHEMA_VERSION and
-regenerating the database from scratch.
+starting a new database (`python -m bg new-db`, which archives the old one).
 
     with open_db("data/backgammon.db"):
-        random = Player.find_or_create("RANDOM")
+        random = Player.get(Player.type == "RANDOM")
         Match.select().where(Match.purpose == "TRAINING")
 """
 
+import os
+import shutil
+import sqlite3
 from collections.abc import Iterable, Iterator
+from compression import zstd
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -46,8 +51,8 @@ from proto import config_pb2, game_pb2
 SCHEMA_VERSION = 1
 
 # Peewee binds models to a database object when the classes are defined, long
-# before the file is known: open_db() points this placeholder at a file for the
-# duration of a `with` block. One database per process at a time.
+# before the file is known: open_db() and create_db() point this placeholder at
+# a file for the duration of a call. One database per process at a time.
 database = SqliteDatabase(None, pragmas={"foreign_keys": 1})
 
 
@@ -230,29 +235,14 @@ MODELS = [Network, Player, Match, Game]
 
 
 @contextmanager
-def open_db(path: Path | str) -> Iterator[SqliteDatabase]:
-    """Binds all models to the database at `path` for the `with` block, creating
-    the schema in a new or empty file. Closed on leaving the block, even on an
-    error; after it, queries fail instead of quietly reconnecting."""
+def _bound(path: Path) -> Iterator[SqliteDatabase]:
+    """Binds all models to the database at `path`, and unbinds them on leaving,
+    even on an error; after that, queries fail instead of quietly reconnecting."""
     if database.database is not None:
         raise RuntimeError(f"a database is already open: {database.database}")
     database.init(str(path), pragmas={"foreign_keys": 1})
     try:
         database.connect()
-        version = database.pragma("user_version")
-        if version == 0:
-            with database.atomic():
-                database.create_tables(MODELS)
-                # Unique settings per player. Not a plain UNIQUE constraint: NULLs
-                # are distinct there, so it would allow duplicate random players.
-                database.execute_sql(
-                    "CREATE UNIQUE INDEX player_settings ON player (type, IFNULL(network_id, 0), config)"
-                )
-                database.pragma("user_version", SCHEMA_VERSION)
-        elif version != SCHEMA_VERSION:
-            raise RuntimeError(
-                f"{path}: schema version {version}, this code expects {SCHEMA_VERSION}; regenerate the database"
-            )
         yield database
     finally:
         if not database.is_closed():
@@ -260,3 +250,80 @@ def open_db(path: Path | str) -> Iterator[SqliteDatabase]:
         # Peewee reconnects on the next query after close(); with no file
         # bound, it raises instead.
         database.init(None)
+
+
+def create_db(path: Path | str) -> None:
+    """Creates a database at `path`: the schema and the random player. Refuses an
+    existing file. The file appears only once complete: it is built under a
+    temporary name and renamed."""
+    path = Path(path)
+    if path.exists():
+        raise FileExistsError(f"{path} already exists")
+    partial = path.with_name(path.name + ".partial")
+    partial.unlink(missing_ok=True)  # left by an interrupted create_db
+    try:
+        with _bound(partial), database.atomic():
+            database.create_tables(MODELS)
+            # Unique settings per player. Not a plain UNIQUE constraint: NULLs
+            # are distinct there, so it would allow duplicate random players.
+            database.execute_sql("CREATE UNIQUE INDEX player_settings ON player (type, IFNULL(network_id, 0), config)")
+            # It has no settings, so there is exactly one; it is id 1, but look
+            # it up by type.
+            Player.create(type="RANDOM", config="")
+            database.pragma("user_version", SCHEMA_VERSION)
+        partial.rename(path)
+    finally:
+        partial.unlink(missing_ok=True)
+
+
+@contextmanager
+def open_db(path: Path | str) -> Iterator[SqliteDatabase]:
+    """Binds all models to the existing database at `path` for the `with` block
+    (create_db() makes one). Refuses a missing file: a mistyped path would
+    otherwise be a new, empty database."""
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"{path}: no such database (python -m bg new-db creates one)")
+    with _bound(path):
+        version = database.pragma("user_version")
+        if version != SCHEMA_VERSION:
+            raise RuntimeError(
+                f"{path}: schema version {version}, this code expects {SCHEMA_VERSION}"
+                " (python -m bg new-db starts a new database)"
+            )
+        yield database
+
+
+def archive_db(path: Path | str, archive_dir: Path | str) -> Path:
+    """Compresses the database at `path` into `archive_dir` (zstd, named by the
+    time) and deletes it. Returns the archive's path. Refuses while another
+    process has the database open."""
+    path, archive_dir = Path(path), Path(archive_dir)
+    if not path.is_file():
+        raise FileNotFoundError(f"{path}: no such database")
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    archive = archive_dir / f"{path.stem}-{stamp}{path.suffix}.zst"
+    n = 1
+    while archive.exists():  # never overwrite: two archives in the same second
+        archive = archive_dir / f"{path.stem}-{stamp}-{n}{path.suffix}.zst"
+        n += 1
+    partial = archive.with_name(archive.name + ".partial")
+    # An exclusive lock keeps writers (and readers) out while the file is read,
+    # and makes SQLite first roll back a transaction a crash left half done.
+    conn = sqlite3.connect(path, timeout=0)
+    try:
+        conn.execute("BEGIN EXCLUSIVE")
+        conn.execute("SELECT count(*) FROM sqlite_master")  # also: is it a database at all?
+        with open(path, "rb") as src, zstd.open(partial, "wb") as dst:
+            shutil.copyfileobj(src, dst, 1 << 20)
+        os.replace(partial, archive)
+    except sqlite3.OperationalError as e:
+        if "locked" in str(e):
+            raise RuntimeError(f"{path} is in use by another process") from e
+        raise
+    finally:
+        conn.close()
+        partial.unlink(missing_ok=True)
+    path.unlink()
+    return archive
