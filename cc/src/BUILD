@@ -80,12 +80,12 @@ cc_test(
 cc_library(
     name = "model",
     hdrs = ["model.h"],
-    data = ["//third_party:onnxruntime"],
+    data = ["//bazel:onnxruntime"],
     srcs = ["model.cc"],
     deps = [
         ":configs",
         "//proto:game_cc_proto",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
     ],
 )
 
@@ -93,7 +93,7 @@ cc_test(
     name = "model_test",
     size = "small",
     srcs = ["model_test.cc"],
-    data = ["//third_party:onnxruntime"],
+    data = ["//bazel:onnxruntime"],
     deps = [
         ":configs",
         ":model",
@@ -108,7 +108,7 @@ cc_test(
     srcs = ["nn_player_test.cc"],
     data = [
         "testdata/test_model.onnx",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
     ],
     deps = [
         ":configs",
@@ -130,7 +130,7 @@ cc_library(
         ":dice",
         ":model",
         ":moves",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
     ],
 )
 
@@ -240,7 +240,7 @@ cc_library(
         ":model",
         ":moves",
         ":player",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
     ],
 )
 
@@ -255,7 +255,7 @@ cc_binary(
         ":model",
         ":moves",
         ":player",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
         "@google_benchmark//:benchmark",
     ],
 )
@@ -264,7 +264,7 @@ cc_test(
     name = "game_manager_test",
     size = "small",
     srcs = ["game_manager_test.cc"],
-    data = ["//third_party:onnxruntime"],
+    data = ["//bazel:onnxruntime"],
     deps = [
         ":configs",
         ":dice",
@@ -273,7 +273,7 @@ cc_test(
         ":model",
         ":moves",
         ":player",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -291,7 +291,7 @@ cc_binary(
         ":model",
         ":moves",
         ":player",
-        "//third_party:onnxruntime",
+        "//bazel:onnxruntime",
         "@cli11//:cli11",
     ],
 )

@@ -6,7 +6,7 @@ Uses the protoc that Bazel builds for the C++ side, so Python and C++ always
 agree on the schema. Run from anywhere inside the repository, after any change
 to a .proto file:
 
-    python3 python/generate_protos.py   (tools/setup.sh does this)
+    python3 tools/generate_protos.py   (tools/setup.sh does this)
 
 The Python protobuf package must be at least as new as this protoc (see
 pyproject.toml); the generated code refuses to load otherwise.
@@ -26,11 +26,13 @@ def repo_root() -> Path:
 
 def build_protoc(root: Path) -> Path:
     subprocess.run(["bazel", "build", PROTOC_TARGET], cwd=root, check=True)
-    # Ask bazel for the path: bazel-bin only reflects the last configuration built.
-    out = subprocess.run(
-        ["bazel", "cquery", "--output=files", PROTOC_TARGET], cwd=root, capture_output=True, text=True, check=True
-    )
-    return root / out.stdout.split()[0]
+
+    # Ask bazel for the path (bazel-bin only reflects the last configuration
+    # built); it is relative to the execution root.
+    def bazel(*args: str) -> str:
+        return subprocess.run(["bazel", *args], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+
+    return Path(bazel("info", "execution_root")) / bazel("cquery", "--output=files", PROTOC_TARGET).split()[0]
 
 
 def main() -> int:

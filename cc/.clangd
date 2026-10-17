@@ -1,5 +1,6 @@
-
 CompileFlags:
+  # Written by tools/compile_commands.py (relative to this file).
+  CompilationDatabase: ../.bazel
   Add: 
     - -Wno-unknown-argument
 

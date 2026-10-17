@@ -79,8 +79,10 @@ bazel run -c opt //cc/src:training_data_main -- --games=/path/games.pb --out=/pa
 ├── cc/src/   # C++ game engine and tools
 ├── proto/    # Protocol buffer definitions
 ├── python/   # Python: bg/ (ours), proto/ (generated), tests/
+├── bazel/    # Bazel build files for downloaded libraries (onnxruntime)
 ├── tools/    # Setup, developer scripts and git hooks
-└── data/     # Database, its archives and caches (gitignored)
+├── data/     # Database, its archives and caches (gitignored)
+└── .bazel/   # Symlinks to Bazel's outputs, compile_commands.json (gitignored)
 ```
 
 ## Development
@@ -89,7 +91,7 @@ bazel run -c opt //cc/src:training_data_main -- --games=/path/games.pb --out=/pa
 bazel test //...                                   # C++ tests
 pytest                                             # Python tests
 bazel run -c opt //cc/src:game_manager_benchmark   # benchmarks
-python3 tools/compile_commands.py                  # refresh compile_commands.json (for the IDE)
+python3 tools/compile_commands.py                  # refresh .bazel/compile_commands.json (clangd)
 ```
 
 The pre-commit hook (`tools/githooks/pre-commit`) runs ruff, pytest,

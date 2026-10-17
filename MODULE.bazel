@@ -19,12 +19,12 @@ use_repo(llvm, "llvm_toolchain")
 
 register_toolchains("@llvm_toolchain//:all")
 
-# onnxruntime: Microsoft's prebuilt release, built per third_party/onnxruntime.BUILD.
+# onnxruntime: Microsoft's prebuilt release, built per bazel/onnxruntime.BUILD.
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "onnxruntime",
-    build_file = "//third_party:onnxruntime.BUILD",
+    build_file = "//bazel:onnxruntime.BUILD",
     # Keep in step with onnxruntime in pyproject.toml.
     sha256 = "cc5c72baf5ae5c8238a6841f0897227be2d02826b9cf98eaf02fdefaeeb03a57",
     strip_prefix = "onnxruntime-linux-x64-1.31.0",

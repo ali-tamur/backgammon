@@ -20,7 +20,7 @@ missing() {
 step "tools"
 command -v bazel >/dev/null || missing "bazel or bazelisk (https://bazel.build/install/bazelisk)"
 command -v uv >/dev/null || missing "uv (https://docs.astral.sh/uv/getting-started/installation/)"
-command -v python3 >/dev/null || missing "python3 (only to run python/generate_protos.py before .venv exists)"
+command -v python3 >/dev/null || missing "python3 (only to run tools/generate_protos.py before .venv exists)"
 # Bazelisk honours .bazelversion; a plain bazel binary is whatever version it is.
 want=$(cat .bazelversion)
 have=$(bazel --version | awk '{print $2}')
@@ -32,7 +32,7 @@ echo "bazel $have, $(uv --version)"
 step "protobuf code (python/proto/)"
 # Before uv sync: the editable install packages python/proto. The script only
 # needs the standard library.
-python3 python/generate_protos.py
+python3 tools/generate_protos.py
 
 step "python environment (.venv)"
 uv sync
